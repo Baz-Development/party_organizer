@@ -9,8 +9,6 @@ O cabeçalho de cada arquivo nomeia o change que o remove.
 
 | Arquivo | Removido por |
 | --- | --- |
-| `guests.ts` | `add-guests-rsvp-backend` |
-| `gifts.ts` | `add-gifts-payments-backend` |
 | `media.ts` | `add-media-backend` |
 | `menu.ts` | `add-menu-backend` |
 | `secret-santa.ts` | `add-secret-santa-backend` |

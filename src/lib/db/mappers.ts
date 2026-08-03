@@ -1,6 +1,7 @@
 import type { Database } from "@/lib/database.types";
 import type {
   EventSummary,
+  Gift,
   Guest,
   ModuleId,
   MuralMessage,
@@ -28,6 +29,7 @@ type ProfileRow = Tables["profiles"]["Row"];
 export type GuestRow = Tables["guests"]["Row"];
 export type PhotoRow = Tables["photos"]["Row"];
 export type MuralMessageRow = Tables["mural_messages"]["Row"];
+export type GiftRow = Tables["gifts"]["Row"];
 
 export type EventRowWithContent = EventRow & {
   event_modules: Pick<Tables["event_modules"]["Row"], "module">[];
@@ -163,6 +165,32 @@ export function toMuralMessage(row: MuralMessageRow): MuralMessage {
     at: row.created_at,
     likes: row.likes_count,
     status: row.status,
+  };
+}
+
+/** Dinheiro sai do banco em centavos; o domínio fala em reais. */
+export const centsToReais = (cents: number): number => Math.round(cents) / 100;
+
+/**
+ * `reservedBy` só é passado por `src/lib/db/gifts.ts` quando quem chama
+ * administra o evento — a fronteira de privacidade
+ * ("Requirement: Visibilidade do estado do presente") vive na consulta que monta
+ * esse argumento, não aqui.
+ */
+export function toGift(row: GiftRow, reservedBy?: string): Gift {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    price: centsToReais(row.price_cents),
+    quota:
+      row.quota_target_cents != null
+        ? { target: centsToReais(row.quota_target_cents), raised: centsToReais(row.quota_raised_cents) }
+        : undefined,
+    status: row.status,
+    reservedBy,
+    store: row.store ?? undefined,
+    note: row.note ?? undefined,
   };
 }
 

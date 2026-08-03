@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { GiftsSummary } from "@/lib/db/gifts";
 import type { GuestStats } from "@/lib/db/guests";
 import { useCountdown } from "@/components/Countdown";
 import { Button } from "@/components/ui";
 import { ACTIVITY } from "@/lib/fixtures/painel";
-import { longDate } from "@/lib/format";
+import { brl, longDate } from "@/lib/format";
 import type { EventSummary } from "@/lib/types";
 
 const KIND_COLORS: Record<string, string> = {
@@ -21,10 +22,12 @@ export function PainelOverview({
   event,
   siteUrl,
   guestStats: stats,
+  giftsSummary,
 }: {
   event: EventSummary;
   siteUrl: string;
   guestStats: GuestStats;
+  giftsSummary: GiftsSummary;
 }) {
   const { days, hours, mins } = useCountdown(event.date);
 
@@ -141,6 +144,37 @@ export function PainelOverview({
           </div>
         </div>
       </div>
+
+      {/* Presentes ------------------------------------------------------ */}
+      {event.modules.includes("presentes") && (
+        <div className="mb-5 flex flex-wrap items-center gap-8 rounded-[20px] bg-paper p-8 shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
+          <div className="flex-1">
+            <div className="mb-3.5 text-[13px] uppercase tracking-wider text-ink-soft">
+              Presentes — só considera pagamento confirmado
+            </div>
+            <div className="flex flex-wrap gap-8">
+              <div>
+                <div className="font-display text-[30px] font-semibold text-accent">
+                  {giftsSummary.presenteados}
+                </div>
+                <div className="mt-0.5 text-[13px] text-ink-soft">presenteados</div>
+              </div>
+              <div>
+                <div className="font-display text-[30px] font-semibold text-ink-faint">
+                  {giftsSummary.total}
+                </div>
+                <div className="mt-0.5 text-[13px] text-ink-soft">no catálogo</div>
+              </div>
+              <div>
+                <div className="font-display text-[30px] font-semibold text-ink-faint">
+                  {brl(giftsSummary.arrecadado)}
+                </div>
+                <div className="mt-0.5 text-[13px] text-ink-soft">arrecadados</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Link público -------------------------------------------------- */}
       <div className="mb-9 flex flex-wrap items-center justify-between gap-6 rounded-[20px] bg-ink px-8 py-7">

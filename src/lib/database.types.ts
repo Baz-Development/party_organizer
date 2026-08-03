@@ -37,7 +37,6 @@ export type Database = {
       events: {
         Row: {
           city: string | null
-          cover_path: string | null
           created_at: string
           event_at: string
           eyebrow: string | null
@@ -46,7 +45,6 @@ export type Database = {
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
-          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
           organization_id: string | null
           rsvp_deadline: string | null
           slug: string
@@ -59,7 +57,6 @@ export type Database = {
         }
         Insert: {
           city?: string | null
-          cover_path?: string | null
           created_at?: string
           event_at: string
           eyebrow?: string | null
@@ -68,7 +65,6 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
-          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug: string
@@ -81,7 +77,6 @@ export type Database = {
         }
         Update: {
           city?: string | null
-          cover_path?: string | null
           created_at?: string
           event_at?: string
           eyebrow?: string | null
@@ -90,7 +85,6 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
-          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug?: string
@@ -114,6 +108,120 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gift_reservations: {
+        Row: {
+          buyer_email: string | null
+          buyer_name: string
+          created_at: string
+          event_id: string
+          expires_at: string
+          gift_id: string
+          guest_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["reservation_status"]
+        }
+        Insert: {
+          buyer_email?: string | null
+          buyer_name: string
+          created_at?: string
+          event_id: string
+          expires_at: string
+          gift_id: string
+          guest_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+        }
+        Update: {
+          buyer_email?: string | null
+          buyer_name?: string
+          created_at?: string
+          event_id?: string
+          expires_at?: string
+          gift_id?: string
+          guest_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_reservations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_reservations_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_reservations_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gifts: {
+        Row: {
+          category: string
+          created_at: string
+          event_id: string
+          id: string
+          name: string
+          note: string | null
+          price_cents: number
+          quota_raised_cents: number
+          quota_reserved_cents: number
+          quota_target_cents: number | null
+          status: Database["public"]["Enums"]["gift_status"]
+          store: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          event_id: string
+          id?: string
+          name: string
+          note?: string | null
+          price_cents: number
+          quota_raised_cents?: number
+          quota_reserved_cents?: number
+          quota_target_cents?: number | null
+          status?: Database["public"]["Enums"]["gift_status"]
+          store?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string
+          note?: string | null
+          price_cents?: number
+          quota_raised_cents?: number
+          quota_reserved_cents?: number
+          quota_target_cents?: number | null
+          status?: Database["public"]["Enums"]["gift_status"]
+          store?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gifts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -209,57 +317,6 @@ export type Database = {
           },
         ]
       }
-      mural_messages: {
-        Row: {
-          author: string
-          created_at: string
-          event_id: string
-          guest_id: string | null
-          id: string
-          likes_count: number
-          message: string
-          status: Database["public"]["Enums"]["mural_status"]
-          visitor_id: string
-        }
-        Insert: {
-          author: string
-          created_at?: string
-          event_id: string
-          guest_id?: string | null
-          id?: string
-          likes_count?: number
-          message: string
-          status?: Database["public"]["Enums"]["mural_status"]
-          visitor_id: string
-        }
-        Update: {
-          author?: string
-          created_at?: string
-          event_id?: string
-          guest_id?: string | null
-          id?: string
-          likes_count?: number
-          message?: string
-          status?: Database["public"]["Enums"]["mural_status"]
-          visitor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mural_messages_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "mural_messages_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       organization_members: {
         Row: {
           created_at: string
@@ -326,56 +383,122 @@ export type Database = {
         }
         Relationships: []
       }
-      photos: {
+      payment_events: {
         Row: {
-          author: string
-          caption: string | null
-          created_at: string
-          event_id: string
-          guest_id: string | null
+          event_type: string
           id: string
-          likes_count: number
-          status: Database["public"]["Enums"]["photo_status"]
-          storage_path: string
-          visitor_id: string
+          payload: Json
+          payment_id: string | null
+          processed_at: string | null
+          provider: string
+          provider_event_id: string | null
+          received_at: string
+          signature_valid: boolean
         }
         Insert: {
-          author: string
-          caption?: string | null
-          created_at?: string
-          event_id: string
-          guest_id?: string | null
+          event_type: string
           id?: string
-          likes_count?: number
-          status?: Database["public"]["Enums"]["photo_status"]
-          storage_path: string
-          visitor_id: string
+          payload: Json
+          payment_id?: string | null
+          processed_at?: string | null
+          provider: string
+          provider_event_id?: string | null
+          received_at?: string
+          signature_valid: boolean
         }
         Update: {
-          author?: string
-          caption?: string | null
-          created_at?: string
-          event_id?: string
-          guest_id?: string | null
+          event_type?: string
           id?: string
-          likes_count?: number
-          status?: Database["public"]["Enums"]["photo_status"]
-          storage_path?: string
-          visitor_id?: string
+          payload?: Json
+          payment_id?: string | null
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string | null
+          received_at?: string
+          signature_valid?: boolean
         }
         Relationships: [
           {
-            foreignKeyName: "photos_event_id_fkey"
+            foreignKeyName: "payment_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          buyer_email: string | null
+          buyer_name: string
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          event_id: string
+          gift_id: string
+          id: string
+          provider: string
+          provider_payment_id: string | null
+          refunded_at: string | null
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_email?: string | null
+          buyer_name: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          event_id: string
+          gift_id: string
+          id?: string
+          provider?: string
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_email?: string | null
+          buyer_name?: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string
+          gift_id?: string
+          id?: string
+          provider?: string
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "photos_guest_id_fkey"
-            columns: ["guest_id"]
+            foreignKeyName: "payments_gift_id_fkey"
+            columns: ["gift_id"]
             isOneToOne: false
-            referencedRelation: "guests"
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "gift_reservations"
             referencedColumns: ["id"]
           },
         ]
@@ -403,41 +526,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
-      }
-      reactions: {
-        Row: {
-          created_at: string
-          event_id: string
-          id: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["reaction_target"]
-          visitor_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          id?: string
-          target_id: string
-          target_type: Database["public"]["Enums"]["reaction_target"]
-          visitor_id: string
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          id?: string
-          target_id?: string
-          target_type?: Database["public"]["Enums"]["reaction_target"]
-          visitor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reactions_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       rsvp_responses: {
         Row: {
@@ -527,50 +615,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      _require_published_module: {
+      attach_checkout_session: {
         Args: {
-          p_event_slug: string
-          p_module: Database["public"]["Enums"]["module_id"]
+          p_payment_id: string
+          p_provider: string
+          p_provider_payment_id: string
         }
         Returns: {
-          city: string | null
-          cover_path: string | null
+          amount_cents: number
+          buyer_email: string | null
+          buyer_name: string
+          confirmed_at: string | null
           created_at: string
-          event_at: string
-          eyebrow: string | null
-          guest_list_open: boolean
-          host_profile_id: string
-          hosts: string | null
+          currency: string
+          event_id: string
+          gift_id: string
           id: string
-          kind: Database["public"]["Enums"]["event_kind"]
-          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
-          organization_id: string | null
-          rsvp_deadline: string | null
-          slug: string
-          status: Database["public"]["Enums"]["event_status"]
-          theme_key: Database["public"]["Enums"]["theme_key"]
-          title: string
+          provider: string
+          provider_payment_id: string | null
+          refunded_at: string | null
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
-          venue: string | null
-          welcome: string | null
         }
         SetofOptions: {
           from: "*"
-          to: "events"
+          to: "payments"
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      _resolve_media_author: {
-        Args: { p_author: string; p_event_id: string; p_guest_token: string }
-        Returns: {
-          author: string
-          guest_id: string
-        }[]
-      }
-      assert_can_submit_photo: {
-        Args: { p_event_slug: string; p_visitor_id: string }
-        Returns: string
       }
       can_manage_event: { Args: { event: string }; Returns: boolean }
       get_guest_by_invite_token: {
@@ -585,43 +658,51 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }[]
       }
+      get_payment_status: {
+        Args: { p_payment_id: string }
+        Returns: {
+          amount_cents: number
+          currency: string
+          gift_id: string
+          gift_name: string
+          gift_status: Database["public"]["Enums"]["gift_status"]
+          payment_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+        }[]
+      }
       is_event_public: { Args: { event: string }; Returns: boolean }
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
-      react_to_item: {
+      process_payment_event: {
         Args: {
-          p_target_id: string
-          p_target_type: Database["public"]["Enums"]["reaction_target"]
-          p_visitor_id: string
-        }
-        Returns: number
-      }
-      submit_mural_message: {
-        Args: {
-          p_author: string
-          p_event_slug: string
-          p_guest_token?: string
-          p_message: string
-          p_visitor_id: string
+          p_amount_cents: number
+          p_event_type: string
+          p_payment_id: string
+          p_provider_payment_id: string
         }
         Returns: {
-          author: string
-          created_at: string
-          event_id: string
-          guest_id: string | null
-          id: string
-          likes_count: number
-          message: string
-          status: Database["public"]["Enums"]["mural_status"]
-          visitor_id: string
+          applied: boolean
+          payment_id: string
+          reason: string
+        }[]
+      }
+      start_gift_checkout: {
+        Args: {
+          p_amount_cents: number
+          p_buyer_email: string
+          p_buyer_name: string
+          p_event_slug: string
+          p_gift_id: string
         }
-        SetofOptions: {
-          from: "*"
-          to: "mural_messages"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        Returns: {
+          amount_cents: number
+          currency: string
+          gift_id: string
+          payment_id: string
+          reservation_expires_at: string
+          status: Database["public"]["Enums"]["payment_status"]
+        }[]
       }
       submit_open_rsvp: {
         Args: {
@@ -652,34 +733,6 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "guests"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      submit_photo: {
-        Args: {
-          p_author: string
-          p_caption: string
-          p_event_slug: string
-          p_guest_token?: string
-          p_storage_path: string
-          p_visitor_id: string
-        }
-        Returns: {
-          author: string
-          caption: string | null
-          created_at: string
-          event_id: string
-          guest_id: string | null
-          id: string
-          likes_count: number
-          status: Database["public"]["Enums"]["photo_status"]
-          storage_path: string
-          visitor_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "photos"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -725,7 +778,7 @@ export type Database = {
         | "corporativo"
         | "formatura"
       event_status: "rascunho" | "publicado" | "encerrado"
-      moderation_policy: "previa" | "imediata"
+      gift_status: "disponivel" | "reservado" | "comprado"
       module_id:
         | "rsvp"
         | "cronograma"
@@ -735,11 +788,10 @@ export type Database = {
         | "mural"
         | "cardapio"
         | "amigo-secreto"
-      mural_status: "pendente" | "aprovada" | "oculta"
       org_member_role: "proprietario" | "colaborador"
       org_plan: "parceiro" | "premium" | "enterprise"
-      photo_status: "pendente" | "aprovada" | "oculta"
-      reaction_target: "foto" | "recado"
+      payment_status: "pendente" | "pago" | "falho" | "reembolsado"
+      reservation_status: "ativa" | "expirada" | "concluida" | "cancelada"
       rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
       user_role: "cliente" | "organizacao" | "admin"
@@ -878,7 +930,7 @@ export const Constants = {
         "formatura",
       ],
       event_status: ["rascunho", "publicado", "encerrado"],
-      moderation_policy: ["previa", "imediata"],
+      gift_status: ["disponivel", "reservado", "comprado"],
       module_id: [
         "rsvp",
         "cronograma",
@@ -889,11 +941,10 @@ export const Constants = {
         "cardapio",
         "amigo-secreto",
       ],
-      mural_status: ["pendente", "aprovada", "oculta"],
       org_member_role: ["proprietario", "colaborador"],
       org_plan: ["parceiro", "premium", "enterprise"],
-      photo_status: ["pendente", "aprovada", "oculta"],
-      reaction_target: ["foto", "recado"],
+      payment_status: ["pendente", "pago", "falho", "reembolsado"],
+      reservation_status: ["ativa", "expirada", "concluida", "cancelada"],
       rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
       user_role: ["cliente", "organizacao", "admin"],

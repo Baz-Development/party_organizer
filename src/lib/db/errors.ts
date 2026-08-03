@@ -87,3 +87,50 @@ export function toMenuVoteError(error: { code?: string; message: string }): DbEr
   }
   return new DbError(error.message, "desconhecido");
 }
+
+/**
+ * Códigos que `start_gift_checkout`/`attach_checkout_session` levantam como
+ * `raise exception '<código>' using errcode = 'P0001'`. `valor_excede_restante`
+ * carrega o valor máximo aceito no próprio código (`valor_excede_restante:12345`),
+ * por isso é tratado à parte em vez de entrar no mapa fixo.
+ */
+const GIFT_CHECKOUT_ERROR_MESSAGES: Record<string, string> = {
+  comprador_invalido: "Informe seu nome para continuar.",
+  evento_indisponivel: "Este evento não está disponível.",
+  modulo_desabilitado: "A lista de presentes não está habilitada para este evento.",
+  presente_nao_encontrado: "Presente não encontrado.",
+  presente_indisponivel: "Este presente já foi escolhido por outra pessoa.",
+  presente_reservado: "Este presente já está reservado por outra pessoa.",
+  valor_invalido: "Informe um valor de contribuição válido.",
+  pagamento_invalido: "Não foi possível continuar este pagamento.",
+};
+
+export class GiftCheckoutError extends DbError {
+  constructor(
+    readonly code: string,
+    /** Presente em centavos só quando `code` é `valor_excede_restante`. */
+    readonly maxAmountCents?: number,
+  ) {
+    super(
+      GIFT_CHECKOUT_ERROR_MESSAGES[code] ??
+        (code === "valor_excede_restante"
+          ? `O valor máximo aceito para esta cota é ${((maxAmountCents ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`
+          : "Não foi possível continuar."),
+      "invalido",
+    );
+    this.name = "GiftCheckoutError";
+  }
+}
+
+export function toGiftCheckoutError(error: { code?: string; message: string }): DbError {
+  if (error.code !== DOMAIN_EXCEPTION) return new DbError(error.message, "desconhecido");
+
+  const [rawCode, rawAmount] = error.message.split(":");
+  if (rawCode === "valor_excede_restante") {
+    return new GiftCheckoutError(rawCode, Number(rawAmount) || 0);
+  }
+  if (rawCode in GIFT_CHECKOUT_ERROR_MESSAGES) {
+    return new GiftCheckoutError(rawCode);
+  }
+  return new DbError(error.message, "desconhecido");
+}

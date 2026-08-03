@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Countdown } from "@/components/Countdown";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
-import { GIFTS } from "@/lib/fixtures/gifts";
 import { brl, longDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
-import type { EventSummary, ModuleId } from "@/lib/types";
+import type { EventSummary, Gift, ModuleId } from "@/lib/types";
 
 const MODULE_LABELS: Partial<Record<ModuleId, string>> = {
   cronograma: "Cronograma",
@@ -29,7 +28,19 @@ export function EventPage({ event }: { event: EventSummary }) {
     .filter(has)
     .map((m) => ({ id: m, label: MODULE_LABELS[m]!, href: `#${m}` }));
 
-  const featuredGifts = GIFTS.filter((g) => g.status === "disponivel").slice(0, 3);
+  const [featuredGifts, setFeaturedGifts] = useState<Gift[]>([]);
+
+  useEffect(() => {
+    if (!has("presentes")) return;
+    fetch(`/api/eventos/${event.slug}/presentes`)
+      .then((res) => res.json())
+      .then((body) => {
+        const gifts: Gift[] = body.data ?? [];
+        setFeaturedGifts(gifts.filter((g) => g.status === "disponivel").slice(0, 3));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.slug]);
 
   return (
     <div style={themeVars(event.themeKey)} className="min-h-screen bg-paper-3">
