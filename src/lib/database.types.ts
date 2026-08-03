@@ -37,6 +37,7 @@ export type Database = {
       events: {
         Row: {
           city: string | null
+          cover_path: string | null
           created_at: string
           event_at: string
           eyebrow: string | null
@@ -45,6 +46,7 @@ export type Database = {
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
           organization_id: string | null
           rsvp_deadline: string | null
           slug: string
@@ -57,6 +59,7 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          cover_path?: string | null
           created_at?: string
           event_at: string
           eyebrow?: string | null
@@ -65,6 +68,7 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug: string
@@ -77,6 +81,7 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          cover_path?: string | null
           created_at?: string
           event_at?: string
           eyebrow?: string | null
@@ -85,6 +90,7 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
+          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug?: string
@@ -317,6 +323,179 @@ export type Database = {
           },
         ]
       }
+      menu_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          poll_id: string
+          tags: string[]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          poll_id: string
+          tags?: string[]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          poll_id?: string
+          tags?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "menu_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_polls: {
+        Row: {
+          closes_at: string
+          course: string
+          created_at: string
+          event_id: string
+          id: string
+          max_choices: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          closes_at: string
+          course: string
+          created_at?: string
+          event_id: string
+          id?: string
+          max_choices?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          closes_at?: string
+          course?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          max_choices?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_polls_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_votes: {
+        Row: {
+          created_at: string
+          guest_id: string
+          id: string
+          option_id: string
+          poll_id: string
+        }
+        Insert: {
+          created_at?: string
+          guest_id: string
+          id?: string
+          option_id: string
+          poll_id: string
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_votes_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "menu_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mural_messages: {
+        Row: {
+          author: string
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          message: string
+          status: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          message: string
+          status?: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          message?: string
+          status?: Database["public"]["Enums"]["mural_status"]
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mural_messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mural_messages_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -503,6 +682,60 @@ export type Database = {
           },
         ]
       }
+      photos: {
+        Row: {
+          author: string
+          caption: string | null
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          status: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        Insert: {
+          author: string
+          caption?: string | null
+          created_at?: string
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        Update: {
+          author?: string
+          caption?: string | null
+          created_at?: string
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -526,6 +759,41 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["reaction_target"]
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rsvp_responses: {
         Row: {
@@ -615,6 +883,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _require_published_module: {
+        Args: {
+          p_event_slug: string
+          p_module: Database["public"]["Enums"]["module_id"]
+        }
+        Returns: {
+          city: string | null
+          cover_path: string | null
+          created_at: string
+          event_at: string
+          eyebrow: string | null
+          guest_list_open: boolean
+          host_profile_id: string
+          hosts: string | null
+          id: string
+          kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
+          organization_id: string | null
+          rsvp_deadline: string | null
+          slug: string
+          status: Database["public"]["Enums"]["event_status"]
+          theme_key: Database["public"]["Enums"]["theme_key"]
+          title: string
+          updated_at: string
+          venue: string | null
+          welcome: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _resolve_media_author: {
+        Args: { p_author: string; p_event_id: string; p_guest_token: string }
+        Returns: {
+          author: string
+          guest_id: string
+        }[]
+      }
+      assert_can_submit_photo: {
+        Args: { p_event_slug: string; p_visitor_id: string }
+        Returns: string
+      }
       attach_checkout_session: {
         Args: {
           p_payment_id: string
@@ -658,6 +971,28 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }[]
       }
+      get_menu_polls_publicos: {
+        Args: { p_event_slug: string }
+        Returns: {
+          closes_at: string
+          course: string
+          max_choices: number
+          option_desc: string
+          option_id: string
+          option_name: string
+          option_tags: string[]
+          poll_id: string
+          question: string
+          votes: number
+        }[]
+      }
+      get_menu_votes_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          option_id: string
+          poll_id: string
+        }[]
+      }
       get_payment_status: {
         Args: { p_payment_id: string }
         Returns: {
@@ -687,6 +1022,14 @@ export type Database = {
           reason: string
         }[]
       }
+      react_to_item: {
+        Args: {
+          p_target_id: string
+          p_target_type: Database["public"]["Enums"]["reaction_target"]
+          p_visitor_id: string
+        }
+        Returns: number
+      }
       start_gift_checkout: {
         Args: {
           p_amount_cents: number
@@ -703,6 +1046,36 @@ export type Database = {
           reservation_expires_at: string
           status: Database["public"]["Enums"]["payment_status"]
         }[]
+      }
+      submit_menu_vote: {
+        Args: { p_option_ids: string[]; p_poll_id: string; p_token: string }
+        Returns: string[]
+      }
+      submit_mural_message: {
+        Args: {
+          p_author: string
+          p_event_slug: string
+          p_guest_token?: string
+          p_message: string
+          p_visitor_id: string
+        }
+        Returns: {
+          author: string
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          message: string
+          status: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "mural_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       submit_open_rsvp: {
         Args: {
@@ -733,6 +1106,34 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "guests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_photo: {
+        Args: {
+          p_author: string
+          p_caption: string
+          p_event_slug: string
+          p_guest_token?: string
+          p_storage_path: string
+          p_visitor_id: string
+        }
+        Returns: {
+          author: string
+          caption: string | null
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          status: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "photos"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -779,6 +1180,7 @@ export type Database = {
         | "formatura"
       event_status: "rascunho" | "publicado" | "encerrado"
       gift_status: "disponivel" | "reservado" | "comprado"
+      moderation_policy: "previa" | "imediata"
       module_id:
         | "rsvp"
         | "cronograma"
@@ -788,9 +1190,12 @@ export type Database = {
         | "mural"
         | "cardapio"
         | "amigo-secreto"
+      mural_status: "pendente" | "aprovada" | "oculta"
       org_member_role: "proprietario" | "colaborador"
       org_plan: "parceiro" | "premium" | "enterprise"
       payment_status: "pendente" | "pago" | "falho" | "reembolsado"
+      photo_status: "pendente" | "aprovada" | "oculta"
+      reaction_target: "foto" | "recado"
       reservation_status: "ativa" | "expirada" | "concluida" | "cancelada"
       rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
@@ -931,6 +1336,7 @@ export const Constants = {
       ],
       event_status: ["rascunho", "publicado", "encerrado"],
       gift_status: ["disponivel", "reservado", "comprado"],
+      moderation_policy: ["previa", "imediata"],
       module_id: [
         "rsvp",
         "cronograma",
@@ -941,9 +1347,12 @@ export const Constants = {
         "cardapio",
         "amigo-secreto",
       ],
+      mural_status: ["pendente", "aprovada", "oculta"],
       org_member_role: ["proprietario", "colaborador"],
       org_plan: ["parceiro", "premium", "enterprise"],
       payment_status: ["pendente", "pago", "falho", "reembolsado"],
+      photo_status: ["pendente", "aprovada", "oculta"],
+      reaction_target: ["foto", "recado"],
       reservation_status: ["ativa", "expirada", "concluida", "cancelada"],
       rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
