@@ -1,6 +1,7 @@
 import { LinkButton } from "@/components/ui";
 import { requireSession } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
+import { getGiftsSummary } from "@/lib/db/gifts";
 import { computeGuestStats, listGuests } from "@/lib/db/guests";
 import { publicEnv } from "@/lib/env.public";
 import { PainelOverview } from "./PainelOverview";
@@ -34,8 +35,14 @@ export default async function PainelDoCliente() {
   }
 
   const stats = computeGuestStats(await listGuests(supabase, event.id));
+  const giftsSummary = await getGiftsSummary(supabase, event.id);
 
   return (
-    <PainelOverview event={event} siteUrl={publicEnv.NEXT_PUBLIC_SITE_URL} guestStats={stats} />
+    <PainelOverview
+      event={event}
+      siteUrl={publicEnv.NEXT_PUBLIC_SITE_URL}
+      guestStats={stats}
+      giftsSummary={giftsSummary}
+    />
   );
 }

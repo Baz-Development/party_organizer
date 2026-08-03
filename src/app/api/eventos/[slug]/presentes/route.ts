@@ -1,31 +1,59 @@
 import { NextResponse } from "next/server";
 import { getEventBySlug } from "@/lib/db/events";
-import { GIFTS } from "@/lib/fixtures/gifts";
+import { DbError } from "@/lib/db/errors";
+import { createGift, listGifts } from "@/lib/db/gifts";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { GiftStatus } from "@/lib/types";
+import { createGiftSchema } from "@/lib/validation/gift";
 
 /**
- * O evento vem do banco; a **lista de presentes** ainda é fixture, até o
- * change `add-gifts-payments-backend`.
+ * Catálogo de presentes de um evento. `listGifts` já devolve `reservedBy`
+ * preenchido só para quem administra o evento e vazio para o público — a
+ * RLS de `gift_reservations` decide isso, não esta rota.
  */
 export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ slug: string }> },
+) {
+  const { slug } = await params;
+
+  const supabase = await createSupabaseServerClient();
+  const event = await getEventBySlug(supabase, slug);
+  if (!event) {
+    return NextResponse.json({ error: "Evento não encontrado" }, { status: 404 });
+  }
+
+  const data = await listGifts(supabase, event.id);
+  return NextResponse.json({ data });
+}
+
+export async function POST(
   req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
 
   const supabase = await createSupabaseServerClient();
-  if (!(await getEventBySlug(supabase, slug))) {
+  const event = await getEventBySlug(supabase, slug);
+  if (!event) {
     return NextResponse.json({ error: "Evento não encontrado" }, { status: 404 });
   }
 
-  const url = new URL(req.url);
-  const status = url.searchParams.get("status") as GiftStatus | null;
-  const category = url.searchParams.get("categoria");
+  const body = await req.json().catch(() => null);
+  const parsed = createGiftSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos." },
+      { status: 400 },
+    );
+  }
 
-  const data = GIFTS.filter((g) => !status || g.status === status).filter(
-    (g) => !category || g.category === category,
-  );
-
-  return NextResponse.json({ data });
+  try {
+    const gift = await createGift(supabase, event.id, parsed.data);
+    return NextResponse.json({ data: gift }, { status: 201 });
+  } catch (error) {
+    if (error instanceof DbError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    throw error;
+  }
 }

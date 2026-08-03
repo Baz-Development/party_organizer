@@ -112,6 +112,120 @@ export type Database = {
           },
         ]
       }
+      gift_reservations: {
+        Row: {
+          buyer_email: string | null
+          buyer_name: string
+          created_at: string
+          event_id: string
+          expires_at: string
+          gift_id: string
+          guest_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["reservation_status"]
+        }
+        Insert: {
+          buyer_email?: string | null
+          buyer_name: string
+          created_at?: string
+          event_id: string
+          expires_at: string
+          gift_id: string
+          guest_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+        }
+        Update: {
+          buyer_email?: string | null
+          buyer_name?: string
+          created_at?: string
+          event_id?: string
+          expires_at?: string
+          gift_id?: string
+          guest_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["reservation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_reservations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_reservations_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_reservations_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gifts: {
+        Row: {
+          category: string
+          created_at: string
+          event_id: string
+          id: string
+          name: string
+          note: string | null
+          price_cents: number
+          quota_raised_cents: number
+          quota_reserved_cents: number
+          quota_target_cents: number | null
+          status: Database["public"]["Enums"]["gift_status"]
+          store: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          event_id: string
+          id?: string
+          name: string
+          note?: string | null
+          price_cents: number
+          quota_raised_cents?: number
+          quota_reserved_cents?: number
+          quota_target_cents?: number | null
+          status?: Database["public"]["Enums"]["gift_status"]
+          store?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string
+          note?: string | null
+          price_cents?: number
+          quota_raised_cents?: number
+          quota_reserved_cents?: number
+          quota_target_cents?: number | null
+          status?: Database["public"]["Enums"]["gift_status"]
+          store?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gifts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guest_invites: {
         Row: {
           created_at: string
@@ -269,6 +383,126 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_events: {
+        Row: {
+          event_type: string
+          id: string
+          payload: Json
+          payment_id: string | null
+          processed_at: string | null
+          provider: string
+          provider_event_id: string | null
+          received_at: string
+          signature_valid: boolean
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          payload: Json
+          payment_id?: string | null
+          processed_at?: string | null
+          provider: string
+          provider_event_id?: string | null
+          received_at?: string
+          signature_valid: boolean
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          payload?: Json
+          payment_id?: string | null
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string | null
+          received_at?: string
+          signature_valid?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_cents: number
+          buyer_email: string | null
+          buyer_name: string
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          event_id: string
+          gift_id: string
+          id: string
+          provider: string
+          provider_payment_id: string | null
+          refunded_at: string | null
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          buyer_email?: string | null
+          buyer_name: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          event_id: string
+          gift_id: string
+          id?: string
+          provider?: string
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          buyer_email?: string | null
+          buyer_name?: string
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          event_id?: string
+          gift_id?: string
+          id?: string
+          provider?: string
+          provider_payment_id?: string | null
+          refunded_at?: string | null
+          reservation_id?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_reservation_id_fkey"
+            columns: ["reservation_id"]
+            isOneToOne: false
+            referencedRelation: "gift_reservations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -381,6 +615,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      attach_checkout_session: {
+        Args: {
+          p_payment_id: string
+          p_provider: string
+          p_provider_payment_id: string
+        }
+        Returns: {
+          amount_cents: number
+          buyer_email: string | null
+          buyer_name: string
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          event_id: string
+          gift_id: string
+          id: string
+          provider: string
+          provider_payment_id: string | null
+          refunded_at: string | null
+          reservation_id: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       can_manage_event: { Args: { event: string }; Returns: boolean }
       get_guest_by_invite_token: {
         Args: { p_token: string }
@@ -394,10 +658,52 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }[]
       }
+      get_payment_status: {
+        Args: { p_payment_id: string }
+        Returns: {
+          amount_cents: number
+          currency: string
+          gift_id: string
+          gift_name: string
+          gift_status: Database["public"]["Enums"]["gift_status"]
+          payment_id: string
+          status: Database["public"]["Enums"]["payment_status"]
+        }[]
+      }
       is_event_public: { Args: { event: string }; Returns: boolean }
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      process_payment_event: {
+        Args: {
+          p_amount_cents: number
+          p_event_type: string
+          p_payment_id: string
+          p_provider_payment_id: string
+        }
+        Returns: {
+          applied: boolean
+          payment_id: string
+          reason: string
+        }[]
+      }
+      start_gift_checkout: {
+        Args: {
+          p_amount_cents: number
+          p_buyer_email: string
+          p_buyer_name: string
+          p_event_slug: string
+          p_gift_id: string
+        }
+        Returns: {
+          amount_cents: number
+          currency: string
+          gift_id: string
+          payment_id: string
+          reservation_expires_at: string
+          status: Database["public"]["Enums"]["payment_status"]
+        }[]
+      }
       submit_open_rsvp: {
         Args: {
           p_companions: number
@@ -472,6 +778,7 @@ export type Database = {
         | "corporativo"
         | "formatura"
       event_status: "rascunho" | "publicado" | "encerrado"
+      gift_status: "disponivel" | "reservado" | "comprado"
       module_id:
         | "rsvp"
         | "cronograma"
@@ -483,6 +790,8 @@ export type Database = {
         | "amigo-secreto"
       org_member_role: "proprietario" | "colaborador"
       org_plan: "parceiro" | "premium" | "enterprise"
+      payment_status: "pendente" | "pago" | "falho" | "reembolsado"
+      reservation_status: "ativa" | "expirada" | "concluida" | "cancelada"
       rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
       user_role: "cliente" | "organizacao" | "admin"
@@ -621,6 +930,7 @@ export const Constants = {
         "formatura",
       ],
       event_status: ["rascunho", "publicado", "encerrado"],
+      gift_status: ["disponivel", "reservado", "comprado"],
       module_id: [
         "rsvp",
         "cronograma",
@@ -633,6 +943,8 @@ export const Constants = {
       ],
       org_member_role: ["proprietario", "colaborador"],
       org_plan: ["parceiro", "premium", "enterprise"],
+      payment_status: ["pendente", "pago", "falho", "reembolsado"],
+      reservation_status: ["ativa", "expirada", "concluida", "cancelada"],
       rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
       user_role: ["cliente", "organizacao", "admin"],
