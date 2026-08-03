@@ -26,7 +26,7 @@ type Client = SupabaseClient<Database>;
 const EVENT_SELECT = `
   id, slug, organization_id, host_profile_id, kind, title, event_at, venue,
   city, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
-  rsvp_deadline, guest_list_open,
+  rsvp_deadline, guest_list_open, moderation_policy, cover_path,
   event_modules ( module ),
   schedule_items ( position, time, title, description )
 `;
@@ -144,6 +144,7 @@ export async function updateEvent(
   if (input.themeKey !== undefined) patch.theme_key = input.themeKey;
   if (input.rsvpDeadline !== undefined) patch.rsvp_deadline = input.rsvpDeadline;
   if (input.guestListOpen !== undefined) patch.guest_list_open = input.guestListOpen;
+  if (input.moderationPolicy !== undefined) patch.moderation_policy = input.moderationPolicy;
 
   const { data, error } = await client
     .from("events")
@@ -209,6 +210,35 @@ export async function setEventModules(
   }
 
   return modules;
+}
+
+/**
+ * Define a capa do evento. `path` já vem prefixado por `{event_id}/` — quem
+ * chama (a rota de confirmação de upload da capa) é responsável por montá-lo
+ * assim; aqui só se confere que o prefixo bate com o evento, que é a defesa
+ * contra "capa apontando para outro evento" já que a RLS de `events` não
+ * enxerga o conteúdo de uma coluna `text`.
+ */
+export async function setEventCover(
+  client: Client,
+  eventId: string,
+  path: string | null,
+): Promise<EventSummary> {
+  if (path !== null && !path.startsWith(`${eventId}/`)) {
+    throw new DbError("A capa precisa pertencer a este evento.", "invalido");
+  }
+
+  const { data, error } = await client
+    .from("events")
+    .update({ cover_path: path })
+    .eq("id", eventId)
+    .select(EVENT_SELECT)
+    .maybeSingle();
+
+  if (error) throw new DbError(error.message, "desconhecido");
+  if (!data) throw new DbError("Evento não encontrado.", "nao-encontrado");
+
+  return toEventSummary(data as unknown as EventRowWithContent);
 }
 
 export async function replaceSchedule(

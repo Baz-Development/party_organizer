@@ -37,6 +37,7 @@ export type Database = {
       events: {
         Row: {
           city: string | null
+          cover_path: string | null
           created_at: string
           event_at: string
           eyebrow: string | null
@@ -45,6 +46,7 @@ export type Database = {
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
           organization_id: string | null
           rsvp_deadline: string | null
           slug: string
@@ -57,6 +59,7 @@ export type Database = {
         }
         Insert: {
           city?: string | null
+          cover_path?: string | null
           created_at?: string
           event_at: string
           eyebrow?: string | null
@@ -65,6 +68,7 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug: string
@@ -77,6 +81,7 @@ export type Database = {
         }
         Update: {
           city?: string | null
+          cover_path?: string | null
           created_at?: string
           event_at?: string
           eyebrow?: string | null
@@ -85,6 +90,7 @@ export type Database = {
           hosts?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
+          moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
           organization_id?: string | null
           rsvp_deadline?: string | null
           slug?: string
@@ -203,6 +209,57 @@ export type Database = {
           },
         ]
       }
+      mural_messages: {
+        Row: {
+          author: string
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          message: string
+          status: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          message: string
+          status?: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          message?: string
+          status?: Database["public"]["Enums"]["mural_status"]
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mural_messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mural_messages_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -269,6 +326,60 @@ export type Database = {
         }
         Relationships: []
       }
+      photos: {
+        Row: {
+          author: string
+          caption: string | null
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          status: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        Insert: {
+          author: string
+          caption?: string | null
+          created_at?: string
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        Update: {
+          author?: string
+          caption?: string | null
+          created_at?: string
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          likes_count?: number
+          status?: Database["public"]["Enums"]["photo_status"]
+          storage_path?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photos_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -292,6 +403,41 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
+      }
+      reactions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["reaction_target"]
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["reaction_target"]
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rsvp_responses: {
         Row: {
@@ -381,6 +527,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _require_published_module: {
+        Args: {
+          p_event_slug: string
+          p_module: Database["public"]["Enums"]["module_id"]
+        }
+        Returns: {
+          city: string | null
+          cover_path: string | null
+          created_at: string
+          event_at: string
+          eyebrow: string | null
+          guest_list_open: boolean
+          host_profile_id: string
+          hosts: string | null
+          id: string
+          kind: Database["public"]["Enums"]["event_kind"]
+          moderation_policy: Database["public"]["Enums"]["moderation_policy"]
+          organization_id: string | null
+          rsvp_deadline: string | null
+          slug: string
+          status: Database["public"]["Enums"]["event_status"]
+          theme_key: Database["public"]["Enums"]["theme_key"]
+          title: string
+          updated_at: string
+          venue: string | null
+          welcome: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _resolve_media_author: {
+        Args: { p_author: string; p_event_id: string; p_guest_token: string }
+        Returns: {
+          author: string
+          guest_id: string
+        }[]
+      }
+      assert_can_submit_photo: {
+        Args: { p_event_slug: string; p_visitor_id: string }
+        Returns: string
+      }
       can_manage_event: { Args: { event: string }; Returns: boolean }
       get_guest_by_invite_token: {
         Args: { p_token: string }
@@ -398,6 +589,40 @@ export type Database = {
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      react_to_item: {
+        Args: {
+          p_target_id: string
+          p_target_type: Database["public"]["Enums"]["reaction_target"]
+          p_visitor_id: string
+        }
+        Returns: number
+      }
+      submit_mural_message: {
+        Args: {
+          p_author: string
+          p_event_slug: string
+          p_guest_token?: string
+          p_message: string
+          p_visitor_id: string
+        }
+        Returns: {
+          author: string
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          message: string
+          status: Database["public"]["Enums"]["mural_status"]
+          visitor_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "mural_messages"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       submit_open_rsvp: {
         Args: {
           p_companions: number
@@ -427,6 +652,34 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "guests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_photo: {
+        Args: {
+          p_author: string
+          p_caption: string
+          p_event_slug: string
+          p_guest_token?: string
+          p_storage_path: string
+          p_visitor_id: string
+        }
+        Returns: {
+          author: string
+          caption: string | null
+          created_at: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          likes_count: number
+          status: Database["public"]["Enums"]["photo_status"]
+          storage_path: string
+          visitor_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "photos"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -472,6 +725,7 @@ export type Database = {
         | "corporativo"
         | "formatura"
       event_status: "rascunho" | "publicado" | "encerrado"
+      moderation_policy: "previa" | "imediata"
       module_id:
         | "rsvp"
         | "cronograma"
@@ -481,8 +735,11 @@ export type Database = {
         | "mural"
         | "cardapio"
         | "amigo-secreto"
+      mural_status: "pendente" | "aprovada" | "oculta"
       org_member_role: "proprietario" | "colaborador"
       org_plan: "parceiro" | "premium" | "enterprise"
+      photo_status: "pendente" | "aprovada" | "oculta"
+      reaction_target: "foto" | "recado"
       rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
       user_role: "cliente" | "organizacao" | "admin"
@@ -621,6 +878,7 @@ export const Constants = {
         "formatura",
       ],
       event_status: ["rascunho", "publicado", "encerrado"],
+      moderation_policy: ["previa", "imediata"],
       module_id: [
         "rsvp",
         "cronograma",
@@ -631,8 +889,11 @@ export const Constants = {
         "cardapio",
         "amigo-secreto",
       ],
+      mural_status: ["pendente", "aprovada", "oculta"],
       org_member_role: ["proprietario", "colaborador"],
       org_plan: ["parceiro", "premium", "enterprise"],
+      photo_status: ["pendente", "aprovada", "oculta"],
+      reaction_target: ["foto", "recado"],
       rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
       user_role: ["cliente", "organizacao", "admin"],

@@ -20,6 +20,8 @@ export const EVENT_STATUSES = ["rascunho", "publicado", "encerrado"] as const;
 
 export const THEME_KEYS = ["oliva", "terracota", "marinho", "dourado"] as const;
 
+export const MODERATION_POLICIES = ["previa", "imediata"] as const;
+
 export const MODULE_IDS = [
   "rsvp",
   "cronograma",
@@ -93,6 +95,9 @@ export const updateEventSchema = z.object({
   themeKey: z.enum(THEME_KEYS, { message: "Tema de cor não suportado." }).optional(),
   rsvpDeadline,
   guestListOpen: z.boolean().optional(),
+  moderationPolicy: z.enum(MODERATION_POLICIES, {
+    message: "Política de moderação desconhecida.",
+  }).optional(),
 });
 
 export const eventStatusSchema = z.enum(EVENT_STATUSES, {

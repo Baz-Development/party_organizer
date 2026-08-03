@@ -36,7 +36,16 @@ export function EventPage({ event }: { event: EventSummary }) {
       <div className="mx-auto min-h-screen max-w-[1180px] bg-paper shadow-[0_0_80px_rgba(0,0,0,0.06)]">
         {/* Capa ------------------------------------------------------ */}
         <header className="relative h-[min(88vh,760px)] min-h-[560px] w-full">
-          <ImageSlot placeholder={`Foto de capa — ${event.title}`} />
+          {event.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- URL assinada, de curta duração; next/image exigiria remotePatterns por ambiente.
+            <img
+              src={event.coverUrl}
+              alt={`Foto de capa — ${event.title}`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ImageSlot placeholder={`Foto de capa — ${event.title}`} />
+          )}
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,18,15,0.05)_0%,rgba(20,18,15,0.15)_55%,rgba(20,18,15,0.72)_100%)]" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 px-6 pb-10 text-center sm:pb-16">
             <div className="mb-3 animate-[fade-up_0.9s_ease_both] text-[13px] uppercase tracking-[3px] text-paper-2/85 sm:text-sm sm:tracking-[4px]">

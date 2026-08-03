@@ -12,10 +12,11 @@
 import type { EventSummary, Organization } from "./types";
 
 /**
- * A galeria não faz parte do seed: não existe tabela de fotos até o change
- * `add-media-backend`. Ela vive em `src/lib/fixtures/media.ts`.
+ * A galeria não faz parte do seed: fotos e recados nascem de envio de
+ * convidado, não de dado fixo. `coverUrl`/`coverPath` também ficam de fora —
+ * a capa é um upload real no bucket `event-media`, sem equivalente estático.
  */
-type SeedEvent = Omit<EventSummary, "gallery">;
+type SeedEvent = Omit<EventSummary, "gallery" | "coverUrl" | "coverPath">;
 
 /** Organização de exemplo; as contagens reais saem do banco. */
 type SeedOrganization = Omit<Organization, "events" | "activeEvents">;
@@ -53,6 +54,7 @@ export const EVENTS: SeedEvent[] = [
     status: "publicado",
     organizationId: "org-1",
     guestListOpen: false,
+    moderationPolicy: "previa",
   },
   {
     id: "ev-2",
@@ -77,6 +79,7 @@ export const EVENTS: SeedEvent[] = [
     status: "publicado",
     organizationId: "org-1",
     guestListOpen: false,
+    moderationPolicy: "previa",
   },
   {
     id: "ev-3",
@@ -101,6 +104,7 @@ export const EVENTS: SeedEvent[] = [
     status: "rascunho",
     organizationId: "org-2",
     guestListOpen: false,
+    moderationPolicy: "previa",
   },
   {
     id: "ev-4",
@@ -125,6 +129,7 @@ export const EVENTS: SeedEvent[] = [
     status: "publicado",
     organizationId: "org-3",
     guestListOpen: false,
+    moderationPolicy: "previa",
   },
 ];
 

@@ -16,7 +16,12 @@ import { publicEnv } from "@/lib/env.public";
  * Usos legítimos, cada um justificado no ponto de uso:
  *   - seed e jobs administrativos, que rodam sem sessão;
  *   - resolver um token de convite de convidado, que não tem identidade no
- *     banco (a tabela de tokens chega no change `add-guests-rsvp-backend`).
+ *     banco (a tabela de tokens chega no change `add-guests-rsvp-backend`);
+ *   - emitir URL de upload assinada para os buckets de Storage
+ *     (`add-media-storage-backend`): `guest-uploads` não tem política de
+ *     `insert` para `anon`/`authenticated` de propósito, então só o servidor
+ *     consegue criar a URL — a checagem de "pode enviar" roda antes, com o
+ *     client de quem chamou.
  *
  * Qualquer novo import daqui derruba a garantia da RLS para aquele caminho e
  * exige revisão. Na dúvida, use `createSupabaseServerClient()`.

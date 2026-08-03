@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getEventBySlug } from "@/lib/db/events";
-import { galleryFor } from "@/lib/fixtures/media";
+import { listPhotos, resolveCoverUrl } from "@/lib/db/media";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { EventSummary, ModuleId } from "@/lib/types";
 
@@ -24,7 +24,15 @@ export async function loadPublicEvent(
   if (!event) notFound();
   if (requiredModule && !event.modules.includes(requiredModule)) notFound();
 
-  // A galeria ainda não tem tabela; composta aqui a partir da fixture até o
-  // change `add-media-backend`.
-  return { ...event, gallery: galleryFor(event.slug) };
+  const coverUrl = await resolveCoverUrl(supabase, event.coverPath);
+
+  // Prévia da seção de galeria na página pública: até 6 fotos aprovadas mais
+  // recentes. A galeria completa e paginada vive em /e/[slug]/galeria.
+  const gallery = event.modules.includes("galeria")
+    ? (await listPhotos(supabase, event.id, { limit: 6, status: "aprovada" })).items.map(
+        (p) => p.caption || `Foto de ${p.author}`,
+      )
+    : [];
+
+  return { ...event, gallery, coverUrl };
 }

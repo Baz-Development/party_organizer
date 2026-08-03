@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/painel", label: "Visão geral" },
   { href: "/painel/convidados", label: "Convidados" },
   { href: "/painel/editor", label: "Editor da página" },
+  { href: "/painel/moderacao", label: "Moderação" },
 ];
 
 export default async function PainelLayout({
