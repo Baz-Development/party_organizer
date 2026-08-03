@@ -203,6 +203,128 @@ export type Database = {
           },
         ]
       }
+      menu_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          poll_id: string
+          tags: string[]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          poll_id: string
+          tags?: string[]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          poll_id?: string
+          tags?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "menu_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_polls: {
+        Row: {
+          closes_at: string
+          course: string
+          created_at: string
+          event_id: string
+          id: string
+          max_choices: number
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          closes_at: string
+          course: string
+          created_at?: string
+          event_id: string
+          id?: string
+          max_choices?: number
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          closes_at?: string
+          course?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          max_choices?: number
+          question?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_polls_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_votes: {
+        Row: {
+          created_at: string
+          guest_id: string
+          id: string
+          option_id: string
+          poll_id: string
+        }
+        Insert: {
+          created_at?: string
+          guest_id: string
+          id?: string
+          option_id: string
+          poll_id: string
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string
+          id?: string
+          option_id?: string
+          poll_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_votes_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "menu_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "menu_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -394,10 +516,36 @@ export type Database = {
           status: Database["public"]["Enums"]["rsvp_status"]
         }[]
       }
+      get_menu_polls_publicos: {
+        Args: { p_event_slug: string }
+        Returns: {
+          closes_at: string
+          course: string
+          max_choices: number
+          option_desc: string
+          option_id: string
+          option_name: string
+          option_tags: string[]
+          poll_id: string
+          question: string
+          votes: number
+        }[]
+      }
+      get_menu_votes_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          option_id: string
+          poll_id: string
+        }[]
+      }
       is_event_public: { Args: { event: string }; Returns: boolean }
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      submit_menu_vote: {
+        Args: { p_option_ids: string[]; p_poll_id: string; p_token: string }
+        Returns: string[]
+      }
       submit_open_rsvp: {
         Args: {
           p_companions: number

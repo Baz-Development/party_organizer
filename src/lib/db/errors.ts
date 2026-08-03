@@ -55,3 +55,35 @@ export function toRsvpError(error: { code?: string; message: string }): DbError 
   }
   return new DbError(error.message, "desconhecido");
 }
+
+/**
+ * Códigos que `submit_menu_vote` levanta como
+ * `raise exception '<código>' using errcode = 'P0001'`.
+ */
+const MENU_VOTE_ERROR_MESSAGES: Record<string, string> = {
+  convite_invalido: "Este link de convite não é válido.",
+  enquete_invalida: "Esta enquete não existe ou não pertence a este evento.",
+  modulo_desabilitado: "A votação de cardápio não está habilitada para este evento.",
+  prazo_encerrado: "O prazo para votar nesta enquete já passou.",
+  escolha_vazia: "Escolha ao menos uma opção.",
+  excesso_de_escolhas: "Você escolheu mais opções do que esta enquete permite.",
+  opcao_duplicada: "Cada opção só pode ser escolhida uma vez.",
+  opcao_invalida: "Uma das opções escolhidas não pertence a esta enquete.",
+};
+
+export class MenuVoteError extends DbError {
+  constructor(readonly code: string) {
+    super(
+      MENU_VOTE_ERROR_MESSAGES[code] ?? "Não foi possível registrar o voto.",
+      "invalido",
+    );
+    this.name = "MenuVoteError";
+  }
+}
+
+export function toMenuVoteError(error: { code?: string; message: string }): DbError {
+  if (error.code === DOMAIN_EXCEPTION && error.message in MENU_VOTE_ERROR_MESSAGES) {
+    return new MenuVoteError(error.message);
+  }
+  return new DbError(error.message, "desconhecido");
+}
