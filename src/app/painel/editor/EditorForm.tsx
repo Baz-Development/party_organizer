@@ -1,12 +1,25 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, Textarea, Toggle } from "@/components/ui";
 import { longDate } from "@/lib/format";
 import { THEME_LIST, THEMES } from "@/lib/themes";
-import type { EventSummary, ModuleId, ScheduleItem, ThemeKey } from "@/lib/types";
+import type { EventSummary, ModerationPolicy, ModuleId, ScheduleItem, ThemeKey } from "@/lib/types";
 import { salvarEditor } from "./actions";
+
+const MODERATION_OPTIONS: { value: ModerationPolicy; label: string; hint: string }[] = [
+  {
+    value: "previa",
+    label: "Aprovação prévia",
+    hint: "Fotos e recados só aparecem depois que você aprovar.",
+  },
+  {
+    value: "imediata",
+    label: "Publicação imediata",
+    hint: "Aparecem na hora; você pode ocultar depois.",
+  },
+];
 
 const TYPO = {
   classico: {
@@ -68,13 +81,65 @@ export function EditorForm({ event }: { event: EventSummary }) {
   const [schedule, setSchedule] = useState<ScheduleItem[]>(event.schedule);
   const [rsvpDeadline, setRsvpDeadline] = useState(toDatetimeLocal(event.rsvpDeadline));
   const [guestListOpen, setGuestListOpen] = useState(event.guestListOpen);
+  const [moderationPolicy, setModerationPolicy] = useState<ModerationPolicy>(
+    event.moderationPolicy,
+  );
   const [modules, setModules] = useState<Record<string, boolean>>(
     Object.fromEntries(MODULE_OPTIONS.map((m) => [m.id, event.modules.includes(m.id)])),
   );
+  const [coverUrl, setCoverUrl] = useState(event.coverUrl);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const coverInput = useRef<HTMLInputElement>(null);
 
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  async function handleCoverSelected(file: File) {
+    setCoverUploading(true);
+    setCoverError(null);
+
+    try {
+      const uploadRes = await fetch(`/api/eventos/${event.slug}/capa/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contentType: file.type }),
+      });
+      const uploadBody = await uploadRes.json().catch(() => null);
+      if (!uploadRes.ok) {
+        setCoverError(uploadBody?.error ?? "Não foi possível preparar o envio.");
+        return;
+      }
+
+      const { path, signedUrl } = uploadBody.data as { path: string; signedUrl: string };
+
+      const putRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+      if (!putRes.ok) {
+        setCoverError("Não foi possível enviar o arquivo.");
+        return;
+      }
+
+      const confirmRes = await fetch(`/api/eventos/${event.slug}/capa`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storagePath: path }),
+      });
+      const confirmBody = await confirmRes.json().catch(() => null);
+      if (!confirmRes.ok) {
+        setCoverError(confirmBody?.error ?? "Não foi possível salvar a capa.");
+        return;
+      }
+
+      setCoverUrl(URL.createObjectURL(file));
+    } finally {
+      setCoverUploading(false);
+    }
+  }
 
   const theme = THEMES[themeKey];
   const t = TYPO[typo];
@@ -87,7 +152,17 @@ export function EditorForm({ event }: { event: EventSummary }) {
     startTransition(async () => {
       const result = await salvarEditor({
         eventId: event.id,
-        content: { hosts, eyebrow, welcome, venue, city, themeKey, rsvpDeadline, guestListOpen },
+        content: {
+          hosts,
+          eyebrow,
+          welcome,
+          venue,
+          city,
+          themeKey,
+          rsvpDeadline,
+          guestListOpen,
+          moderationPolicy,
+        },
         modules: [
           "rsvp",
           ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
@@ -135,11 +210,34 @@ export function EditorForm({ event }: { event: EventSummary }) {
         <Group title="Foto de capa">
           <div className="flex items-center gap-3 rounded-xl bg-paper-2 p-3">
             <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
-              <ImageSlot placeholder="Capa" compact />
+              {coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- prévia local/URL assinada de curta duração.
+                <img src={coverUrl} alt="Capa" className="h-full w-full object-cover" />
+              ) : (
+                <ImageSlot placeholder="Capa" compact />
+              )}
             </div>
-            <div className="text-[13.5px] leading-relaxed text-ink-soft">
-              Upload de imagem chega junto com a galeria — por enquanto a capa é
-              um placeholder.
+            <div className="flex-1">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={coverUploading}
+                onClick={() => coverInput.current?.click()}
+              >
+                {coverUploading ? "Enviando..." : coverUrl ? "Trocar capa" : "Enviar capa"}
+              </Button>
+              <input
+                ref={coverInput}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void handleCoverSelected(file);
+                }}
+              />
+              {coverError && <p className="mt-1.5 text-[12px] text-danger">{coverError}</p>}
             </div>
           </div>
         </Group>
@@ -314,6 +412,26 @@ export function EditorForm({ event }: { event: EventSummary }) {
                 onChange={setGuestListOpen}
               />
             </div>
+          </div>
+        </Group>
+
+        {/* Moderação */}
+        <Group title="Moderação de galeria e mural">
+          <div className="flex flex-col gap-2.5">
+            {MODERATION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setModerationPolicy(opt.value)}
+                className={`cursor-pointer rounded-[10px] border px-3.5 py-3 text-left ${
+                  moderationPolicy === opt.value
+                    ? "border-accent bg-paper-2"
+                    : "border-[rgba(42,39,36,0.15)] bg-white"
+                }`}
+              >
+                <div className="text-sm font-semibold">{opt.label}</div>
+                <div className="mt-0.5 text-[12.5px] text-ink-soft">{opt.hint}</div>
+              </button>
+            ))}
           </div>
         </Group>
 

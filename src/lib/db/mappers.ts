@@ -3,8 +3,10 @@ import type {
   EventSummary,
   Guest,
   ModuleId,
+  MuralMessage,
   Organization,
   OrganizationMember,
+  Photo,
   Profile,
   ScheduleItem,
 } from "@/lib/types";
@@ -24,6 +26,8 @@ type EventRow = Tables["events"]["Row"];
 type OrganizationRow = Tables["organizations"]["Row"];
 type ProfileRow = Tables["profiles"]["Row"];
 export type GuestRow = Tables["guests"]["Row"];
+export type PhotoRow = Tables["photos"]["Row"];
+export type MuralMessageRow = Tables["mural_messages"]["Row"];
 
 export type EventRowWithContent = EventRow & {
   event_modules: Pick<Tables["event_modules"]["Row"], "module">[];
@@ -72,14 +76,16 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     themeKey: row.theme_key,
     modules,
     schedule,
-    // A galeria pertence ao módulo de mídia, que ainda não tem tabela. Até o
-    // change `add-media-backend`, quem precisa dela compõe com a fixture de
-    // `src/lib/fixtures/`.
+    // A galeria em si é paginada e carregada à parte (src/lib/db/media.ts);
+    // este campo alimenta só a prévia da página pública do evento, resolvida
+    // por quem chama `toEventSummary` quando precisa dela.
     gallery: [],
     status: row.status,
     organizationId: row.organization_id ?? undefined,
     rsvpDeadline: row.rsvp_deadline ?? undefined,
     guestListOpen: row.guest_list_open,
+    moderationPolicy: row.moderation_policy,
+    coverPath: row.cover_path ?? undefined,
   };
 }
 
@@ -133,6 +139,30 @@ export function toGuest(row: GuestRow): Guest {
     invitedAt: row.invited_at,
     respondedAt: row.responded_at ?? undefined,
     unlisted: row.unlisted,
+  };
+}
+
+/** `url` chega resolvida por quem chama — mapper fica síncrono, a URL assinada não é. */
+export function toPhoto(row: PhotoRow, url: string): Photo {
+  return {
+    id: row.id,
+    author: row.author,
+    caption: row.caption ?? undefined,
+    at: row.created_at,
+    likes: row.likes_count,
+    status: row.status,
+    url,
+  };
+}
+
+export function toMuralMessage(row: MuralMessageRow): MuralMessage {
+  return {
+    id: row.id,
+    author: row.author,
+    message: row.message,
+    at: row.created_at,
+    likes: row.likes_count,
+    status: row.status,
   };
 }
 

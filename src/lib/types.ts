@@ -48,6 +48,12 @@ export interface EventSummary {
   rsvpDeadline?: string;
   /** Permite RSVP de gente não cadastrada; cria convidado marcado como `unlisted`. */
   guestListOpen: boolean;
+  /** Aprovação prévia ou publicação imediata para envios de convidado (galeria/mural). */
+  moderationPolicy: ModerationPolicy;
+  /** Path do objeto no bucket `event-media`. `undefined` quando não há capa. */
+  coverPath?: string;
+  /** URL assinada da capa, resolvida por quem carrega o evento — `undefined` até ser resolvida. */
+  coverUrl?: string;
 }
 
 export type UserRole = "cliente" | "organizacao" | "admin";
@@ -104,22 +110,29 @@ export interface Gift {
   note?: string;
 }
 
+export type ModerationPolicy = "previa" | "imediata";
+export type MediaStatus = "pendente" | "aprovada" | "oculta";
+
 export interface Photo {
   id: string;
   author: string;
   caption?: string;
+  /** ISO date-time. */
   at: string;
   likes: number;
-  approved: boolean;
+  status: MediaStatus;
+  /** URL assinada, de curta duração — resolvida no momento da listagem. */
+  url: string;
 }
 
 export interface MuralMessage {
   id: string;
   author: string;
   message: string;
+  /** ISO date-time. */
   at: string;
   likes: number;
-  approved: boolean;
+  status: MediaStatus;
 }
 
 export interface MenuOption {
