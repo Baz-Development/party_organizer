@@ -3,7 +3,7 @@ import type { Database } from "@/lib/database.types";
 import { resolveSlugCollision, slugify } from "@/lib/slug";
 import type { EventSummary, ModuleId, ScheduleItem } from "@/lib/types";
 import type { CreateEventInput, UpdateEventInput } from "@/lib/validation/event";
-import { DbError, SlugConflictError, UNIQUE_VIOLATION } from "./errors";
+import { CHECK_VIOLATION, DbError, SlugConflictError, UNIQUE_VIOLATION } from "./errors";
 import { toEventSummary, type EventRowWithContent } from "./mappers";
 
 type Client = SupabaseClient<Database>;
@@ -26,6 +26,7 @@ type Client = SupabaseClient<Database>;
 const EVENT_SELECT = `
   id, slug, organization_id, host_profile_id, kind, title, event_at, venue,
   city, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
+  rsvp_deadline, guest_list_open,
   event_modules ( module ),
   schedule_items ( position, time, title, description )
 `;
@@ -141,6 +142,8 @@ export async function updateEvent(
   if (input.eyebrow !== undefined) patch.eyebrow = input.eyebrow;
   if (input.welcome !== undefined) patch.welcome = input.welcome;
   if (input.themeKey !== undefined) patch.theme_key = input.themeKey;
+  if (input.rsvpDeadline !== undefined) patch.rsvp_deadline = input.rsvpDeadline;
+  if (input.guestListOpen !== undefined) patch.guest_list_open = input.guestListOpen;
 
   const { data, error } = await client
     .from("events")
@@ -149,7 +152,12 @@ export async function updateEvent(
     .select(EVENT_SELECT)
     .maybeSingle();
 
-  if (error) throw new DbError(error.message, "desconhecido");
+  if (error) {
+    if (error.code === CHECK_VIOLATION) {
+      throw new DbError("O prazo de RSVP não pode estar no passado.", "invalido");
+    }
+    throw new DbError(error.message, "desconhecido");
+  }
   // Sem linha de volta = a RLS recusou o update ou o evento não existe.
   if (!data) throw new DbError("Evento não encontrado.", "nao-encontrado");
 

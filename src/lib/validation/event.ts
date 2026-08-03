@@ -71,6 +71,17 @@ export const createEventSchema = z.object({
   modules: z.array(z.enum(MODULE_IDS)).optional(),
 });
 
+/**
+ * Aceita data/hora, string vazia (limpa o prazo) ou ausência (não altera).
+ * Validação de "não é passado" fica a cargo de quem chama, que conhece a
+ * data de criação do evento a comparar.
+ */
+const rsvpDeadline = z
+  .string()
+  .refine((value) => value === "" || !Number.isNaN(Date.parse(value)), "Prazo inválido.")
+  .transform((value) => (value === "" ? null : new Date(value).toISOString()))
+  .optional();
+
 export const updateEventSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   date: eventDate.optional(),
@@ -80,6 +91,8 @@ export const updateEventSchema = z.object({
   eyebrow: optionalText,
   welcome: optionalText,
   themeKey: z.enum(THEME_KEYS, { message: "Tema de cor não suportado." }).optional(),
+  rsvpDeadline,
+  guestListOpen: z.boolean().optional(),
 });
 
 export const eventStatusSchema = z.enum(EVENT_STATUSES, {

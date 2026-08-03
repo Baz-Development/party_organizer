@@ -40,11 +40,13 @@ export type Database = {
           created_at: string
           event_at: string
           eyebrow: string | null
+          guest_list_open: boolean
           host_profile_id: string
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           organization_id: string | null
+          rsvp_deadline: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
           theme_key: Database["public"]["Enums"]["theme_key"]
@@ -58,11 +60,13 @@ export type Database = {
           created_at?: string
           event_at: string
           eyebrow?: string | null
+          guest_list_open?: boolean
           host_profile_id: string
           hosts?: string | null
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
           organization_id?: string | null
+          rsvp_deadline?: string | null
           slug: string
           status?: Database["public"]["Enums"]["event_status"]
           theme_key?: Database["public"]["Enums"]["theme_key"]
@@ -76,11 +80,13 @@ export type Database = {
           created_at?: string
           event_at?: string
           eyebrow?: string | null
+          guest_list_open?: boolean
           host_profile_id?: string
           hosts?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
           organization_id?: string | null
+          rsvp_deadline?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["event_status"]
           theme_key?: Database["public"]["Enums"]["theme_key"]
@@ -102,6 +108,97 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guest_invites: {
+        Row: {
+          created_at: string
+          guest_id: string
+          id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          guest_id: string
+          id?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          guest_id?: string
+          id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guest_invites_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: true
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guests: {
+        Row: {
+          companions: number
+          created_at: string
+          dietary: string | null
+          email: string | null
+          event_id: string
+          group_name: string | null
+          id: string
+          invited_at: string
+          kids: number
+          name: string
+          phone: string | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["rsvp_status"]
+          unlisted: boolean
+          updated_at: string
+        }
+        Insert: {
+          companions?: number
+          created_at?: string
+          dietary?: string | null
+          email?: string | null
+          event_id: string
+          group_name?: string | null
+          id?: string
+          invited_at?: string
+          kids?: number
+          name: string
+          phone?: string | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          unlisted?: boolean
+          updated_at?: string
+        }
+        Update: {
+          companions?: number
+          created_at?: string
+          dietary?: string | null
+          email?: string | null
+          event_id?: string
+          group_name?: string | null
+          id?: string
+          invited_at?: string
+          kids?: number
+          name?: string
+          phone?: string | null
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["rsvp_status"]
+          unlisted?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -196,6 +293,54 @@ export type Database = {
         }
         Relationships: []
       }
+      rsvp_responses: {
+        Row: {
+          companions: number
+          dietary: string | null
+          event_id: string
+          guest_id: string
+          id: string
+          kids: number
+          responded_at: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Insert: {
+          companions?: number
+          dietary?: string | null
+          event_id: string
+          guest_id: string
+          id?: string
+          kids?: number
+          responded_at?: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Update: {
+          companions?: number
+          dietary?: string | null
+          event_id?: string
+          guest_id?: string
+          id?: string
+          kids?: number
+          responded_at?: string
+          status?: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvp_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvp_responses_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_items: {
         Row: {
           description: string | null
@@ -237,10 +382,87 @@ export type Database = {
     }
     Functions: {
       can_manage_event: { Args: { event: string }; Returns: boolean }
+      get_guest_by_invite_token: {
+        Args: { p_token: string }
+        Returns: {
+          companions: number
+          dietary: string
+          event_id: string
+          guest_id: string
+          kids: number
+          name: string
+          status: Database["public"]["Enums"]["rsvp_status"]
+        }[]
+      }
       is_event_public: { Args: { event: string }; Returns: boolean }
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      submit_open_rsvp: {
+        Args: {
+          p_companions: number
+          p_dietary: string
+          p_event_slug: string
+          p_kids: number
+          p_name: string
+          p_status: Database["public"]["Enums"]["rsvp_status"]
+        }
+        Returns: {
+          companions: number
+          created_at: string
+          dietary: string | null
+          email: string | null
+          event_id: string
+          group_name: string | null
+          id: string
+          invited_at: string
+          kids: number
+          name: string
+          phone: string | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["rsvp_status"]
+          unlisted: boolean
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "guests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_rsvp: {
+        Args: {
+          p_companions: number
+          p_dietary: string
+          p_kids: number
+          p_status: Database["public"]["Enums"]["rsvp_status"]
+          p_token: string
+        }
+        Returns: {
+          companions: number
+          created_at: string
+          dietary: string | null
+          email: string | null
+          event_id: string
+          group_name: string | null
+          id: string
+          invited_at: string
+          kids: number
+          name: string
+          phone: string | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["rsvp_status"]
+          unlisted: boolean
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "guests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       event_kind:
@@ -261,6 +483,7 @@ export type Database = {
         | "amigo-secreto"
       org_member_role: "proprietario" | "colaborador"
       org_plan: "parceiro" | "premium" | "enterprise"
+      rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
       user_role: "cliente" | "organizacao" | "admin"
     }
@@ -410,6 +633,7 @@ export const Constants = {
       ],
       org_member_role: ["proprietario", "colaborador"],
       org_plan: ["parceiro", "premium", "enterprise"],
+      rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
       user_role: ["cliente", "organizacao", "admin"],
     },

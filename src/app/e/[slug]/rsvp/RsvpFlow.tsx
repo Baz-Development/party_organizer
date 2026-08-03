@@ -1,10 +1,9 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, LinkButton, Stepper } from "@/components/ui";
-import { GUESTS } from "@/lib/fixtures/guests";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary } from "@/lib/types";
 
@@ -15,29 +14,56 @@ interface DietPerson {
   label: string;
 }
 
-export function RsvpFlow({ event }: { event: EventSummary }) {
+interface InvitedGuest {
+  guestId: string;
+  eventId: string;
+  name: string;
+  status: "pendente" | "confirmado" | "recusado";
+  companions: number;
+  kids: number;
+  dietary: string | null;
+}
+
+export function RsvpFlow({ event, token }: { event: EventSummary; token: string | null }) {
   const [step, setStep] = useState(1);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [invited, setInvited] = useState<InvitedGuest | null>(null);
+  const [loadingInvite, setLoadingInvite] = useState(!!token);
   const [attending, setAttending] = useState<Attending>(null);
   const [companions, setCompanions] = useState(0);
   const [kids, setKids] = useState(false);
   const [kidsCount, setKidsCount] = useState(0);
   const [dietary, setDietary] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return GUESTS.filter((g) => g.name.toLowerCase().includes(q))
-      .slice(0, 4)
-      .map((g) => g.name);
-  }, [query]);
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
 
-  const showMatches = matches.length > 0 && selected !== query;
-  const showNoMatch = query.trim().length > 2 && matches.length === 0;
-  const step1Disabled = query.trim().length === 0;
+    fetch(`/api/rsvp/${token}`)
+      .then((res) => res.json())
+      .then((body: { data: InvitedGuest | null }) => {
+        if (cancelled) return;
+        if (body.data) {
+          setInvited(body.data);
+          setName(body.data.name);
+          setStep(2);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingInvite(false);
+      });
 
-  const firstName = (selected || query || "amigo").split(" ")[0];
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  const identified = !!invited;
+  const step1Disabled = name.trim().length === 0;
+  const firstName = (name || "amigo").split(" ")[0];
+  const guestListClosed = !token && !event.guestListOpen;
 
   const dietPeople: DietPerson[] = useMemo(() => {
     const list: DietPerson[] = [{ id: "me", label: "Você" }];
@@ -45,6 +71,54 @@ export function RsvpFlow({ event }: { event: EventSummary }) {
     if (kids) for (let i = 1; i <= kidsCount; i++) list.push({ id: `kid-${i}`, label: `Criança ${i}` });
     return list;
   }, [companions, kids, kidsCount]);
+
+  async function handleSubmit() {
+    if (!attending) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    const payload = {
+      status: attending === "sim" ? ("confirmado" as const) : ("recusado" as const),
+      companions: attending === "sim" ? companions : 0,
+      kids: attending === "sim" && kids ? kidsCount : 0,
+      dietary: dietary.me || undefined,
+    };
+
+    try {
+      const res = await fetch(
+        token ? `/api/rsvp/${token}` : `/api/eventos/${event.slug}/rsvp-aberto`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(token ? payload : { ...payload, name }),
+        },
+      );
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(body?.error ?? "Não foi possível registrar sua resposta.");
+        return;
+      }
+
+      setStep(3);
+    } catch {
+      setError("Não foi possível registrar sua resposta. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loadingInvite) {
+    return (
+      <div
+        style={themeVars(event.themeKey)}
+        className="flex min-h-screen items-center justify-center bg-paper-3"
+      >
+        <p className="text-ink-soft">Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -55,7 +129,7 @@ export function RsvpFlow({ event }: { event: EventSummary }) {
         {/* Progresso ------------------------------------------------- */}
         <div className="px-6 pt-5">
           <div className="mb-6 flex min-h-6 items-center gap-3.5">
-            {step > 1 ? (
+            {step > 1 && !identified ? (
               <button
                 onClick={() => setStep((s) => s - 1)}
                 aria-label="Voltar"
@@ -85,8 +159,20 @@ export function RsvpFlow({ event }: { event: EventSummary }) {
           </div>
         </div>
 
-        {/* Passo 1 — identificação ----------------------------------- */}
-        {step === 1 && (
+        {/* Lista fechada, sem token --------------------------------- */}
+        {guestListClosed && step === 1 && (
+          <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
+            <h1 className="mb-2.5 font-display text-[26px] font-semibold leading-[1.25]">
+              Convite necessário
+            </h1>
+            <p className="text-[15px] leading-relaxed text-ink-soft">
+              Este evento confirma presença só por convite. Use o link que você recebeu.
+            </p>
+          </div>
+        )}
+
+        {/* Passo 1 — identificação (só quando não veio por token) ---- */}
+        {!guestListClosed && step === 1 && (
           <div className="flex flex-1 animate-[fade-up_0.4s_ease_both] flex-col px-7">
             <div className="mb-5 h-24 w-24 overflow-hidden rounded-full">
               <ImageSlot shape="circle" placeholder="Foto" />
@@ -95,49 +181,15 @@ export function RsvpFlow({ event }: { event: EventSummary }) {
               Oi! Que bom te ver por aqui.
             </h1>
             <p className="mb-6 text-[16px] leading-relaxed text-ink-soft">
-              Antes de tudo, nos ajuda a te encontrar na lista?
+              Antes de tudo, como podemos te chamar?
             </p>
 
             <Input
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelected(null);
-              }}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Digite seu nome"
               className="mb-4"
             />
-
-            {showMatches && (
-              <div className="mb-2 flex flex-col gap-2">
-                {matches.map((name) => {
-                  const isSel = selected === name;
-                  return (
-                    <button
-                      key={name}
-                      onClick={() => {
-                        setSelected(name);
-                        setQuery(name);
-                      }}
-                      className={`flex w-full cursor-pointer items-center justify-between rounded-[10px] border px-4 py-3.5 text-left text-[15px] ${
-                        isSel
-                          ? "border-accent bg-accent text-on-accent"
-                          : "border-line-strong bg-white text-ink"
-                      }`}
-                    >
-                      <span>{name}</span>
-                      {isSel && <span className="font-bold">✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {showNoMatch && (
-              <p className="mt-1 text-sm text-ink-faint">
-                Não achamos esse nome — tudo bem, é só continuar que confirmamos direto com você.
-              </p>
-            )}
 
             <div className="flex-1" />
             <div className="py-6">
@@ -229,10 +281,20 @@ export function RsvpFlow({ event }: { event: EventSummary }) {
               </p>
             )}
 
+            {error && (
+              <p className="mt-4 rounded-xl bg-[rgba(200,60,60,0.08)] px-4 py-3 text-[14px] text-[#a63c3c]">
+                {error}
+              </p>
+            )}
+
             <div className="flex-1" />
             <div className="py-6">
-              <Button full size="lg" disabled={!attending} onClick={() => setStep(3)}>
-                {attending === "nao" ? "Enviar resposta" : "Confirmar presença"}
+              <Button full size="lg" disabled={!attending || submitting} onClick={handleSubmit}>
+                {submitting
+                  ? "Enviando..."
+                  : attending === "nao"
+                    ? "Enviar resposta"
+                    : "Confirmar presença"}
               </Button>
             </div>
           </div>

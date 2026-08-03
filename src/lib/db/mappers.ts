@@ -1,6 +1,7 @@
 import type { Database } from "@/lib/database.types";
 import type {
   EventSummary,
+  Guest,
   ModuleId,
   Organization,
   OrganizationMember,
@@ -22,6 +23,7 @@ type Tables = Database["public"]["Tables"];
 type EventRow = Tables["events"]["Row"];
 type OrganizationRow = Tables["organizations"]["Row"];
 type ProfileRow = Tables["profiles"]["Row"];
+export type GuestRow = Tables["guests"]["Row"];
 
 export type EventRowWithContent = EventRow & {
   event_modules: Pick<Tables["event_modules"]["Row"], "module">[];
@@ -76,6 +78,8 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     gallery: [],
     status: row.status,
     organizationId: row.organization_id ?? undefined,
+    rsvpDeadline: row.rsvp_deadline ?? undefined,
+    guestListOpen: row.guest_list_open,
   };
 }
 
@@ -112,6 +116,23 @@ export function toProfile(row: ProfileRow): Profile {
     displayName: row.display_name ?? row.email,
     role: row.role,
     createdAt: row.created_at,
+  };
+}
+
+export function toGuest(row: GuestRow): Guest {
+  return {
+    id: row.id,
+    name: row.name,
+    group: row.group_name ?? "",
+    email: row.email ?? undefined,
+    phone: row.phone ?? undefined,
+    status: row.status,
+    companions: row.companions,
+    kids: row.kids,
+    dietary: row.dietary ?? undefined,
+    invitedAt: row.invited_at,
+    respondedAt: row.responded_at ?? undefined,
+    unlisted: row.unlisted,
   };
 }
 

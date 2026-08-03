@@ -52,6 +52,7 @@ export const EVENTS: SeedEvent[] = [
     ],
     status: "publicado",
     organizationId: "org-1",
+    guestListOpen: false,
   },
   {
     id: "ev-2",
@@ -75,6 +76,7 @@ export const EVENTS: SeedEvent[] = [
     ],
     status: "publicado",
     organizationId: "org-1",
+    guestListOpen: false,
   },
   {
     id: "ev-3",
@@ -98,6 +100,7 @@ export const EVENTS: SeedEvent[] = [
     ],
     status: "rascunho",
     organizationId: "org-2",
+    guestListOpen: false,
   },
   {
     id: "ev-4",
@@ -121,6 +124,7 @@ export const EVENTS: SeedEvent[] = [
     ],
     status: "publicado",
     organizationId: "org-3",
+    guestListOpen: false,
   },
 ];
 

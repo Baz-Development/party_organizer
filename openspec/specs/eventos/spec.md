@@ -6,9 +6,7 @@ Define o evento como entidade central do produto: sua criação pelo anfitrião,
 slug público único que endereça `/e/[slug]`, o ciclo de vida rascunho →
 publicado → encerrado, quais módulos estão habilitados, o conteúdo editorial e o
 cronograma, e o vínculo opcional com uma organização parceira.
-
 ## Requirements
-
 ### Requirement: Criação de evento pelo anfitrião
 
 O sistema MUST permitir que um usuário autenticado crie um evento informando tipo,
@@ -145,3 +143,30 @@ anfitrião do evento.
 - **WHEN** um evento não pertence a nenhuma organização
 - **THEN** apenas o anfitrião e os admins conseguem lê-lo e editá-lo
 - **AND** ele não aparece em nenhum painel de organização
+
+### Requirement: Prazo de RSVP e lista aberta
+
+O evento MUST armazenar, como configuração editável por quem o administra, um prazo
+opcional para respostas de RSVP e um indicador de lista aberta que permite respostas
+de pessoas não cadastradas.
+
+#### Scenario: Prazo configurado
+
+- **WHEN** o anfitrião define um prazo de RSVP em `/painel/editor`
+- **THEN** o prazo é persistido e passa a valer para as respostas do evento
+
+#### Scenario: Prazo anterior à criação do evento
+
+- **WHEN** um prazo de RSVP no passado é enviado
+- **THEN** a operação é recusada com erro de validação
+
+#### Scenario: Lista aberta alternada
+
+- **WHEN** o anfitrião habilita ou desabilita a lista aberta
+- **THEN** a configuração é persistida e passa a valer para as próximas respostas
+
+#### Scenario: Configuração restrita a quem administra
+
+- **WHEN** alguém sem vínculo com o evento tenta alterar prazo ou lista aberta
+- **THEN** a operação é recusada por falta de autorização
+

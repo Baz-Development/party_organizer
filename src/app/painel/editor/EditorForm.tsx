@@ -34,6 +34,14 @@ const TYPO = {
 
 type TypoKey = keyof typeof TYPO;
 
+/** ISO → valor de `<input type="datetime-local">`; ausente vira campo vazio. */
+function toDatetimeLocal(iso: string | undefined): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 /**
  * RSVP não aparece: é sempre ativo, como no onboarding. Ele é reanexado na
  * hora de salvar para que desmarcar tudo aqui não desligue a confirmação de
@@ -58,6 +66,8 @@ export function EditorForm({ event }: { event: EventSummary }) {
   const [venue, setVenue] = useState(event.venue);
   const [city, setCity] = useState(event.city);
   const [schedule, setSchedule] = useState<ScheduleItem[]>(event.schedule);
+  const [rsvpDeadline, setRsvpDeadline] = useState(toDatetimeLocal(event.rsvpDeadline));
+  const [guestListOpen, setGuestListOpen] = useState(event.guestListOpen);
   const [modules, setModules] = useState<Record<string, boolean>>(
     Object.fromEntries(MODULE_OPTIONS.map((m) => [m.id, event.modules.includes(m.id)])),
   );
@@ -77,7 +87,7 @@ export function EditorForm({ event }: { event: EventSummary }) {
     startTransition(async () => {
       const result = await salvarEditor({
         eventId: event.id,
-        content: { hosts, eyebrow, welcome, venue, city, themeKey },
+        content: { hosts, eyebrow, welcome, venue, city, themeKey, rsvpDeadline, guestListOpen },
         modules: [
           "rsvp",
           ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
@@ -283,6 +293,28 @@ export function EditorForm({ event }: { event: EventSummary }) {
           <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
             A ordem da lista é a ordem que o convidado vê.
           </p>
+        </Group>
+
+        {/* RSVP */}
+        <Group title="Confirmação de presença">
+          <div className="flex flex-col gap-3.5">
+            <SmallField label="Prazo para responder (opcional)">
+              <input
+                type="datetime-local"
+                value={rsvpDeadline}
+                onChange={(e) => setRsvpDeadline(e.target.value)}
+                className="w-full rounded-[10px] border border-line-strong bg-white px-3.5 py-2.5 text-sm"
+              />
+            </SmallField>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm">Aceitar RSVP de quem não foi convidado</span>
+              <Toggle
+                label="Lista aberta"
+                checked={guestListOpen}
+                onChange={setGuestListOpen}
+              />
+            </div>
+          </div>
         </Group>
 
         {/* Módulos */}

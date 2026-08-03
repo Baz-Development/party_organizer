@@ -63,6 +63,7 @@ export async function salvarEditor(input: EditorPayload): Promise<EditorResult> 
   // A página pública do evento e o painel mostram o que acabou de mudar.
   revalidatePath("/painel");
   revalidatePath("/painel/editor");
+  revalidatePath("/e/[slug]/rsvp", "page");
 
   return { ok: true };
 }

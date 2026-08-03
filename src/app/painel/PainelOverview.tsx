@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import type { GuestStats } from "@/lib/db/guests";
 import { useCountdown } from "@/components/Countdown";
 import { Button } from "@/components/ui";
-import { GUESTS, guestStats } from "@/lib/fixtures/guests";
 import { ACTIVITY } from "@/lib/fixtures/painel";
 import { longDate } from "@/lib/format";
 import type { EventSummary } from "@/lib/types";
@@ -20,16 +20,17 @@ const KIND_COLORS: Record<string, string> = {
 export function PainelOverview({
   event,
   siteUrl,
+  guestStats: stats,
 }: {
   event: EventSummary;
   siteUrl: string;
+  guestStats: GuestStats;
 }) {
   const { days, hours, mins } = useCountdown(event.date);
 
-  // Convidados e atividade continuam vindo de fixture — as tabelas chegam nos
-  // changes `add-guests-rsvp-backend` e seguintes.
-  const stats = guestStats(GUESTS);
-  const pct = Math.round((stats.confirmados / stats.convidados) * 100);
+  // Atividade continua vindo de fixture — chega nos changes seguintes
+  // (presentes, galeria, mural).
+  const pct = stats.convidados ? Math.round((stats.confirmados / stats.convidados) * 100) : 0;
 
   const [copied, setCopied] = useState(false);
   const publicUrl = `${siteUrl.replace(/^https?:\/\//, "")}/e/${event.slug}`;

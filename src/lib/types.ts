@@ -44,6 +44,10 @@ export interface EventSummary {
   gallery: string[];
   status: "rascunho" | "publicado" | "encerrado";
   organizationId?: string;
+  /** ISO date-time. Ausente = respostas aceitas até o evento ser encerrado. */
+  rsvpDeadline?: string;
+  /** Permite RSVP de gente não cadastrada; cria convidado marcado como `unlisted`. */
+  guestListOpen: boolean;
 }
 
 export type UserRole = "cliente" | "organizacao" | "admin";
@@ -81,6 +85,8 @@ export interface Guest {
   dietary?: string;
   invitedAt: string;
   respondedAt?: string;
+  /** Criado pelo próprio RSVP de lista aberta, sem ter sido cadastrado antes. */
+  unlisted?: boolean;
 }
 
 export type GiftStatus = "disponivel" | "reservado" | "comprado";
