@@ -1,0 +1,45 @@
+schema: spec-driven
+
+context: |
+  Produto: "Convite" — plataforma de páginas de evento (casamento, debutante,
+  infantil, corporativo, formatura). Três públicos: convidado (sem login),
+  cliente/anfitrião (dono do evento), organização parceira e admin da plataforma.
+
+  Stack atual: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4.
+  ATENÇÃO: esta versão do Next.js tem breaking changes — sempre consultar
+  `node_modules/next/dist/docs/` antes de escrever código.
+
+  Estado atual: 14 telas prontas, sem banco. Todo dado vem de `src/lib/mock-data.ts`;
+  as rotas em `src/app/api/**/route.ts` devolvem mocks (`persisted: false`).
+  Os tipos de domínio já existem em `src/lib/types.ts` e são o contrato a preservar.
+
+  Backend alvo: Supabase (Postgres + Auth + Storage + Realtime), rodando local via
+  Supabase CLI e promovido para staging/produção. Toda configuração de ambiente é
+  chaveada por `.env` — nenhum host, chave ou project-ref hardcoded no código.
+
+  Decisões já tomadas:
+  - Auth: Supabase Auth (magic link) para cliente/organização/admin. Convidado
+    acessa por link público do evento + token de convite, sem conta.
+  - Autorização: RLS em todas as tabelas, por organização e por evento.
+  - Escopo do backend: CRUD + regras de negócio, Storage de imagens, pagamento de
+    presentes e notificações por e-mail.
+
+  Idioma: rotas, slugs e nomes de domínio em português (evento, convidado,
+  presente, cardápio, amigo-secreto). Identificadores de código em inglês.
+
+rules:
+  proposal:
+    - Escreva em português do Brasil
+    - "Cite as rotas de API e telas afetadas pelo nome real (ex.: /e/[slug]/rsvp)"
+  specs:
+    - Escreva requisitos e cenários em português do Brasil
+    - Todo requisito que toca dados deve ter um cenário de autorização (quem pode e quem não pode)
+    - Não descrever implementação (SQL, nomes de função) — apenas comportamento observável
+  design:
+    - Escreva em português do Brasil
+    - Incluir o schema SQL das tabelas e as políticas de RLS relevantes
+    - Declarar explicitamente as variáveis de ambiente introduzidas
+  tasks:
+    - Escreva em português do Brasil
+    - Cada tarefa deve ser verificável e caber em no máximo 2 horas
+    - Migrations, RLS e seed são tarefas separadas do código de aplicação

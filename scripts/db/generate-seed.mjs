@@ -1,0 +1,239 @@
+#!/usr/bin/env node
+/**
+ * Converte `src/lib/mock-data.ts` em `supabase/seed.sql`.
+ *
+ * É um gerador, e não um dump colado à mão, para que a conversão fique
+ * auditável: quando um mock mudar, o seed é regerado e o diff mostra
+ * exatamente o que mudou no banco.
+ *
+ * O Node 24 executa o `.ts` direto (apaga os tipos), então lemos os mocks como
+ * módulo em vez de tentar interpretar o arquivo como texto.
+ */
+import { createHash } from "node:crypto";
+import { writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const MOCK_PATH = resolve("src/lib/mock-data.ts");
+const OUTPUT = resolve("supabase/seed.sql");
+
+/** Fuso dos eventos de exemplo — todos acontecem no Brasil. */
+const TZ_OFFSET = "-03:00";
+
+/** Domínio dos e-mails de exemplo. Não existe, e é essa a intenção. */
+const EMAIL_DOMAIN = "exemplo.local";
+
+const ADMIN_EMAIL = `admin@${EMAIL_DOMAIN}`;
+
+/**
+ * UUID v5: mesmo nome, mesmo id, sempre. Sem isso, cada geração do seed
+ * produziria ids novos e o diff seria ilegível.
+ */
+const SEED_NAMESPACE = "1b671a64-40d5-491e-99b0-da01ff1f3341";
+
+function uuidv5(name) {
+  const namespace = Buffer.from(SEED_NAMESPACE.replace(/-/g, ""), "hex");
+  const hash = createHash("sha1")
+    .update(Buffer.concat([namespace, Buffer.from(name, "utf8")]))
+    .digest();
+
+  const bytes = Buffer.from(hash.subarray(0, 16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x50; // versão 5
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variante RFC 4122
+
+  const hex = bytes.toString("hex");
+  return [
+    hex.slice(0, 8),
+    hex.slice(8, 12),
+    hex.slice(12, 16),
+    hex.slice(16, 20),
+    hex.slice(20),
+  ].join("-");
+}
+
+/** Literal SQL de texto, com aspas simples escapadas. */
+function txt(value) {
+  if (value === undefined || value === null || value === "") return "NULL";
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function uuid(value) {
+  return `'${value}'::uuid`;
+}
+
+function list(values) {
+  return values.join(",\n  ");
+}
+
+export async function generateSeed() {
+  const mocks = await import(pathToFileURL(MOCK_PATH).href);
+  const { EVENTS, ORGANIZATIONS } = mocks;
+
+  // ---------------------------------------------------------------------
+  // Pessoas: um admin, um proprietário por organização, um anfitrião por
+  // evento. Todos entram por link mágico — não há senha no seed.
+  // ---------------------------------------------------------------------
+  const people = new Map();
+
+  const addPerson = (email, displayName, role) => {
+    if (!people.has(email)) {
+      people.set(email, { id: uuidv5(`user:${email}`), email, displayName, role });
+    }
+    return people.get(email);
+  };
+
+  addPerson(ADMIN_EMAIL, "Admin da plataforma", "admin");
+
+  const orgOwner = new Map();
+  for (const org of ORGANIZATIONS) {
+    const email = org.contact || `${org.id}@${EMAIL_DOMAIN}`;
+    orgOwner.set(org.id, addPerson(email, `Equipe ${org.name}`, "organizacao"));
+  }
+
+  const eventHost = new Map();
+  for (const event of EVENTS) {
+    const email = `${event.slug}@${EMAIL_DOMAIN}`;
+    eventHost.set(event.slug, addPerson(email, event.hosts, "cliente"));
+  }
+
+  const orgId = (mockId) => uuidv5(`organization:${mockId}`);
+  const eventId = (slug) => uuidv5(`event:${slug}`);
+
+  const everyone = [...people.values()];
+  const userIds = everyone.map((p) => uuid(p.id));
+  const orgIds = ORGANIZATIONS.map((o) => uuid(orgId(o.id)));
+  const eventIds = EVENTS.map((e) => uuid(eventId(e.slug)));
+
+  const sql = `-- Gerado por \`npm run db:seed\` a partir de src/lib/mock-data.ts.
+-- Não edite à mão: rode o script de novo depois de mudar os mocks.
+--
+-- Dados de desenvolvimento. Todos os e-mails são de um domínio inexistente
+-- (${EMAIL_DOMAIN}) e nenhuma senha é definida: entre pelo link mágico,
+-- lendo a caixa de e-mail local.
+--
+-- Entre como ${ADMIN_EMAIL} para ver o painel administrativo.
+
+begin;
+
+-- Rodar o seed duas vezes não pode duplicar nada. A ordem importa: eventos
+-- antes de perfis, porque events.host_profile_id não tem cascade.
+delete from public.events where id in (
+  ${list(eventIds)}
+);
+delete from public.organizations where id in (
+  ${list(orgIds)}
+);
+delete from auth.users where id in (
+  ${list(userIds)}
+);
+
+-- ---------------------------------------------------------------------------
+-- Identidades
+-- ---------------------------------------------------------------------------
+
+insert into auth.users (
+  id, aud, role, email, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+values
+${everyone
+  .map(
+    (person) => `  (
+    ${uuid(person.id)}, 'authenticated', 'authenticated', ${txt(person.email)}, now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    ${txt(JSON.stringify({ display_name: person.displayName }))}::jsonb,
+    now(), now()
+  )`,
+  )
+  .join(",\n")};
+
+-- O trigger on_auth_user_created já criou os perfis; aqui definimos nome de
+-- exibição e papel. O papel de admin nunca é atribuível pela aplicação — só
+-- por seed ou operação administrativa, ambas sem sessão.
+insert into public.profiles (id, email, display_name, role)
+values
+${everyone
+  .map(
+    (person) =>
+      `  (${uuid(person.id)}, ${txt(person.email)}, ${txt(person.displayName)}, ${txt(person.role)}::public.user_role)`,
+  )
+  .join(",\n")}
+on conflict (id) do update
+  set display_name = excluded.display_name,
+      role = excluded.role;
+
+-- ---------------------------------------------------------------------------
+-- Organizações parceiras
+-- ---------------------------------------------------------------------------
+
+insert into public.organizations (id, name, city, plan, contact, since)
+values
+${ORGANIZATIONS.map(
+  (org) =>
+    `  (${uuid(orgId(org.id))}, ${txt(org.name)}, ${txt(org.city)}, ${txt(org.plan)}::public.org_plan, ${txt(org.contact)}, ${txt(org.since)}::date)`,
+).join(",\n")};
+
+insert into public.organization_members (organization_id, profile_id, role)
+values
+${ORGANIZATIONS.map(
+  (org) =>
+    `  (${uuid(orgId(org.id))}, ${uuid(orgOwner.get(org.id).id)}, 'proprietario'::public.org_member_role)`,
+).join(",\n")};
+
+-- ---------------------------------------------------------------------------
+-- Eventos
+--
+-- Os quatro saem publicados, para que as telas do convidado fiquem navegáveis
+-- logo depois do reset. (O mock trazia "aniversario-do-bento" em rascunho.)
+-- ---------------------------------------------------------------------------
+
+insert into public.events (
+  id, slug, organization_id, host_profile_id, kind, title, event_at,
+  venue, city, hosts, eyebrow, welcome, theme_key, status
+)
+values
+${EVENTS.map((event) => {
+  const organization = event.organizationId
+    ? uuid(orgId(event.organizationId))
+    : "NULL";
+  return `  (
+    ${uuid(eventId(event.slug))}, ${txt(event.slug)}, ${organization},
+    ${uuid(eventHost.get(event.slug).id)},
+    ${txt(event.kind)}::public.event_kind, ${txt(event.title)},
+    ${txt(`${event.date}${TZ_OFFSET}`)}::timestamptz,
+    ${txt(event.venue)}, ${txt(event.city)}, ${txt(event.hosts)},
+    ${txt(event.eyebrow)}, ${txt(event.welcome)},
+    ${txt(event.themeKey)}::public.theme_key, 'publicado'::public.event_status
+  )`;
+}).join(",\n")};
+
+insert into public.event_modules (event_id, module)
+values
+${EVENTS.flatMap((event) =>
+  event.modules.map(
+    (module) =>
+      `  (${uuid(eventId(event.slug))}, ${txt(module)}::public.module_id)`,
+  ),
+).join(",\n")};
+
+insert into public.schedule_items (event_id, position, time, title, description)
+values
+${EVENTS.flatMap((event) =>
+  event.schedule.map(
+    (item, index) =>
+      `  (${uuid(eventId(event.slug))}, ${index}, ${txt(item.time)}, ${txt(item.title)}, ${txt(item.desc)})`,
+  ),
+).join(",\n")};
+
+commit;
+`;
+
+  writeFileSync(OUTPUT, sql, "utf8");
+  return { output: OUTPUT, events: EVENTS.length, people: everyone.length };
+}
+
+// Executado diretamente: só gera o arquivo, sem tocar no banco.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const { output, events, people } = await generateSeed();
+  console.log(`Seed gerado em ${output} (${events} eventos, ${people} pessoas).`);
+}

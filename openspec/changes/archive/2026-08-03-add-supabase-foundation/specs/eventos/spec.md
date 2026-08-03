@@ -1,0 +1,138 @@
+## ADDED Requirements
+
+### Requirement: Criação de evento pelo anfitrião
+
+O sistema MUST permitir que um usuário autenticado crie um evento informando tipo,
+título, data, local, cidade e anfitriões, tornando-se seu anfitrião. O evento MUST
+nascer em rascunho.
+
+#### Scenario: Evento criado pelo onboarding
+
+- **WHEN** um usuário autenticado conclui o onboarding informando os dados do evento
+- **THEN** o evento é criado em rascunho, com ele como anfitrião
+- **AND** o painel do cliente passa a listar esse evento
+
+#### Scenario: Data inválida
+
+- **WHEN** um evento é enviado sem data ou com data em formato inválido
+- **THEN** a criação é recusada com erro de validação
+- **AND** nada é gravado
+
+#### Scenario: Criação exige sessão
+
+- **WHEN** uma requisição sem sessão tenta criar um evento
+- **THEN** a operação é recusada por falta de autenticação
+
+### Requirement: Slug público único
+
+Cada evento MUST ter um slug único na plataforma, usado como endereço público em
+`/e/[slug]`. O slug MUST ser gerado a partir do título quando não informado e MUST
+permanecer estável após a publicação.
+
+#### Scenario: Slug derivado do título
+
+- **WHEN** um evento é criado sem slug explícito
+- **THEN** o sistema gera um slug em minúsculas, sem acentos e com hifens a partir do
+  título
+
+#### Scenario: Colisão de slug
+
+- **WHEN** o slug gerado ou informado já pertence a outro evento
+- **THEN** o sistema recusa o slug informado com erro de conflito, ou acrescenta um
+  sufixo ao slug gerado até torná-lo único
+
+#### Scenario: Slug inexistente
+
+- **WHEN** alguém abre `/e/[slug]` com um slug que não existe
+- **THEN** a resposta é de evento não encontrado
+
+### Requirement: Ciclo de vida do evento
+
+Um evento MUST estar em exatamente um destes estados: rascunho, publicado ou
+encerrado. Somente eventos publicados MUST ser visíveis ao público.
+
+#### Scenario: Publicação
+
+- **WHEN** o anfitrião publica um evento em rascunho
+- **THEN** o estado passa a publicado
+- **AND** a página pública do evento passa a responder para qualquer visitante
+
+#### Scenario: Despublicação
+
+- **WHEN** o anfitrião retorna um evento publicado para rascunho
+- **THEN** a página pública deixa de responder para visitantes sem vínculo
+- **AND** os dados já coletados permanecem preservados
+
+#### Scenario: Encerramento
+
+- **WHEN** o anfitrião encerra um evento
+- **THEN** o evento deixa de aceitar novas interações de convidado
+- **AND** continua acessível em leitura ao anfitrião e à organização
+
+#### Scenario: Somente anfitrião ou organização publica
+
+- **WHEN** um usuário sem vínculo com o evento tenta alterar seu estado
+- **THEN** a operação é recusada por falta de autorização
+
+### Requirement: Módulos habilitados por evento
+
+Cada evento MUST definir quais módulos estão habilitados entre RSVP, cronograma,
+local, presentes, galeria, mural, cardápio e amigo secreto. Um módulo desabilitado
+MUST NOT ser acessível na página pública.
+
+#### Scenario: Módulo habilitado aparece
+
+- **WHEN** o anfitrião habilita o módulo de presentes
+- **THEN** a página pública do evento passa a oferecer a seção de presentes
+
+#### Scenario: Módulo desabilitado é inacessível
+
+- **WHEN** um visitante acessa diretamente a rota de um módulo desabilitado no evento
+- **THEN** recebe resposta de não encontrado
+- **AND** nenhum dado daquele módulo é retornado
+
+#### Scenario: Somente módulos conhecidos
+
+- **WHEN** uma requisição tenta habilitar um identificador de módulo desconhecido
+- **THEN** a operação é recusada com erro de validação
+
+### Requirement: Conteúdo editorial e cronograma
+
+O evento MUST armazenar seu conteúdo editorial — chamada, texto de boas-vindas e
+tema de cor — e uma lista ordenada de itens de cronograma com horário, título e
+descrição.
+
+#### Scenario: Edição pelo editor da página
+
+- **WHEN** o anfitrião altera o texto de boas-vindas ou o tema de cor em
+  `/painel/editor`
+- **THEN** a alteração é persistida e refletida na página pública do evento
+
+#### Scenario: Ordenação do cronograma
+
+- **WHEN** o cronograma do evento é consultado
+- **THEN** os itens vêm na ordem definida pelo anfitrião, de forma estável entre
+  consultas
+
+#### Scenario: Tema inválido
+
+- **WHEN** um tema de cor fora do conjunto suportado é enviado
+- **THEN** a operação é recusada com erro de validação
+
+### Requirement: Vínculo opcional com organização
+
+Um evento MUST poder pertencer opcionalmente a uma organização e, quando pertence,
+os membros dessa organização MUST ter o mesmo alcance de leitura e edição que o
+anfitrião do evento.
+
+#### Scenario: Evento vinculado
+
+- **WHEN** um evento pertence a uma organização
+- **THEN** os membros dessa organização conseguem ler e editar o evento
+- **AND** ele aparece no painel da organização
+
+#### Scenario: Evento sem organização
+
+- **WHEN** um evento não pertence a nenhuma organização
+- **THEN** apenas o anfitrião e os admins conseguem lê-lo e editá-lo
+- **AND** ele não aparece em nenhum painel de organização

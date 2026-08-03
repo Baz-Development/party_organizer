@@ -1,0 +1,118 @@
+## ADDED Requirements
+
+### Requirement: Token de convite por convidado
+
+O sistema MUST gerar para cada convidado um token opaco, imprevisível e único, que o
+identifica na página pública do evento sem exigir conta.
+
+#### Scenario: Link identifica o convidado
+
+- **WHEN** um convidado abre o evento pelo link que carrega seu token válido
+- **THEN** o formulário de RSVP vem preenchido com o nome dele
+- **AND** a resposta é atribuída àquele convidado
+
+#### Scenario: Token de outro evento
+
+- **WHEN** um token válido de outro evento é usado na página deste evento
+- **THEN** nenhuma identificação é concedida
+- **AND** nenhum dado do outro evento é revelado
+
+#### Scenario: Token inexistente ou adulterado
+
+- **WHEN** o link carrega um token que não existe ou foi alterado
+- **THEN** o convidado é tratado como visitante anônimo
+
+#### Scenario: Token não enumerável
+
+- **WHEN** tokens de convite de um mesmo evento são comparados
+- **THEN** não é possível derivar um token válido a partir de outro
+
+### Requirement: Registro da resposta de RSVP
+
+O sistema MUST registrar a resposta do convidado como confirmada ou recusada, junto
+do número de acompanhantes, número de crianças, restrição alimentar e data da
+resposta.
+
+#### Scenario: Confirmação completa
+
+- **WHEN** um convidado identificado conclui o fluxo confirmando presença com
+  acompanhantes, crianças e restrição alimentar
+- **THEN** a resposta é persistida e visível em `/painel/convidados`
+- **AND** a data da resposta é registrada
+
+#### Scenario: Recusa
+
+- **WHEN** um convidado identificado recusa o convite
+- **THEN** o estado dele passa a recusado
+- **AND** acompanhantes e crianças são zerados
+
+#### Scenario: Números negativos
+
+- **WHEN** a resposta informa número negativo de acompanhantes ou crianças
+- **THEN** a operação é recusada com erro de validação
+
+#### Scenario: Módulo desabilitado
+
+- **WHEN** uma resposta é enviada para um evento com o módulo de RSVP desabilitado
+- **THEN** a operação é recusada e nada é gravado
+
+### Requirement: Correção da resposta até o prazo
+
+O sistema MUST permitir que o convidado altere sua resposta enquanto o prazo de RSVP
+do evento não tiver passado, mantendo apenas a resposta mais recente como válida.
+
+#### Scenario: Alteração dentro do prazo
+
+- **WHEN** um convidado que confirmou reabre o link antes do prazo e passa a recusar
+- **THEN** o estado atual passa a recusado
+- **AND** as estatísticas do painel refletem a mudança
+
+#### Scenario: Alteração após o prazo
+
+- **WHEN** um convidado tenta responder depois do prazo de RSVP
+- **THEN** a operação é recusada com aviso de prazo encerrado
+- **AND** a resposta anterior é preservada
+
+#### Scenario: Evento sem prazo definido
+
+- **WHEN** o evento não define prazo de RSVP
+- **THEN** respostas são aceitas até o evento ser encerrado
+
+### Requirement: RSVP de convidado não listado
+
+O sistema MUST permitir, quando o anfitrião habilitar lista aberta no evento, que
+uma pessoa não cadastrada envie RSVP informando seu nome, criando um convidado novo
+marcado como não listado.
+
+#### Scenario: Lista aberta habilitada
+
+- **WHEN** uma pessoa sem token responde ao RSVP de um evento com lista aberta
+- **THEN** um convidado é criado com a resposta enviada
+- **AND** ele aparece em `/painel/convidados` sinalizado como não listado
+
+#### Scenario: Lista aberta desabilitada
+
+- **WHEN** uma pessoa sem token responde ao RSVP de um evento com lista fechada
+- **THEN** a operação é recusada
+- **AND** nenhum convidado é criado
+
+### Requirement: Privacidade das respostas
+
+A lista de convidados e suas respostas MUST NOT ser legível pelo público. O
+convidado identificado MUST enxergar apenas a própria resposta.
+
+#### Scenario: Convidado não vê a lista
+
+- **WHEN** um convidado identificado por token requisita a lista de convidados do
+  evento
+- **THEN** recebe apenas o próprio registro ou erro de autorização
+
+#### Scenario: Visitante anônimo
+
+- **WHEN** um visitante sem token requisita a lista de convidados
+- **THEN** a operação é recusada e nenhum nome é revelado
+
+#### Scenario: Anfitrião vê tudo
+
+- **WHEN** quem administra o evento requisita a lista
+- **THEN** recebe todos os convidados com suas respostas e estatísticas

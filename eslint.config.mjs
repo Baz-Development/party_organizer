@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefatos do Supabase CLI: runtime dos contêineres e tipos gerados do
+    // schema. Nada aqui é escrito à mão, então lintar só gera ruído.
+    "supabase/.temp/**",
+    "supabase/.branches/**",
+    "src/lib/database.types.ts",
   ]),
 ]);
 
