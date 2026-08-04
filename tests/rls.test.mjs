@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import { anonimo, montarCenario } from "./harness.mjs";
+import { admin, anonimo, montarCenario } from "./harness.mjs";
 
 /**
  * Testes de política contra o banco local.
@@ -242,6 +242,129 @@ describe("RLS", () => {
         .in("id", [c.eventos.aRascunho, c.eventos.bRascunho]);
 
       assert.equal(data.length, 2);
+    });
+  });
+
+  describe("amigo secreto — sigilo dos pares (add-secret-santa-backend)", () => {
+    it("nenhum papel comum alcança secret_santa_assignments por select direto", async () => {
+      const { error: comoAnon } = await anonimo.from("secret_santa_assignments").select("id");
+      assert.ok(comoAnon);
+
+      const { error: comoAdmin } = await c.membroA.client
+        .from("secret_santa_assignments")
+        .select("id");
+      assert.ok(comoAdmin);
+
+      const { error: comoPlataforma } = await c.plataforma.client
+        .from("secret_santa_assignments")
+        .select("id");
+      assert.ok(comoPlataforma, "nem admin da plataforma deveria ler um par direto da tabela");
+    });
+
+    it("nenhum papel comum alcança secret_santa_reveals por select direto", async () => {
+      const { error: comoAnon } = await anonimo.from("secret_santa_reveals").select("*");
+      assert.ok(comoAnon);
+
+      const { error: comoPlataforma } = await c.plataforma.client
+        .from("secret_santa_reveals")
+        .select("*");
+      assert.ok(comoPlataforma);
+    });
+
+    it("nenhum papel comum alcança secret_santa_wishlists por select direto", async () => {
+      const { error: comoAnon } = await anonimo.from("secret_santa_wishlists").select("*");
+      assert.ok(comoAnon);
+
+      const { error: comoAdmin } = await c.membroA.client
+        .from("secret_santa_wishlists")
+        .select("*");
+      assert.ok(comoAdmin, "wishlist só sai pela função de revelação, nunca por select direto");
+    });
+  });
+
+  describe("fila e supressão de e-mail", () => {
+    it("nenhum papel comum alcança email_messages de outra organização; quem administra lê a própria", async () => {
+      const { data: msg } = await admin
+        .from("email_messages")
+        .insert({
+          event_id: c.eventos.aPublicado,
+          recipient_email: "convidado@teste.local",
+          template: "convite",
+          data: { eventTitle: "Evento", eventSlug: "x" },
+        })
+        .select("id")
+        .single();
+
+      const { error: comoAnon } = await anonimo.from("email_messages").select("*").eq("id", msg.id);
+      assert.ok(comoAnon, "anon não tem grant de select em email_messages");
+
+      const { data: comoIntruso } = await c.membroB.client
+        .from("email_messages")
+        .select("id")
+        .eq("id", msg.id);
+      assert.deepEqual(comoIntruso, [], "membro de outra organização não lê o histórico de A");
+
+      const { data: comoDono } = await c.membroA.client
+        .from("email_messages")
+        .select("id")
+        .eq("id", msg.id);
+      assert.equal(comoDono.length, 1, "quem administra o evento lê o próprio histórico");
+    });
+
+    it("anon não insere em email_messages diretamente — só via enfileiramento server-only", async () => {
+      const { error } = await anonimo.from("email_messages").insert({
+        event_id: c.eventos.aPublicado,
+        recipient_email: "forjado@teste.local",
+        template: "convite",
+        data: {},
+      });
+      assert.ok(error, "email_messages não tem grant de insert para anon/authenticated");
+    });
+
+    it("email_suppressions só é lida/gerida por quem administra o evento", async () => {
+      const { data: sup } = await admin
+        .from("email_suppressions")
+        .insert({ event_id: c.eventos.aPublicado, email: "suprimido@teste.local", reason: "descadastro" })
+        .select("id")
+        .single();
+
+      const { error: comoAnon } = await anonimo.from("email_suppressions").select("*").eq("id", sup.id);
+      assert.ok(comoAnon);
+
+      const { data: comoIntruso } = await c.membroB.client
+        .from("email_suppressions")
+        .select("id")
+        .eq("id", sup.id);
+      assert.deepEqual(comoIntruso, []);
+
+      const { data: comoDono } = await c.membroA.client
+        .from("email_suppressions")
+        .select("id")
+        .eq("id", sup.id);
+      assert.equal(comoDono.length, 1);
+    });
+
+    it("unsubscribe_email funciona sem conta e é idempotente", async () => {
+      const email = "descadastro-rls@teste.local";
+
+      const { error: primeira } = await anonimo.rpc("unsubscribe_email", {
+        p_event_id: c.eventos.aPublicado,
+        p_email: email,
+      });
+      assert.equal(primeira, null);
+
+      const { error: segunda } = await anonimo.rpc("unsubscribe_email", {
+        p_event_id: c.eventos.aPublicado,
+        p_email: email,
+      });
+      assert.equal(segunda, null, "descadastrar duas vezes não deveria dar erro");
+
+      const { count } = await admin
+        .from("email_suppressions")
+        .select("id", { count: "exact", head: true })
+        .eq("event_id", c.eventos.aPublicado)
+        .eq("email", email);
+      assert.equal(count, 1, "não deveria duplicar a linha de supressão");
     });
   });
 

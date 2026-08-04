@@ -3,24 +3,91 @@
 import { useEffect, useRef, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { Button } from "@/components/ui";
-import { SECRET_SANTA_DRAW } from "@/lib/fixtures/secret-santa";
 import type { EventSummary } from "@/lib/types";
 
-type Stage = "closed" | "opening" | "revealed";
+type Stage = "loading" | "not-drawn" | "closed" | "opening" | "revealed" | "error";
 
-export function SecretSantaReveal({ event }: { event: EventSummary }) {
-  const [stage, setStage] = useState<Stage>("closed");
+interface RevealResponse {
+  drawn: boolean;
+  receiverName?: string;
+  receiverWishlist?: string[];
+  revealedAt?: string;
+}
+
+export function SecretSantaReveal({ event, token }: { event: EventSummary; token: string | null }) {
+  const [stage, setStage] = useState<Stage>(token ? "loading" : "error");
+  const [reveal, setReveal] = useState<RevealResponse | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+
+    fetch(`/api/amigo-secreto/${token}/revelacao`)
+      .then((res) => res.json())
+      .then((body: { data?: RevealResponse; error?: string }) => {
+        if (cancelled) return;
+        if (!body.data) {
+          setStage("error");
+          return;
+        }
+        setReveal(body.data);
+        setStage(body.data.drawn ? "closed" : "not-drawn");
+      })
+      .catch(() => {
+        if (!cancelled) setStage("error");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const open = () => {
     if (stage !== "closed") return;
     setStage("opening");
     timer.current = setTimeout(() => setStage("revealed"), 650);
   };
+
+  if (stage === "loading") {
+    return (
+      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+        <div className="flex flex-1 items-center justify-center px-7 text-center text-ink-soft">
+          Carregando...
+        </div>
+      </GuestShell>
+    );
+  }
+
+  if (stage === "error") {
+    return (
+      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+        <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
+          <h1 className="mb-2.5 font-display text-[24px] font-semibold">Link inválido</h1>
+          <p className="mx-auto max-w-[260px] text-[15px] text-ink-soft">
+            Use o link de convite que você recebeu para ver seu amigo secreto.
+          </p>
+        </div>
+      </GuestShell>
+    );
+  }
+
+  if (stage === "not-drawn") {
+    return (
+      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+        <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
+          <h1 className="mb-2.5 font-display text-[24px] font-semibold">Ainda não é hora!</h1>
+          <p className="mx-auto max-w-[260px] text-[15px] text-ink-soft">
+            O sorteio ainda não foi realizado. Volte aqui depois que os anfitriões sortearem.
+          </p>
+        </div>
+      </GuestShell>
+    );
+  }
 
   return (
     <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
@@ -62,23 +129,21 @@ export function SecretSantaReveal({ event }: { event: EventSummary }) {
           <div className="w-full animate-[fade-up_0.5s_ease_both] text-center">
             <div className="mb-3.5 text-[13px] uppercase tracking-[2px] text-accent">Você tirou</div>
             <div className="mb-7 font-display text-[36px] font-semibold">
-              {SECRET_SANTA_DRAW.target}
+              {reveal?.receiverName}
             </div>
 
             <div className="mb-7 rounded-2xl border border-line bg-white px-5 py-5.5 text-left">
               <div className="mb-3.5 text-[13px] tracking-wide text-ink-soft">Lista de desejos</div>
               <div className="flex flex-col gap-2.5">
-                {SECRET_SANTA_DRAW.targetWishlist.map((item) => (
+                {(reveal?.receiverWishlist ?? []).map((item) => (
                   <div key={item} className="rounded-lg bg-paper-2 px-3 py-2.5 text-[15px]">
                     {item}
                   </div>
                 ))}
+                {(reveal?.receiverWishlist ?? []).length === 0 && (
+                  <p className="text-sm text-ink-faint">Sem lista de desejos ainda.</p>
+                )}
               </div>
-              {SECRET_SANTA_DRAW.targetNote && (
-                <p className="mt-4 text-[14px] italic leading-relaxed text-ink-soft">
-                  “{SECRET_SANTA_DRAW.targetNote}”
-                </p>
-              )}
             </div>
 
             <p className="mb-6 text-sm text-ink-faint">Guarde segredo até o grande dia!</p>

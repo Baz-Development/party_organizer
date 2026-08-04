@@ -34,19 +34,21 @@ add-supabase-foundation  ← base obrigatória
 
 ## Estado dos artefatos
 
-| Change | proposal | specs | design | tasks |
-| --- | --- | --- | --- | --- |
-| `add-supabase-foundation` | ✅ | ✅ | ✅ | ✅ (59) |
-| `add-guests-rsvp-backend` | ✅ | ✅ | — | — |
-| `add-gifts-payments-backend` | ✅ | ✅ | — | — |
-| `add-media-storage-backend` | ✅ | ✅ | — | — |
-| `add-menu-poll-backend` | ✅ | ✅ | — | — |
-| `add-secret-santa-backend` | ✅ | ✅ | — | — |
-| `add-transactional-emails` | ✅ | ✅ | — | — |
+Os sete changes estão implementados e arquivados em
+`openspec/changes/archive/`; as specs promovidas vivem em `openspec/specs/`.
 
-Só a fundação está pronta para implementação. `design` e `tasks` dos módulos são
-gerados quando cada um entrar na fila — decisões de schema tomadas hoje, seis
-changes à frente, envelheceriam antes de serem usadas.
+| Change | proposal | specs | design | tasks | Estado |
+| --- | --- | --- | --- | --- | --- |
+| `add-supabase-foundation` | ✅ | ✅ | ✅ | ✅ | Arquivado |
+| `add-guests-rsvp-backend` | ✅ | ✅ | ✅ | ✅ | Arquivado |
+| `add-media-storage-backend` | ✅ | ✅ | ✅ | ✅ | Arquivado |
+| `add-gifts-payments-backend` | ✅ | ✅ | ✅ | ✅ | Arquivado |
+| `add-menu-poll-backend` | ✅ | ✅ | ✅ | ✅ | Arquivado |
+| `add-secret-santa-backend` | ✅ | ✅ | ✅ | ✅ (46/47) | Arquivado — tela `/painel/amigo-secreto` adiada, sem mock prévio |
+| `add-transactional-emails` | ✅ | ✅ | ✅ | ✅ (33/34) | Arquivado — cobertura de teste ponta a ponta de código server-only registrada como lacuna, não implementada |
+
+`design` e `tasks` de cada módulo foram gerados só quando ele entrou na fila,
+como planejado — decisões de schema tomadas na hora, não seis changes antes.
 
 ## Fluxo por change
 

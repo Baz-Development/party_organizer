@@ -134,3 +134,40 @@ export function toGiftCheckoutError(error: { code?: string; message: string }): 
   }
   return new DbError(error.message, "desconhecido");
 }
+
+/**
+ * Códigos que as funções de `add-secret-santa-backend` levantam como
+ * `raise exception '<código>' using errcode = 'P0001'`. Mensagens
+ * deliberadamente genéricas — nenhuma cita nome ou id de participante, para
+ * que um erro nunca vaze pareamento por inferência.
+ */
+const SECRET_SANTA_ERROR_MESSAGES: Record<string, string> = {
+  convite_invalido: "Este link de convite não é válido.",
+  modulo_desabilitado: "O amigo secreto não está habilitado para este evento.",
+  sorteio_ja_realizado: "O sorteio já foi realizado.",
+  nome_duplicado: "Esse nome já está sendo usado por outro participante.",
+  participantes_insuficientes: "É preciso de pelo menos 3 participantes para sortear.",
+  sorteio_impossivel: "As restrições cadastradas tornam o sorteio impossível.",
+  sorteio_nao_realizado: "O sorteio ainda não foi realizado.",
+  ja_revelado_recusa: "Não é possível refazer o sorteio depois que alguém já revelou seu par.",
+  sem_permissao: "Você não tem permissão para esta ação.",
+  par_invalido: "Selecione dois participantes diferentes.",
+  participante_invalido: "Participante não encontrado neste evento.",
+};
+
+export class SecretSantaError extends DbError {
+  constructor(readonly code: string) {
+    super(
+      SECRET_SANTA_ERROR_MESSAGES[code] ?? "Não foi possível completar a ação.",
+      "invalido",
+    );
+    this.name = "SecretSantaError";
+  }
+}
+
+export function toSecretSantaError(error: { code?: string; message: string }): DbError {
+  if (error.code === DOMAIN_EXCEPTION && error.message in SECRET_SANTA_ERROR_MESSAGES) {
+    return new SecretSantaError(error.message);
+  }
+  return new DbError(error.message, "desconhecido");
+}

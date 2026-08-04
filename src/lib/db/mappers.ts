@@ -10,6 +10,7 @@ import type {
   Photo,
   Profile,
   ScheduleItem,
+  SecretSantaParticipant,
 } from "@/lib/types";
 
 /**
@@ -191,6 +192,26 @@ export function toGift(row: GiftRow, reservedBy?: string): Gift {
     reservedBy,
     store: row.store ?? undefined,
     note: row.note ?? undefined,
+  };
+}
+
+/**
+ * `wishlist`/`hasDrawn` chegam resolvidos por quem chama
+ * (`src/lib/db/secretSanta.ts`): a wishlist mora em `secret_santa_wishlists`,
+ * tabela separada por sigilo, e `hasDrawn` reflete o sorteio do evento, não
+ * uma coluna do participante.
+ */
+export function toSecretSantaParticipant(
+  row: { id: string; display_name: string; joined_at: string },
+  wishlist: string[],
+  hasDrawn: boolean,
+): SecretSantaParticipant {
+  return {
+    id: row.id,
+    name: row.display_name,
+    wishlist,
+    joinedAt: row.joined_at,
+    hasDrawn,
   };
 }
 

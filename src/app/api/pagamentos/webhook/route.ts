@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import type { Json } from "@/lib/database.types";
 import { UNIQUE_VIOLATION } from "@/lib/db/errors";
+import { enqueueEmail } from "@/lib/email/enqueue";
+import { processEmailQueue } from "@/lib/email/processQueue";
 import { paymentsEnv } from "@/lib/payments/env";
 import { verifyWebhookSignature } from "@/lib/payments/webhookSignature";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -96,7 +98,42 @@ export async function POST(req: Request) {
 
   await admin.from("payment_events").update({ processed_at: new Date().toISOString() }).eq("id", eventRow.id);
 
+  if (result.applied && eventType === "aprovado") {
+    after(() => enqueueReceiptEmail(admin, result.payment_id));
+  }
+
   return NextResponse.json({ received: true, applied: result.applied, reason: result.reason });
+}
+
+/**
+ * Enfileira o recibo e tenta processar a fila best-effort, sem bloquear a
+ * resposta ao provedor. Pagador sem e-mail: não enfileira.
+ */
+async function enqueueReceiptEmail(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  paymentId: string,
+): Promise<void> {
+  const { data } = await admin
+    .from("payments")
+    .select("event_id, buyer_name, buyer_email, amount_cents, gifts(name), events(title)")
+    .eq("id", paymentId)
+    .single();
+
+  if (!data?.buyer_email || !data.gifts || !data.events) return;
+
+  await enqueueEmail(admin, {
+    eventId: data.event_id,
+    recipientEmail: data.buyer_email,
+    template: "recibo_presente",
+    data: {
+      eventTitle: data.events.title,
+      buyerName: data.buyer_name,
+      giftName: data.gifts.name,
+      amountCents: data.amount_cents,
+    },
+  });
+
+  await processEmailQueue(admin);
 }
 
 function parseJson(raw: string): Record<string, unknown> | null {

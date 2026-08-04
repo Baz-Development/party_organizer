@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { RsvpError } from "@/lib/db/errors";
 import { submitOpenRsvp } from "@/lib/db/guests";
+import { enqueueRsvpConfirmationEmail } from "@/lib/email/enqueue";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitOpenRsvpSchema } from "@/lib/validation/rsvp";
 
@@ -27,6 +29,11 @@ export async function POST(
 
   try {
     const guest = await submitOpenRsvp(supabase, slug, parsed.data.name, parsed.data);
+
+    after(() =>
+      enqueueRsvpConfirmationEmail(createSupabaseAdminClient(), guest.id, parsed.data.status, parsed.data),
+    );
+
     return NextResponse.json({ data: guest }, { status: 201 });
   } catch (error) {
     if (error instanceof RsvpError) {

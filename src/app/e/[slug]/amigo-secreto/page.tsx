@@ -3,9 +3,16 @@ import { SecretSantaSignup } from "./SecretSantaSignup";
 
 export const metadata = { title: "Amigo secreto — Convite" };
 
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ convite?: string }>;
+}) {
   const { slug } = await params;
+  const { convite } = await searchParams;
   const event = await loadPublicEvent(slug, "amigo-secreto");
 
-  return <SecretSantaSignup event={event} />;
+  return <SecretSantaSignup event={event} token={convite ?? null} />;
 }
