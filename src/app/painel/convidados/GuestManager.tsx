@@ -5,6 +5,38 @@ import { Badge, Button, Input, Sheet } from "@/components/ui";
 import { shortDate } from "@/lib/format";
 import type { Guest, RsvpStatus } from "@/lib/types";
 
+const EMAIL_STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  enviando: "Enviando",
+  entregue: "Entregue",
+  falha: "Falhou",
+};
+
+const EMAIL_STATUS_TONE: Record<string, "ok" | "neutral" | "danger"> = {
+  pendente: "neutral",
+  enviando: "neutral",
+  entregue: "ok",
+  falha: "danger",
+};
+
+const EMAIL_TEMPLATE_LABEL: Record<string, string> = {
+  convite: "Convite",
+  lembrete_rsvp: "Lembrete de RSVP",
+  confirmacao_rsvp: "Confirmação de RSVP",
+  recibo_presente: "Recibo de presente",
+  revelacao_amigo_secreto: "Revelação do amigo secreto",
+  acesso_painel: "Acesso ao painel",
+};
+
+interface EmailHistoryEntry {
+  id: string;
+  recipientEmail: string;
+  template: string;
+  status: string;
+  lastError: string | null;
+  createdAt: string;
+}
+
 const FILTERS: { key: RsvpStatus | "todos"; label: string }[] = [
   { key: "todos", label: "Todos" },
   { key: "confirmado", label: "Confirmados" },
@@ -56,6 +88,10 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
   const [detail, setDetail] = useState<Guest | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<EmailHistoryEntry[]>([]);
+  const [sendingInvites, setSendingInvites] = useState(false);
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/eventos/${event.slug}/convidados`);
@@ -101,6 +137,40 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
     await load();
   }
 
+  async function handleSendInvites(guestIds?: string[]) {
+    setSendingInvites(true);
+    setInviteResult(null);
+    const res = await fetch(`/api/eventos/${event.slug}/convidados/enviar-convites`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(guestIds ? { guestIds } : {}),
+    });
+    const body = await res.json().catch(() => null);
+    setSendingInvites(false);
+
+    if (!res.ok) {
+      setInviteResult(body?.error ?? "Não foi possível enviar os convites.");
+      return;
+    }
+
+    const { enfileirados, naoEnviaveis } = body.data as {
+      enfileirados: number;
+      naoEnviaveis: { guestId: string; name: string }[];
+    };
+    setInviteResult(
+      naoEnviaveis.length > 0
+        ? `${enfileirados} convite(s) enfileirado(s). ${naoEnviaveis.length} sem e-mail cadastrado.`
+        : `${enfileirados} convite(s) enfileirado(s).`,
+    );
+  }
+
+  async function openHistory() {
+    setHistoryOpen(true);
+    const res = await fetch(`/api/eventos/${event.slug}/convidados/historico-emails`);
+    const body = await res.json().catch(() => null);
+    setHistory(body?.data ?? []);
+  }
+
   async function handleExport() {
     const res = await fetch(`/api/eventos/${event.slug}/convidados/exportar`);
     const body = await res.json();
@@ -124,6 +194,12 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
           <h1 className="font-display text-[30px] font-semibold">Convidados</h1>
         </div>
         <div className="flex flex-wrap gap-2.5">
+          <Button variant="outline" onClick={openHistory}>
+            Histórico de e-mails
+          </Button>
+          <Button variant="outline" disabled={sendingInvites} onClick={() => handleSendInvites()}>
+            {sendingInvites ? "Enviando..." : "Enviar convites pendentes"}
+          </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             Importar lista
           </Button>
@@ -133,6 +209,8 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
           <Button onClick={() => setAddOpen(true)}>Adicionar convidado</Button>
         </div>
       </div>
+
+      {inviteResult && <p className="mb-4 text-[13.5px] text-ink-soft">{inviteResult}</p>}
 
       {/* Resumo -------------------------------------------------------- */}
       <div className="my-8 flex flex-wrap gap-7">
@@ -272,16 +350,54 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
               ))}
             </dl>
 
-            <div className="flex gap-2.5">
-              <Button variant="outline" full onClick={() => setDetail(null)}>
-                Fechar
+            <div className="flex flex-col gap-2.5">
+              <Button
+                full
+                variant="outline"
+                disabled={!detail.email || sendingInvites}
+                onClick={() => handleSendInvites([detail.id])}
+              >
+                {detail.email ? "Reenviar convite" : "Sem e-mail cadastrado"}
               </Button>
-              <Button full onClick={() => handleDelete(detail)}>
-                Remover
-              </Button>
+              <div className="flex gap-2.5">
+                <Button variant="outline" full onClick={() => setDetail(null)}>
+                  Fechar
+                </Button>
+                <Button full onClick={() => handleDelete(detail)}>
+                  Remover
+                </Button>
+              </div>
             </div>
           </div>
         )}
+      </Sheet>
+
+      {/* Histórico de e-mails ------------------------------------------ */}
+      <Sheet open={historyOpen} onClose={() => setHistoryOpen(false)} maxWidth={480}>
+        <div>
+          <div className="mb-5 font-display text-[22px] font-semibold">Histórico de e-mails</div>
+          {history.length === 0 && (
+            <p className="text-[13.5px] text-ink-faint">Nenhuma mensagem enviada ainda.</p>
+          )}
+          <div className="flex flex-col gap-3">
+            {history.map((entry) => (
+              <div key={entry.id} className="rounded-xl border border-line px-4 py-3">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="text-[14px] font-medium">{entry.recipientEmail}</span>
+                  <Badge tone={EMAIL_STATUS_TONE[entry.status] ?? "neutral"}>
+                    {EMAIL_STATUS_LABEL[entry.status] ?? entry.status}
+                  </Badge>
+                </div>
+                <div className="text-[13px] text-ink-soft">
+                  {EMAIL_TEMPLATE_LABEL[entry.template] ?? entry.template} · {shortDate(entry.createdAt)}
+                </div>
+                {entry.status === "falha" && entry.lastError && (
+                  <div className="mt-1 text-[12.5px] text-danger">{entry.lastError}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </Sheet>
 
       {/* Adicionar convidado --------------------------------------- */}

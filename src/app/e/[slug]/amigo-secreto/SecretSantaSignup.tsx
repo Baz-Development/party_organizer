@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { Button, Input, LinkButton } from "@/components/ui";
 import { SECRET_SANTA_CONFIG } from "@/lib/fixtures/secret-santa";
@@ -9,22 +9,109 @@ import type { EventSummary } from "@/lib/types";
 
 const MAX_ITEMS = 5;
 
-export function SecretSantaSignup({ event }: { event: EventSummary }) {
+interface Participation {
+  displayName: string;
+  wishlist: string[];
+  joinedAt: string;
+}
+
+export function SecretSantaSignup({ event, token }: { event: EventSummary; token: string | null }) {
+  const [loading, setLoading] = useState(!!token);
+  const [participation, setParticipation] = useState<Participation | null>(null);
+  const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
   const [draft, setDraft] = useState("");
-  const [wishlist, setWishlist] = useState<string[]>([
-    "Vela aromática",
-    "Livro de receitas",
-  ]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+
+    fetch(`/api/amigo-secreto/${token}`)
+      .then((res) => res.json())
+      .then((body: { data: Participation | null }) => {
+        if (cancelled) return;
+        if (body.data) {
+          setParticipation(body.data);
+          setName(body.data.displayName);
+          setWishlist(body.data.wishlist);
+          setSaved(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const addDisabled = draft.trim().length === 0 || wishlist.length >= MAX_ITEMS;
-  const saveDisabled = wishlist.length === 0;
+  const identified = !!participation;
+  const canSave = (identified || name.trim().length > 0) && wishlist.length > 0 && !submitting;
 
   const add = () => {
     if (addDisabled) return;
     setWishlist((w) => [...w, draft.trim()]);
     setDraft("");
   };
+
+  async function handleSave() {
+    if (!token) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/amigo-secreto/${token}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          identified ? { wishlist } : { displayName: name, wishlist },
+        ),
+      });
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(body?.error ?? "Não foi possível salvar sua lista.");
+        return;
+      }
+
+      setSaved(true);
+    } catch {
+      setError("Não foi possível salvar sua lista. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <GuestShell event={event}>
+        <div className="flex flex-1 items-center justify-center px-7 text-center text-ink-soft">
+          Carregando...
+        </div>
+      </GuestShell>
+    );
+  }
+
+  if (!token) {
+    return (
+      <GuestShell event={event}>
+        <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
+          <h1 className="mb-2.5 font-display text-[26px] font-semibold leading-[1.25]">
+            Link inválido
+          </h1>
+          <p className="text-[15px] leading-relaxed text-ink-soft">
+            Use o link de convite que você recebeu para entrar no amigo secreto.
+          </p>
+        </div>
+      </GuestShell>
+    );
+  }
 
   if (saved) {
     return (
@@ -39,7 +126,7 @@ export function SecretSantaSignup({ event }: { event: EventSummary }) {
             Guarde segredo!
           </p>
           <div className="flex flex-col gap-3">
-            <LinkButton href={`/e/${event.slug}/amigo-secreto/revelacao`}>
+            <LinkButton href={`/e/${event.slug}/amigo-secreto/revelacao?convite=${token}`}>
               Ver meu sorteio
             </LinkButton>
             <Button variant="outline" onClick={() => setSaved(false)}>
@@ -60,10 +147,25 @@ export function SecretSantaSignup({ event }: { event: EventSummary }) {
           amigo secreto na mão certa.
         </p>
 
-        <div className="mb-6 flex items-center gap-3 rounded-xl bg-paper-2 px-4 py-3.5">
-          <div className="text-[13px] text-ink-soft">Participando como</div>
-          <div className="text-sm font-semibold">Você</div>
-        </div>
+        {!identified && (
+          <div className="mb-5">
+            <span className="mb-2 block text-[13px] tracking-wide text-ink-soft">
+              Como quer aparecer no sorteio?
+            </span>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Seu nome ou apelido"
+            />
+          </div>
+        )}
+
+        {identified && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl bg-paper-2 px-4 py-3.5">
+            <div className="text-[13px] text-ink-soft">Participando como</div>
+            <div className="text-sm font-semibold">{name}</div>
+          </div>
+        )}
 
         <div className="mb-7 rounded-2xl bg-ink px-4.5 py-4">
           <div className="mb-1.5 text-xs uppercase tracking-wider text-accent-soft">
@@ -122,10 +224,16 @@ export function SecretSantaSignup({ event }: { event: EventSummary }) {
           </p>
         )}
 
+        {error && (
+          <p className="mt-4 rounded-xl bg-[rgba(200,60,60,0.08)] px-4 py-3 text-[14px] text-[#a63c3c]">
+            {error}
+          </p>
+        )}
+
         <div className="flex-1" />
         <div className="pt-6">
-          <Button full size="lg" disabled={saveDisabled} onClick={() => setSaved(true)}>
-            Salvar minha lista
+          <Button full size="lg" disabled={!canSave} onClick={handleSave}>
+            {submitting ? "Salvando..." : "Salvar minha lista"}
           </Button>
         </div>
       </div>

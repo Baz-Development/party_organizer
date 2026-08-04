@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { RsvpError } from "@/lib/db/errors";
 import { getGuestByInviteToken, submitRsvp } from "@/lib/db/guests";
+import { enqueueRsvpConfirmationEmail } from "@/lib/email/enqueue";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitRsvpSchema } from "@/lib/validation/rsvp";
 
@@ -44,6 +46,11 @@ export async function POST(
 
   try {
     const guest = await submitRsvp(supabase, token, parsed.data);
+
+    after(() =>
+      enqueueRsvpConfirmationEmail(createSupabaseAdminClient(), guest.id, parsed.data.status, parsed.data),
+    );
+
     return NextResponse.json({ data: guest });
   } catch (error) {
     if (error instanceof RsvpError) {

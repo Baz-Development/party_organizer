@@ -11,6 +11,91 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      email_messages: {
+        Row: {
+          attempts: number
+          created_at: string
+          data: Json
+          event_id: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          provider_message_id: string | null
+          recipient_email: string
+          status: Database["public"]["Enums"]["email_status"]
+          template: Database["public"]["Enums"]["email_template"]
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          event_id: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          provider_message_id?: string | null
+          recipient_email: string
+          status?: Database["public"]["Enums"]["email_status"]
+          template: Database["public"]["Enums"]["email_template"]
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          event_id?: string
+          id?: string
+          last_error?: string | null
+          next_attempt_at?: string
+          provider_message_id?: string | null
+          recipient_email?: string
+          status?: Database["public"]["Enums"]["email_status"]
+          template?: Database["public"]["Enums"]["email_template"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          event_id: string
+          id: string
+          reason: Database["public"]["Enums"]["email_suppression_reason"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_id: string
+          id?: string
+          reason: Database["public"]["Enums"]["email_suppression_reason"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_id?: string
+          id?: string
+          reason?: Database["public"]["Enums"]["email_suppression_reason"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_suppressions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_modules: {
         Row: {
           event_id: string
@@ -878,6 +963,218 @@ export type Database = {
           },
         ]
       }
+      secret_santa_assignments: {
+        Row: {
+          draw_id: string
+          giver_participant_id: string
+          id: string
+          receiver_participant_id: string
+        }
+        Insert: {
+          draw_id: string
+          giver_participant_id: string
+          id?: string
+          receiver_participant_id: string
+        }
+        Update: {
+          draw_id?: string
+          giver_participant_id?: string
+          id?: string
+          receiver_participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_assignments_draw_id_fkey"
+            columns: ["draw_id"]
+            isOneToOne: false
+            referencedRelation: "secret_santa_draws"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_santa_assignments_giver_participant_id_fkey"
+            columns: ["giver_participant_id"]
+            isOneToOne: false
+            referencedRelation: "secret_santa_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_santa_assignments_receiver_participant_id_fkey"
+            columns: ["receiver_participant_id"]
+            isOneToOne: false
+            referencedRelation: "secret_santa_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secret_santa_draws: {
+        Row: {
+          event_id: string
+          executed_at: string
+          executed_by: string | null
+          id: string
+        }
+        Insert: {
+          event_id: string
+          executed_at?: string
+          executed_by?: string | null
+          id?: string
+        }
+        Update: {
+          event_id?: string
+          executed_at?: string
+          executed_by?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_draws_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secret_santa_exclusions: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          participant_a_id: string
+          participant_b_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          participant_a_id: string
+          participant_b_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          participant_a_id?: string
+          participant_b_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_exclusions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_santa_exclusions_participant_a_id_fkey"
+            columns: ["participant_a_id"]
+            isOneToOne: false
+            referencedRelation: "secret_santa_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_santa_exclusions_participant_b_id_fkey"
+            columns: ["participant_b_id"]
+            isOneToOne: false
+            referencedRelation: "secret_santa_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secret_santa_participants: {
+        Row: {
+          created_at: string
+          display_name: string
+          event_id: string
+          guest_id: string
+          id: string
+          joined_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          event_id: string
+          guest_id: string
+          id?: string
+          joined_at?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          event_id?: string
+          guest_id?: string
+          id?: string
+          joined_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "secret_santa_participants_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secret_santa_reveals: {
+        Row: {
+          assignment_id: string
+          revealed_at: string
+        }
+        Insert: {
+          assignment_id: string
+          revealed_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          revealed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_reveals_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
+            referencedRelation: "secret_santa_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secret_santa_wishlists: {
+        Row: {
+          items: string[]
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          items?: string[]
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          items?: string[]
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "secret_santa_wishlists_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "secret_santa_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -924,6 +1221,35 @@ export type Database = {
           guest_id: string
         }[]
       }
+      _secret_santa_try: {
+        Args: {
+          p_exclusion_pairs: string[]
+          p_givers: string[]
+          p_idx: number
+          p_pool: string[]
+        }
+        Returns: string[]
+      }
+      add_secret_santa_exclusion: {
+        Args: {
+          p_event_id: string
+          p_participant_a: string
+          p_participant_b: string
+        }
+        Returns: {
+          created_at: string
+          event_id: string
+          id: string
+          participant_a_id: string
+          participant_b_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "secret_santa_exclusions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       assert_can_submit_photo: {
         Args: { p_event_slug: string; p_visitor_id: string }
         Returns: string
@@ -959,6 +1285,29 @@ export type Database = {
         }
       }
       can_manage_event: { Args: { event: string }; Returns: boolean }
+      claim_pending_email_messages: {
+        Args: { p_limit: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          data: Json
+          event_id: string
+          id: string
+          last_error: string | null
+          next_attempt_at: string
+          provider_message_id: string | null
+          recipient_email: string
+          status: Database["public"]["Enums"]["email_status"]
+          template: Database["public"]["Enums"]["email_template"]
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_guest_by_invite_token: {
         Args: { p_token: string }
         Returns: {
@@ -993,6 +1342,24 @@ export type Database = {
           poll_id: string
         }[]
       }
+      get_my_secret_santa: {
+        Args: { p_token: string }
+        Returns: {
+          drawn: boolean
+          receiver_name: string
+          receiver_wishlist: string[]
+          revealed_at: string
+        }[]
+      }
+      get_my_secret_santa_participation: {
+        Args: { p_token: string }
+        Returns: {
+          display_name: string
+          joined_at: string
+          participant_id: string
+          wishlist: string[]
+        }[]
+      }
       get_payment_status: {
         Args: { p_payment_id: string }
         Returns: {
@@ -1005,10 +1372,35 @@ export type Database = {
           status: Database["public"]["Enums"]["payment_status"]
         }[]
       }
+      get_secret_santa_status: {
+        Args: { p_event_id: string }
+        Returns: {
+          drawn_at: string
+          participant_count: number
+        }[]
+      }
       is_event_public: { Args: { event: string }; Returns: boolean }
       is_org_member: { Args: { org: string }; Returns: boolean }
       is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
+      join_secret_santa: {
+        Args: { p_display_name: string; p_token: string }
+        Returns: {
+          created_at: string
+          display_name: string
+          event_id: string
+          guest_id: string
+          id: string
+          joined_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "secret_santa_participants"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       process_payment_event: {
         Args: {
           p_amount_cents: number
@@ -1029,6 +1421,40 @@ export type Database = {
           p_visitor_id: string
         }
         Returns: number
+      }
+      redo_secret_santa_draw: {
+        Args: { p_event_id: string }
+        Returns: {
+          event_id: string
+          executed_at: string
+          executed_by: string | null
+          id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "secret_santa_draws"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      remove_secret_santa_exclusion: {
+        Args: { p_exclusion_id: string }
+        Returns: undefined
+      }
+      run_secret_santa_draw: {
+        Args: { p_event_id: string }
+        Returns: {
+          event_id: string
+          executed_at: string
+          executed_by: string | null
+          id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "secret_santa_draws"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       start_gift_checkout: {
         Args: {
@@ -1170,8 +1596,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      unsubscribe_email: {
+        Args: { p_email: string; p_event_id: string }
+        Returns: undefined
+      }
+      update_secret_santa_wishlist: {
+        Args: { p_token: string; p_wishlist: string[] }
+        Returns: {
+          items: string[]
+          participant_id: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "secret_santa_wishlists"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
+      email_status: "pendente" | "enviando" | "entregue" | "falha"
+      email_suppression_reason: "retorno_permanente" | "descadastro"
+      email_template:
+        | "convite"
+        | "lembrete_rsvp"
+        | "confirmacao_rsvp"
+        | "recibo_presente"
+        | "revelacao_amigo_secreto"
+        | "acesso_painel"
       event_kind:
         | "casamento"
         | "debutante"
@@ -1327,6 +1780,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      email_status: ["pendente", "enviando", "entregue", "falha"],
+      email_suppression_reason: ["retorno_permanente", "descadastro"],
+      email_template: [
+        "convite",
+        "lembrete_rsvp",
+        "confirmacao_rsvp",
+        "recibo_presente",
+        "revelacao_amigo_secreto",
+        "acesso_painel",
+      ],
       event_kind: [
         "casamento",
         "debutante",
