@@ -7,12 +7,12 @@ export default async function Page({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
   searchParams: Promise<{ convite?: string }>;
 }) {
-  const { slug } = await params;
+  const { id } = await params;
   const { convite } = await searchParams;
-  const event = await loadPublicEvent(slug, "rsvp");
+  const event = await loadPublicEvent(id, "rsvp");
 
   return <RsvpFlow event={event} token={convite ?? null} />;
 }

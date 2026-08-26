@@ -8,7 +8,7 @@ import { listMembershipIds } from "@/lib/db/profiles";
 import { createEventSchema } from "@/lib/validation/event";
 
 export type CriarEventoResult =
-  | { ok: true; slug: string }
+  | { ok: true; id: string; slug: string }
   | { ok: false; message: string };
 
 /**
@@ -42,7 +42,7 @@ export async function criarEvento(input: unknown): Promise<CriarEventoResult> {
     );
 
     revalidatePath("/painel");
-    return { ok: true, slug: event.slug };
+    return { ok: true, id: event.id, slug: event.slug };
   } catch (error) {
     if (error instanceof DbError) return { ok: false, message: error.message };
     throw error;

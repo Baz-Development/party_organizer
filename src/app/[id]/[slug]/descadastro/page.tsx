@@ -7,12 +7,12 @@ export default async function Page({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
   searchParams: Promise<{ email?: string }>;
 }) {
-  const { slug } = await params;
+  const { id } = await params;
   const { email } = await searchParams;
-  const event = await loadPublicEvent(slug);
+  const event = await loadPublicEvent(id);
 
   return <DescadastroConfirm event={event} email={email ?? ""} />;
 }

@@ -3,6 +3,7 @@ import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { requireSession } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
+import { eventUrl } from "@/lib/event-url";
 import { themeVars } from "@/lib/themes";
 
 const ITEMS = [
@@ -36,7 +37,7 @@ export default async function PainelLayout({
           <div className="flex items-center gap-2">
             {event && (
               <Link
-                href={`/e/${event.slug}`}
+                href={eventUrl(event)}
                 className="rounded-lg border border-line-strong px-3.5 py-2 text-[13.5px] font-semibold text-ink no-underline hover:bg-paper-2"
               >
                 Ver página pública

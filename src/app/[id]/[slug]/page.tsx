@@ -1,4 +1,4 @@
-import { getEventBySlug } from "@/lib/db/events";
+import { getEventById } from "@/lib/db/events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { EventPage } from "./EventPage";
 import { loadPublicEvent } from "./load-event";
@@ -6,13 +6,13 @@ import { loadPublicEvent } from "./load-event";
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = await params;
+  const { id } = await params;
 
   // Metadata não pode dar 404, então lê direto em vez de usar o loader.
   const supabase = await createSupabaseServerClient();
-  const event = await getEventBySlug(supabase, slug);
+  const event = await getEventById(supabase, id);
 
   return {
     title: event ? `${event.title} — Convite` : "Evento não encontrado",
@@ -23,10 +23,10 @@ export async function generateMetadata({
 export default async function Page({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = await params;
-  const event = await loadPublicEvent(slug);
+  const { id } = await params;
+  const event = await loadPublicEvent(id);
 
   return <EventPage event={event} />;
 }

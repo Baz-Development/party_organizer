@@ -6,6 +6,7 @@ import type { GiftsSummary } from "@/lib/db/gifts";
 import type { GuestStats } from "@/lib/db/guests";
 import { useCountdown } from "@/components/Countdown";
 import { Button } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import { ACTIVITY } from "@/lib/fixtures/painel";
 import { brl, longDate } from "@/lib/format";
 import type { EventSummary } from "@/lib/types";
@@ -36,7 +37,7 @@ export function PainelOverview({
   const pct = stats.convidados ? Math.round((stats.confirmados / stats.convidados) * 100) : 0;
 
   const [copied, setCopied] = useState(false);
-  const publicUrl = `${siteUrl.replace(/^https?:\/\//, "")}/e/${event.slug}`;
+  const publicUrl = `${siteUrl.replace(/^https?:\/\//, "")}${eventUrl(event)}`;
 
   const shortcuts = [
     {
@@ -52,12 +53,12 @@ export function PainelOverview({
     {
       title: "Presentes",
       desc: "Acompanhe a lista de presentes e as contribuições recebidas.",
-      href: `/e/${event.slug}/presentes`,
+      href: eventUrl(event, "/presentes"),
     },
     {
       title: "Galeria e mural",
       desc: "Aprove fotos e recados enviados pelos convidados.",
-      href: `/e/${event.slug}/galeria`,
+      href: eventUrl(event, "/galeria"),
     },
   ];
 

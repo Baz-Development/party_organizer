@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { Button, Input, LinkButton } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import { SECRET_SANTA_CONFIG } from "@/lib/fixtures/secret-santa";
 import { longDate } from "@/lib/format";
 import type { EventSummary } from "@/lib/types";
@@ -126,7 +127,7 @@ export function SecretSantaSignup({ event, token }: { event: EventSummary; token
             Guarde segredo!
           </p>
           <div className="flex flex-col gap-3">
-            <LinkButton href={`/e/${event.slug}/amigo-secreto/revelacao?convite=${token}`}>
+            <LinkButton href={eventUrl(event, `/amigo-secreto/revelacao?convite=${token}`)}>
               Ver meu sorteio
             </LinkButton>
             <Button variant="outline" onClick={() => setSaved(false)}>

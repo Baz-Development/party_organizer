@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, LinkButton, Stepper } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary } from "@/lib/types";
 
@@ -139,7 +140,7 @@ export function RsvpFlow({ event, token }: { event: EventSummary; token: string 
               </button>
             ) : (
               <Link
-                href={`/e/${event.slug}`}
+                href={eventUrl(event)}
                 aria-label="Voltar ao convite"
                 className="flex h-8 w-8 items-center justify-center rounded-full text-xl text-ink no-underline"
               >
@@ -316,12 +317,12 @@ export function RsvpFlow({ event, token }: { event: EventSummary; token: string 
             </p>
 
             {attending === "sim" && (
-              <LinkButton href={`/e/${event.slug}/presentes`} size="lg">
+              <LinkButton href={eventUrl(event, "/presentes")} size="lg">
                 Ver lista de presentes
               </LinkButton>
             )}
             <Link
-              href={`/e/${event.slug}`}
+              href={eventUrl(event)}
               className="mt-4 text-[15px] text-ink-soft underline"
             >
               Voltar ao convite

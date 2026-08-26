@@ -71,6 +71,28 @@ export async function getEventBySlug(
   return toEventSummary(data as unknown as EventRowWithContent);
 }
 
+/**
+ * Traz o evento pelo id — é o que identifica a rota pública (`/[id]/[slug]`).
+ * O slug na URL é só cosmético; quem resolve a página é o id.
+ */
+export async function getEventById(
+  client: Client,
+  id: string,
+): Promise<EventSummary | null> {
+  const { data, error } = await client
+    .from("events")
+    .select(EVENT_SELECT)
+    .eq("id", id)
+    // Id inexistente e evento invisível pela RLS devem ser indistinguíveis —
+    // os dois viram 404.
+    .maybeSingle();
+
+  if (error) throw new DbError(error.message, "desconhecido");
+  if (!data) return null;
+
+  return toEventSummary(data as unknown as EventRowWithContent);
+}
+
 export async function createEvent(
   client: Client,
   input: CreateEventInput,

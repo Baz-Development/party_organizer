@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Countdown } from "@/components/Countdown";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import { brl, longDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary, Gift, ModuleId } from "@/lib/types";
@@ -169,7 +170,7 @@ export function EventPage({ event }: { event: EventSummary }) {
               ))}
             </div>
             <Link
-              href={`/e/${event.slug}/presentes`}
+              href={eventUrl(event, "/presentes")}
               className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper"
             >
               Ver lista completa
@@ -190,7 +191,7 @@ export function EventPage({ event }: { event: EventSummary }) {
               ))}
             </div>
             <Link
-              href={`/e/${event.slug}/galeria`}
+              href={eventUrl(event, "/galeria")}
               className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
             >
               Enviar minhas fotos
@@ -210,7 +211,7 @@ export function EventPage({ event }: { event: EventSummary }) {
               minuto.
             </p>
             <Link
-              href={`/e/${event.slug}/cardapio`}
+              href={eventUrl(event, "/cardapio")}
               className="inline-block rounded-xl bg-accent px-8 py-4 text-[15px] font-semibold text-on-accent no-underline"
             >
               Votar no cardápio
@@ -242,7 +243,7 @@ export function EventPage({ event }: { event: EventSummary }) {
                   {secretJoined ? "Inscrição confirmada" : "Participar do sorteio"}
                 </button>
                 <Link
-                  href={`/e/${event.slug}/amigo-secreto`}
+                  href={eventUrl(event, "/amigo-secreto")}
                   className="rounded-[10px] border border-paper/40 px-7 py-3.5 text-[15px] font-semibold text-paper no-underline"
                 >
                   Ver meu sorteio
@@ -269,7 +270,7 @@ export function EventPage({ event }: { event: EventSummary }) {
         </Button>
       </div>
 
-      <RsvpSheet open={rsvpOpen} onClose={() => setRsvpOpen(false)} slug={event.slug} />
+      <RsvpSheet open={rsvpOpen} onClose={() => setRsvpOpen(false)} event={event} />
     </div>
   );
 }
@@ -281,11 +282,11 @@ export function EventPage({ event }: { event: EventSummary }) {
 function RsvpSheet({
   open,
   onClose,
-  slug,
+  event,
 }: {
   open: boolean;
   onClose: () => void;
-  slug: string;
+  event: EventSummary;
 }) {
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
@@ -332,7 +333,7 @@ function RsvpSheet({
           </div>
           <p className="mb-7 text-center text-sm text-ink-soft">
             Preencha os dados abaixo para confirmar.{" "}
-            <Link href={`/e/${slug}/rsvp`} className="text-accent underline">
+            <Link href={eventUrl(event, "/rsvp")} className="text-accent underline">
               ou use o fluxo completo
             </Link>
           </p>

@@ -1,4 +1,4 @@
-import { getShowcaseSlug } from "@/lib/db/featured";
+import { getShowcaseEvent } from "@/lib/db/featured";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Landing } from "./Landing";
 
@@ -8,7 +8,7 @@ import { Landing } from "./Landing";
  */
 export default async function Page() {
   const supabase = await createSupabaseServerClient();
-  const demoSlug = await getShowcaseSlug(supabase);
+  const demoEvent = await getShowcaseEvent(supabase);
 
-  return <Landing demoSlug={demoSlug} />;
+  return <Landing demoEvent={demoEvent} />;
 }

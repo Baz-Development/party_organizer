@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getShowcaseSlug } from "@/lib/db/featured";
+import { getShowcaseEvent, type ShowcaseEvent } from "@/lib/db/featured";
+import { eventUrl } from "@/lib/event-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { themeVars } from "@/lib/themes";
 
@@ -9,10 +10,13 @@ export const metadata = {
 };
 
 /** Usado quando o banco ainda não tem nenhum evento publicado. */
-const SLUG_EXEMPLO = "marina-e-thiago";
+const EVENTO_EXEMPLO: ShowcaseEvent = {
+  id: "00000000-0000-0000-0000-000000000000",
+  slug: "marina-e-thiago",
+};
 
 const buildGroups = (
-  slug: string,
+  event: ShowcaseEvent,
 ): { title: string; desc: string; items: { href: string; label: string; note: string }[] }[] =>
   [
     {
@@ -20,13 +24,13 @@ const buildGroups = (
       desc: "O que o convidado vê pelo link do evento.",
       items: [
         { href: "/", label: "Landing Page", note: "Vitrine do produto, planos e FAQ" },
-        { href: `/e/${slug}`, label: "Página do Evento", note: "Capa, contagem regressiva e módulos" },
-        { href: `/e/${slug}/rsvp`, label: "Fluxo RSVP", note: "3 passos: identificar, responder, agradecer" },
-        { href: `/e/${slug}/presentes`, label: "Lista de Presentes", note: "Lista → checkout (Pix/cartão) → sucesso" },
-        { href: `/e/${slug}/galeria`, label: "Galeria e Mural", note: "Mosaico de fotos + recados (tem estado vazio)" },
-        { href: `/e/${slug}/cardapio`, label: "Votação de Cardápio", note: "Bebidas, entrada, prato e sobremesa" },
-        { href: `/e/${slug}/amigo-secreto`, label: "Amigo Secreto — Cadastro", note: "Lista de desejos do participante" },
-        { href: `/e/${slug}/amigo-secreto/revelacao`, label: "Amigo Secreto — Revelação", note: "Envelope animado com o sorteado" },
+        { href: eventUrl(event), label: "Página do Evento", note: "Capa, contagem regressiva e módulos" },
+        { href: eventUrl(event, "/rsvp"), label: "Fluxo RSVP", note: "3 passos: identificar, responder, agradecer" },
+        { href: eventUrl(event, "/presentes"), label: "Lista de Presentes", note: "Lista → checkout (Pix/cartão) → sucesso" },
+        { href: eventUrl(event, "/galeria"), label: "Galeria e Mural", note: "Mosaico de fotos + recados (tem estado vazio)" },
+        { href: eventUrl(event, "/cardapio"), label: "Votação de Cardápio", note: "Bebidas, entrada, prato e sobremesa" },
+        { href: eventUrl(event, "/amigo-secreto"), label: "Amigo Secreto — Cadastro", note: "Lista de desejos do participante" },
+        { href: eventUrl(event, "/amigo-secreto/revelacao"), label: "Amigo Secreto — Revelação", note: "Envelope animado com o sorteado" },
       ],
     },
     {
@@ -62,10 +66,10 @@ const buildApiRoutes = (slug: string) => [
 
 export default async function RotasPage() {
   const supabase = await createSupabaseServerClient();
-  const slug = (await getShowcaseSlug(supabase)) ?? SLUG_EXEMPLO;
+  const event = (await getShowcaseEvent(supabase)) ?? EVENTO_EXEMPLO;
 
-  const GROUPS = buildGroups(slug);
-  const API_ROUTES = buildApiRoutes(slug);
+  const GROUPS = buildGroups(event);
+  const API_ROUTES = buildApiRoutes(event.slug);
 
   return (
     <div style={themeVars("terracota")} className="min-h-screen bg-paper-3">

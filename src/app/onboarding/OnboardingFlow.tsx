@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Field, Input, Toggle } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import type { EventKind, ModuleId } from "@/lib/types";
 import { criarEvento } from "./actions";
 
@@ -77,7 +78,7 @@ export function OnboardingFlow() {
     mural: true,
   });
 
-  const [slug, setSlug] = useState<string | null>(null);
+  const [createdEvent, setCreatedEvent] = useState<{ id: string; slug: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -99,7 +100,7 @@ export function OnboardingFlow() {
       });
 
       if (result.ok) {
-        setSlug(result.slug);
+        setCreatedEvent({ id: result.id, slug: result.slug });
         setStep(4);
       } else {
         setError(result.message);
@@ -341,11 +342,11 @@ export function OnboardingFlow() {
                 ))}
               </div>
 
-              {slug && (
+              {createdEvent && (
                 <p className="mb-8 text-[14.5px] leading-relaxed text-ink-soft">
                   Endereço do convite:{" "}
-                  <Link href={`/e/${slug}`} className="font-semibold text-accent">
-                    /e/{slug}
+                  <Link href={eventUrl(createdEvent)} className="font-semibold text-accent">
+                    {eventUrl(createdEvent)}
                   </Link>
                   <br />
                   Ele começa em rascunho — publique quando estiver pronto.

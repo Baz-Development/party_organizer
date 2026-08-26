@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { eventUrl } from "@/lib/event-url";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export function GuestShell({
       >
         <div className="flex items-center gap-3 px-6 pb-3 pt-6">
           <Link
-            href={backHref ?? `/e/${event.slug}`}
+            href={backHref ?? eventUrl(event)}
             aria-label="Voltar"
             className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-ink no-underline hover:bg-paper-2"
           >

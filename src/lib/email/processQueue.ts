@@ -77,9 +77,10 @@ async function processOne(
 
   const data = (message.data ?? {}) as Record<string, unknown>;
   const eventSlug = typeof data.eventSlug === "string" ? data.eventSlug : undefined;
+  const eventPath = eventSlug ? `/${message.event_id}/${eventSlug}` : undefined;
   const unsubscribeLink =
-    eventSlug && !isEssentialTemplate(message.template)
-      ? `${publicEnv.NEXT_PUBLIC_SITE_URL}/e/${eventSlug}/descadastro?email=${encodeURIComponent(message.recipient_email)}`
+    eventPath && !isEssentialTemplate(message.template)
+      ? `${publicEnv.NEXT_PUBLIC_SITE_URL}${eventPath}/descadastro?email=${encodeURIComponent(message.recipient_email)}`
       : "";
 
   let link = "";
@@ -101,8 +102,8 @@ async function processOne(
 
     link =
       message.template === "revelacao_amigo_secreto"
-        ? `${publicEnv.NEXT_PUBLIC_SITE_URL}/e/${eventSlug}/amigo-secreto/revelacao?convite=${token}`
-        : `${publicEnv.NEXT_PUBLIC_SITE_URL}/e/${eventSlug}/rsvp?convite=${token}`;
+        ? `${publicEnv.NEXT_PUBLIC_SITE_URL}${eventPath}/amigo-secreto/revelacao?convite=${token}`
+        : `${publicEnv.NEXT_PUBLIC_SITE_URL}${eventPath}/rsvp?convite=${token}`;
   }
 
   const render = emailTemplates[message.template](data, link, unsubscribeLink);

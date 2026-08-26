@@ -6,6 +6,7 @@ import { ImageSlot } from "@/components/ImageSlot";
 import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Button, Input, Sheet } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary, Organization } from "@/lib/types";
 import { useNow } from "@/lib/use-now";
@@ -241,7 +242,7 @@ export function OrganizacaoPanel({
                 return (
                   <Link
                     key={ev.id}
-                    href={`/e/${ev.slug}`}
+                    href={eventUrl(ev)}
                     className="flex items-center gap-6 bg-paper px-6 py-5 text-ink no-underline hover:bg-paper-2"
                   >
                     <div className="w-14 shrink-0 text-center">

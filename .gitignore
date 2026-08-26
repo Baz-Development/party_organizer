@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 # ...exceto o arquivo de exemplo, que é a documentação viva das variáveis
 !.env.example
+.env.dev
 
 # vercel
 .vercel

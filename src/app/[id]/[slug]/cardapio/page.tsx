@@ -9,15 +9,15 @@ export default async function Page({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
   searchParams: Promise<{ convite?: string }>;
 }) {
-  const { slug } = await params;
+  const { id } = await params;
   const { convite } = await searchParams;
-  const event = await loadPublicEvent(slug, "cardapio");
+  const event = await loadPublicEvent(id, "cardapio");
 
   const supabase = await createSupabaseServerClient();
-  const polls = await getMenuPollsForGuest(supabase, slug);
+  const polls = await getMenuPollsForGuest(supabase, event.slug);
 
   return <MenuVote event={event} polls={polls} token={convite ?? null} />;
 }

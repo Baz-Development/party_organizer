@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { Button } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import type { EventSummary } from "@/lib/types";
 
 type Stage = "loading" | "not-drawn" | "closed" | "opening" | "revealed" | "error";
@@ -55,7 +56,7 @@ export function SecretSantaReveal({ event, token }: { event: EventSummary; token
 
   if (stage === "loading") {
     return (
-      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+      <GuestShell event={event} backHref={eventUrl(event, "/amigo-secreto")}>
         <div className="flex flex-1 items-center justify-center px-7 text-center text-ink-soft">
           Carregando...
         </div>
@@ -65,7 +66,7 @@ export function SecretSantaReveal({ event, token }: { event: EventSummary; token
 
   if (stage === "error") {
     return (
-      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+      <GuestShell event={event} backHref={eventUrl(event, "/amigo-secreto")}>
         <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
           <h1 className="mb-2.5 font-display text-[24px] font-semibold">Link inválido</h1>
           <p className="mx-auto max-w-[260px] text-[15px] text-ink-soft">
@@ -78,7 +79,7 @@ export function SecretSantaReveal({ event, token }: { event: EventSummary; token
 
   if (stage === "not-drawn") {
     return (
-      <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+      <GuestShell event={event} backHref={eventUrl(event, "/amigo-secreto")}>
         <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
           <h1 className="mb-2.5 font-display text-[24px] font-semibold">Ainda não é hora!</h1>
           <p className="mx-auto max-w-[260px] text-[15px] text-ink-soft">
@@ -90,7 +91,7 @@ export function SecretSantaReveal({ event, token }: { event: EventSummary; token
   }
 
   return (
-    <GuestShell event={event} backHref={`/e/${event.slug}/amigo-secreto`}>
+    <GuestShell event={event} backHref={eventUrl(event, "/amigo-secreto")}>
       <div className="flex flex-1 flex-col items-center justify-center px-7 py-6">
         {stage !== "revealed" ? (
           <div className="animate-[fade-up_0.4s_ease_both] text-center">

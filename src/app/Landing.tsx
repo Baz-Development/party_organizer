@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
 import { LinkButton, Pill } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
+import type { ShowcaseEvent } from "@/lib/db/featured";
 
 const STEPS = [
   {
@@ -94,11 +96,11 @@ const FAQS = [
 ];
 
 /**
- * `demoSlug` é o evento publicado que o botão "Ver exemplo ao vivo" abre.
+ * `demoEvent` é o evento publicado que o botão "Ver exemplo ao vivo" abre.
  * Vem do servidor porque depende do banco; sem nenhum evento publicado, o
  * botão simplesmente não aparece.
  */
-export function Landing({ demoSlug }: { demoSlug: string | null }) {
+export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
   const [eventType, setEventType] = useState<EventTypeKey>("casamento");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const active = EVENT_TYPES[eventType];
@@ -132,8 +134,8 @@ export function Landing({ demoSlug }: { demoSlug: string | null }) {
             <LinkButton href="/onboarding" size="lg">
               Criar minha página do evento
             </LinkButton>
-            {demoSlug && (
-              <LinkButton href={`/e/${demoSlug}`} size="lg" variant="outline">
+            {demoEvent && (
+              <LinkButton href={eventUrl(demoEvent)} size="lg" variant="outline">
                 Ver exemplo ao vivo
               </LinkButton>
             )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, LinkButton } from "@/components/ui";
+import { eventUrl } from "@/lib/event-url";
 import type { EventSummary, MenuPoll } from "@/lib/types";
 
 type Selection = Record<string, string[]>;
@@ -134,7 +135,7 @@ export function MenuVote({
             <Button variant="outline" onClick={() => setSent(false)}>
               Trocar meu voto
             </Button>
-            <LinkButton href={`/e/${event.slug}`} variant="ghost">
+            <LinkButton href={eventUrl(event)} variant="ghost">
               Voltar ao convite
             </LinkButton>
           </div>
