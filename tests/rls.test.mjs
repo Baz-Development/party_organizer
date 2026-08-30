@@ -5,7 +5,7 @@ import { admin, anonimo, montarCenario } from "./harness.mjs";
 /**
  * Testes de política contra o banco local.
  *
- * Uma RLS mal escrita vaza dados entre organizações — é o risco mais grave
+ * Uma RLS mal escrita vaza dados entre anfitriões — é o risco mais grave
  * desta fundação, e não é o tipo de coisa que aparece em revisão de código.
  * Estes testes falam com o banco como cada papel real fala.
  *
@@ -50,7 +50,7 @@ describe("RLS", () => {
         .eq("id", c.eventos.aRascunho)
         .maybeSingle();
 
-      assert.ok(data, "o membro da organização dona deveria ver o rascunho");
+      assert.ok(data, "o anfitrião do evento deveria ver o próprio rascunho");
     });
 
     it("cronograma de rascunho não vaza junto", async () => {
@@ -63,8 +63,8 @@ describe("RLS", () => {
     });
   });
 
-  describe("isolamento entre organizações", () => {
-    it("membro de A não lê rascunho de B", async () => {
+  describe("isolamento entre anfitriões", () => {
+    it("anfitrião A não lê rascunho de B", async () => {
       const { data } = await c.membroA.client
         .from("events")
         .select("id, title, welcome")
@@ -74,39 +74,7 @@ describe("RLS", () => {
       assert.equal(data, null, "nenhum campo do evento de B pode ser revelado");
     });
 
-    it("membro de A não lê a organização B", async () => {
-      const { data } = await c.membroA.client
-        .from("organizations")
-        .select("id")
-        .eq("id", c.orgB)
-        .maybeSingle();
-
-      assert.equal(data, null);
-    });
-
-    it("membro de A não lê os membros de B", async () => {
-      const { data } = await c.membroA.client
-        .from("organization_members")
-        .select("profile_id")
-        .eq("organization_id", c.orgB);
-
-      assert.deepEqual(data, []);
-    });
-
-    it("listagem por organização de B, feita por A, não devolve nada gerenciável", async () => {
-      const { data } = await c.membroA.client
-        .from("events")
-        .select("id, status")
-        .eq("organization_id", c.orgB);
-
-      // Pedir explicitamente a organização alheia não abre exceção nenhuma.
-      assert.deepEqual(
-        (data ?? []).filter((e) => e.status !== "publicado"),
-        [],
-      );
-    });
-
-    it("membro de A não altera evento de B", async () => {
+    it("anfitrião A não altera evento de B", async () => {
       const { data } = await c.membroA.client
         .from("events")
         .update({ title: "invadido" })
@@ -125,7 +93,7 @@ describe("RLS", () => {
       assert.notEqual(original.title, "invadido");
     });
 
-    it("membro de A não apaga evento de B", async () => {
+    it("anfitrião A não apaga evento de B", async () => {
       const { data } = await c.membroA.client
         .from("events")
         .delete()
@@ -135,18 +103,10 @@ describe("RLS", () => {
       assert.deepEqual(data, []);
     });
 
-    it("membro de A não se adiciona à organização B", async () => {
-      const { error } = await c.membroA.client
-        .from("organization_members")
-        .insert({ organization_id: c.orgB, profile_id: c.membroA.id });
-
-      assert.ok(error, "a política de insert deveria recusar");
-    });
-
-    it("membro de A não move o próprio evento para a organização B", async () => {
+    it("anfitrião A não transfere o próprio evento para B", async () => {
       const { data, error } = await c.membroA.client
         .from("events")
-        .update({ organization_id: c.orgB })
+        .update({ host_profile_id: c.membroB.id })
         .eq("id", c.eventos.aRascunho)
         .select("id");
 
@@ -159,11 +119,11 @@ describe("RLS", () => {
 
       const { data: depois } = await c.membroA.client
         .from("events")
-        .select("organization_id")
+        .select("host_profile_id")
         .eq("id", c.eventos.aRascunho)
         .single();
 
-      assert.equal(depois.organization_id, c.orgA, "o evento continua na organização A");
+      assert.equal(depois.host_profile_id, c.membroA.id, "o evento continua com o anfitrião A");
     });
   });
 
@@ -204,14 +164,6 @@ describe("RLS", () => {
       assert.deepEqual(alheio, []);
     });
 
-    it("cliente comum não cadastra organização", async () => {
-      const { error } = await c.cliente.client
-        .from("organizations")
-        .insert({ name: "Organização pirata", plan: "parceiro" });
-
-      assert.ok(error, "só admin da plataforma cadastra organização");
-    });
-
     it("cliente não cria evento em nome de outra pessoa", async () => {
       const { error } = await c.cliente.client.from("events").insert({
         slug: `forjado-${c.tag}`,
@@ -226,16 +178,7 @@ describe("RLS", () => {
   });
 
   describe("admin da plataforma", () => {
-    it("enxerga as duas organizações", async () => {
-      const { data } = await c.plataforma.client
-        .from("organizations")
-        .select("id")
-        .in("id", [c.orgA, c.orgB]);
-
-      assert.equal(data.length, 2);
-    });
-
-    it("enxerga rascunho de qualquer organização", async () => {
+    it("enxerga rascunho de qualquer anfitrião", async () => {
       const { data } = await c.plataforma.client
         .from("events")
         .select("id")
@@ -283,7 +226,7 @@ describe("RLS", () => {
   });
 
   describe("fila e supressão de e-mail", () => {
-    it("nenhum papel comum alcança email_messages de outra organização; quem administra lê a própria", async () => {
+    it("nenhum papel comum alcança email_messages de outro anfitrião; quem administra lê a própria", async () => {
       const { data: msg } = await admin
         .from("email_messages")
         .insert({
@@ -302,7 +245,7 @@ describe("RLS", () => {
         .from("email_messages")
         .select("id")
         .eq("id", msg.id);
-      assert.deepEqual(comoIntruso, [], "membro de outra organização não lê o histórico de A");
+      assert.deepEqual(comoIntruso, [], "outro anfitrião não lê o histórico de A");
 
       const { data: comoDono } = await c.membroA.client
         .from("email_messages")
@@ -365,25 +308,6 @@ describe("RLS", () => {
         .eq("event_id", c.eventos.aPublicado)
         .eq("email", email);
       assert.equal(count, 1, "não deveria duplicar a linha de supressão");
-    });
-  });
-
-  describe("composição da organização", () => {
-    it("a organização não fica sem proprietário", async () => {
-      const { error } = await c.membroA.client
-        .from("organization_members")
-        .delete()
-        .eq("organization_id", c.orgA)
-        .eq("profile_id", c.membroA.id);
-
-      assert.ok(error, "remover o último proprietário deveria ser recusado");
-
-      const { data } = await c.membroA.client
-        .from("organization_members")
-        .select("profile_id")
-        .eq("organization_id", c.orgA);
-
-      assert.equal(data.length, 1, "a composição deveria continuar intacta");
     });
   });
 });

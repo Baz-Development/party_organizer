@@ -4,8 +4,9 @@
 
 Define o evento como entidade central do produto: sua criação pelo anfitrião, o
 slug público único que endereça `/e/[slug]`, o ciclo de vida rascunho →
-publicado → encerrado, quais módulos estão habilitados, o conteúdo editorial e o
-cronograma, e o vínculo opcional com uma organização parceira.
+publicado → encerrado, quais módulos estão habilitados, e o conteúdo editorial e
+o cronograma.
+
 ## Requirements
 ### Requirement: Criação de evento pelo anfitrião
 
@@ -60,25 +61,26 @@ encerrado. Somente eventos publicados MUST ser visíveis ao público.
 
 #### Scenario: Publicação
 
-- **WHEN** o anfitrião publica um evento em rascunho
+- **WHEN** o anfitrião ou um admin publica um evento em rascunho
 - **THEN** o estado passa a publicado
 - **AND** a página pública do evento passa a responder para qualquer visitante
 
 #### Scenario: Despublicação
 
-- **WHEN** o anfitrião retorna um evento publicado para rascunho
+- **WHEN** o anfitrião ou um admin retorna um evento publicado para rascunho
 - **THEN** a página pública deixa de responder para visitantes sem vínculo
 - **AND** os dados já coletados permanecem preservados
 
 #### Scenario: Encerramento
 
-- **WHEN** o anfitrião encerra um evento
+- **WHEN** o anfitrião ou um admin encerra um evento
 - **THEN** o evento deixa de aceitar novas interações de convidado
-- **AND** continua acessível em leitura ao anfitrião e à organização
+- **AND** continua acessível em leitura ao anfitrião e ao admin
 
-#### Scenario: Somente anfitrião ou organização publica
+#### Scenario: Somente anfitrião ou admin publica
 
-- **WHEN** um usuário sem vínculo com o evento tenta alterar seu estado
+- **WHEN** um usuário sem vínculo com o evento e sem papel de admin tenta alterar
+  seu estado
 - **THEN** a operação é recusada por falta de autorização
 
 ### Requirement: Módulos habilitados por evento
@@ -125,24 +127,6 @@ descrição.
 
 - **WHEN** um tema de cor fora do conjunto suportado é enviado
 - **THEN** a operação é recusada com erro de validação
-
-### Requirement: Vínculo opcional com organização
-
-Um evento MUST poder pertencer opcionalmente a uma organização e, quando pertence,
-os membros dessa organização MUST ter o mesmo alcance de leitura e edição que o
-anfitrião do evento.
-
-#### Scenario: Evento vinculado
-
-- **WHEN** um evento pertence a uma organização
-- **THEN** os membros dessa organização conseguem ler e editar o evento
-- **AND** ele aparece no painel da organização
-
-#### Scenario: Evento sem organização
-
-- **WHEN** um evento não pertence a nenhuma organização
-- **THEN** apenas o anfitrião e os admins conseguem lê-lo e editá-lo
-- **AND** ele não aparece em nenhum painel de organização
 
 ### Requirement: Prazo de RSVP e lista aberta
 

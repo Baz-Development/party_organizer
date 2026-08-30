@@ -3,7 +3,7 @@
 Protótipo visual das 14 telas do projeto Claude Design
 (`af466763-6cc2-4746-9103-6226934b80a5`), portado para Next.js.
 
-Eventos, organizações, perfis e cronograma vivem no Supabase (Postgres + Auth),
+Eventos, perfis e cronograma vivem no Supabase (Postgres + Auth),
 com RLS em todas as tabelas. Os módulos ainda não migrados (presentes, galeria,
 mural, cardápio, amigo secreto) continuam lendo fixtures em `src/lib/fixtures/`
 até que cada um ganhe seu próprio change.
@@ -102,21 +102,19 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase
 | `/painel/convidados` | Gestão de Convidados |
 | `/painel/editor` | Editor da Página |
 
-### Parceiros e plataforma
+### Plataforma
 
 | Rota | Tela |
 | --- | --- |
-| `/organizacao` | Painel da Organização |
 | `/admin` | Painel Admin |
 
 Slugs de exemplo carregados pelo seed: `marina-e-thiago`, `15-anos-sofia`,
 `aniversario-do-bento`, `convencao-nexus-2026`.
 
-`/painel`, `/painel/*`, `/onboarding`, `/organizacao` e `/admin` exigem sessão.
+`/painel`, `/painel/*`, `/onboarding` e `/admin` exigem sessão.
 Entre em `/entrar` com um dos e-mails do seed — `admin@exemplo.local` para o
-painel administrativo, `contato@santaclara.com.br` para o de organização,
-`marina-e-thiago@exemplo.local` para o de cliente — e abra o link mágico na
-caixa de e-mail local (`http://127.0.0.1:54424`).
+painel administrativo, `marina-e-thiago@exemplo.local` para o de cliente — e
+abra o link mágico na caixa de e-mail local (`http://127.0.0.1:54424`).
 
 ## Rotas de API
 
@@ -126,7 +124,6 @@ caixa de e-mail local (`http://127.0.0.1:54424`).
 | GET | `/api/eventos/[slug]` | do banco, 404 real |
 | GET · POST | `/api/eventos/[slug]/convidados` | evento real, convidados de fixture |
 | GET | `/api/eventos/[slug]/presentes` | evento real, presentes de fixture |
-| GET | `/api/organizacoes` | do banco; 401 sem sessão |
 | GET | `/api/auth/callback` | troca o link mágico por sessão |
 | POST | `/api/auth/sair` | encerra a sessão |
 
@@ -147,9 +144,9 @@ src/
     rotas/                   Índice de todas as telas
     onboarding/              Criação real de evento
     painel/                  layout + visão geral, convidados, editor
-    organizacao/  admin/     Layouts que guardam papel
+    admin/                   Layout que guarda o papel de admin
     e/[slug]/                Páginas públicas do evento
-    api/                     Route handlers (eventos, organizações, sessão)
+    api/                     Route handlers (eventos, sessão)
   components/
     ui.tsx                   Button, Input, Sheet, Badge, Toggle, Stepper...
     ImageSlot.tsx            Placeholder de foto (equivale ao <image-slot>)
@@ -251,8 +248,8 @@ npm run verify   # lint + tipos + build + testes
 ```
 
 Os testes de política (`tests/rls.test.mjs`) falam com o banco local
-autenticados como cliente, membro da organização A, membro da organização B e
-admin, e afirmam que leitura e escrita cruzadas são negadas. Exigem
+autenticados como cliente A, cliente B e admin, e afirmam que leitura e escrita
+cruzadas entre clientes são negadas. Exigem
 `npm run db:start`. `tests/auth.test.mjs` percorre o link mágico de ponta a
 ponta e é pulado se a aplicação não estiver rodando.
 

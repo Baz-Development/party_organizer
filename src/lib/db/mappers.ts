@@ -5,8 +5,6 @@ import type {
   Guest,
   ModuleId,
   MuralMessage,
-  Organization,
-  OrganizationMember,
   Photo,
   Profile,
   ScheduleItem,
@@ -25,7 +23,6 @@ import type {
 type Tables = Database["public"]["Tables"];
 
 type EventRow = Tables["events"]["Row"];
-type OrganizationRow = Tables["organizations"]["Row"];
 type ProfileRow = Tables["profiles"]["Row"];
 export type GuestRow = Tables["guests"]["Row"];
 export type PhotoRow = Tables["photos"]["Row"];
@@ -84,7 +81,6 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     // por quem chama `toEventSummary` quando precisa dela.
     gallery: [],
     status: row.status,
-    organizationId: row.organization_id ?? undefined,
     rsvpDeadline: row.rsvp_deadline ?? undefined,
     guestListOpen: row.guest_list_open,
     moderationPolicy: row.moderation_policy,
@@ -99,22 +95,6 @@ function toScheduleItem(
     time: row.time,
     title: row.title,
     desc: row.description ?? "",
-  };
-}
-
-export function toOrganization(
-  row: OrganizationRow,
-  counts: { events: number; activeEvents: number },
-): Organization {
-  return {
-    id: row.id,
-    name: row.name,
-    city: row.city ?? "",
-    plan: row.plan,
-    events: counts.events,
-    activeEvents: counts.activeEvents,
-    contact: row.contact ?? "",
-    since: row.since,
   };
 }
 
@@ -212,20 +192,5 @@ export function toSecretSantaParticipant(
     wishlist,
     joinedAt: row.joined_at,
     hasDrawn,
-  };
-}
-
-export function toOrganizationMember(row: {
-  organization_id: string;
-  profile_id: string;
-  role: Database["public"]["Enums"]["org_member_role"];
-  profiles: Pick<ProfileRow, "email" | "display_name"> | null;
-}): OrganizationMember {
-  return {
-    organizationId: row.organization_id,
-    profileId: row.profile_id,
-    role: row.role,
-    email: row.profiles?.email ?? "",
-    displayName: row.profiles?.display_name ?? row.profiles?.email ?? "",
   };
 }

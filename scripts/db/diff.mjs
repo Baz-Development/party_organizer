@@ -23,13 +23,36 @@ if (result.status !== 0) {
 
 // O CLI imprime o SQL necessário para alinhar o banco às migrations.
 // Saída vazia (fora as mensagens informativas) significa schema em dia.
+// Versões recentes do CLI ainda anexam uma linha JSON de resumo
+// (`{"diff":"", ...}`) — quando `diff` vem vazio, o schema está em dia.
+const jsonSummary = result.stdout
+  .split("\n")
+  .map((line) => line.trim())
+  .filter((line) => line.startsWith("{") && line.endsWith("}"))
+  .map((line) => {
+    try {
+      return JSON.parse(line);
+    } catch {
+      return null;
+    }
+  })
+  .find((parsed) => parsed && typeof parsed.diff === "string");
+
 const diff = result.stdout
   .split("\n")
-  .filter((line) => !line.startsWith("Connecting") && !line.startsWith("Diffing"))
+  .filter(
+    (line) =>
+      !line.startsWith("Connecting") &&
+      !line.startsWith("Diffing") &&
+      !(line.trim().startsWith("{") && line.trim().endsWith("}")),
+  )
   .join("\n")
   .trim();
 
-const inSync = diff === "" || /No schema changes found/i.test(diff);
+const inSync =
+  (jsonSummary ? jsonSummary.diff.trim() === "" : false) ||
+  diff === "" ||
+  /No schema changes found/i.test(diff);
 
 if (inSync) {
   console.log(`Schema em dia com as migrations (${target.replace("--", "")}).`);

@@ -132,7 +132,6 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy: Database["public"]["Enums"]["moderation_policy"]
-          organization_id: string | null
           rsvp_deadline: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
@@ -154,7 +153,6 @@ export type Database = {
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
-          organization_id?: string | null
           rsvp_deadline?: string | null
           slug: string
           status?: Database["public"]["Enums"]["event_status"]
@@ -176,7 +174,6 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
           moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
-          organization_id?: string | null
           rsvp_deadline?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["event_status"]
@@ -192,13 +189,6 @@ export type Database = {
             columns: ["host_profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "events_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -580,72 +570,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      organization_members: {
-        Row: {
-          created_at: string
-          organization_id: string
-          profile_id: string
-          role: Database["public"]["Enums"]["org_member_role"]
-        }
-        Insert: {
-          created_at?: string
-          organization_id: string
-          profile_id: string
-          role?: Database["public"]["Enums"]["org_member_role"]
-        }
-        Update: {
-          created_at?: string
-          organization_id?: string
-          profile_id?: string
-          role?: Database["public"]["Enums"]["org_member_role"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_members_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "organization_members_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      organizations: {
-        Row: {
-          city: string | null
-          contact: string | null
-          created_at: string
-          id: string
-          name: string
-          plan: Database["public"]["Enums"]["org_plan"]
-          since: string
-        }
-        Insert: {
-          city?: string | null
-          contact?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          plan?: Database["public"]["Enums"]["org_plan"]
-          since?: string
-        }
-        Update: {
-          city?: string | null
-          contact?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          plan?: Database["public"]["Enums"]["org_plan"]
-          since?: string
-        }
-        Relationships: []
       }
       payment_events: {
         Row: {
@@ -1197,7 +1121,6 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy: Database["public"]["Enums"]["moderation_policy"]
-          organization_id: string | null
           rsvp_deadline: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
@@ -1380,8 +1303,6 @@ export type Database = {
         }[]
       }
       is_event_public: { Args: { event: string }; Returns: boolean }
-      is_org_member: { Args: { org: string }; Returns: boolean }
-      is_org_owner: { Args: { org: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       join_secret_santa: {
         Args: { p_display_name: string; p_token: string }
@@ -1644,15 +1565,13 @@ export type Database = {
         | "cardapio"
         | "amigo-secreto"
       mural_status: "pendente" | "aprovada" | "oculta"
-      org_member_role: "proprietario" | "colaborador"
-      org_plan: "parceiro" | "premium" | "enterprise"
       payment_status: "pendente" | "pago" | "falho" | "reembolsado"
       photo_status: "pendente" | "aprovada" | "oculta"
       reaction_target: "foto" | "recado"
       reservation_status: "ativa" | "expirada" | "concluida" | "cancelada"
       rsvp_status: "pendente" | "confirmado" | "recusado"
       theme_key: "oliva" | "terracota" | "marinho" | "dourado"
-      user_role: "cliente" | "organizacao" | "admin"
+      user_role: "cliente" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1811,15 +1730,13 @@ export const Constants = {
         "amigo-secreto",
       ],
       mural_status: ["pendente", "aprovada", "oculta"],
-      org_member_role: ["proprietario", "colaborador"],
-      org_plan: ["parceiro", "premium", "enterprise"],
       payment_status: ["pendente", "pago", "falho", "reembolsado"],
       photo_status: ["pendente", "aprovada", "oculta"],
       reaction_target: ["foto", "recado"],
       reservation_status: ["ativa", "expirada", "concluida", "cancelada"],
       rsvp_status: ["pendente", "confirmado", "recusado"],
       theme_key: ["oliva", "terracota", "marinho", "dourado"],
-      user_role: ["cliente", "organizacao", "admin"],
+      user_role: ["cliente", "admin"],
     },
   },
 } as const

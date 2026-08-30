@@ -52,7 +52,7 @@ export default async function EntrarPage({
             Entrar
           </h1>
           <p className="mb-7 text-[15px] leading-relaxed text-ink-soft">
-            Para clientes, organizações parceiras e administradores.
+            Para clientes e para a Equipe Villa Glam.
           </p>
 
           <EntrarForm next={next} />

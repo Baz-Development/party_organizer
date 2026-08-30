@@ -130,7 +130,6 @@ describe("amigo secreto", () => {
         .from("events")
         .insert({
           slug: `sorteio-${tagSuffix}-${c.tag}`,
-          organization_id: c.orgA,
           host_profile_id: c.membroA.id,
           kind: "casamento",
           title: `Evento sorteio ${tagSuffix}`,
@@ -304,7 +303,6 @@ describe("amigo secreto", () => {
         .from("events")
         .insert({
           slug: `revelacao-${c.tag}`,
-          organization_id: c.orgA,
           host_profile_id: c.membroA.id,
           kind: "casamento",
           title: "Evento revelação",
@@ -374,7 +372,6 @@ describe("amigo secreto", () => {
         .from("events")
         .insert({
           slug: `nao-sorteado-${c.tag}`,
-          organization_id: c.orgA,
           host_profile_id: c.membroA.id,
           kind: "casamento",
           title: "Evento não sorteado",
@@ -398,7 +395,6 @@ describe("amigo secreto", () => {
         .from("events")
         .insert({
           slug: `refazer-${c.tag}`,
-          organization_id: c.orgA,
           host_profile_id: c.membroA.id,
           kind: "casamento",
           title: "Evento refazer",

@@ -91,7 +91,6 @@ const FAQS = [
   { q: "Meus convidados precisam criar conta?", a: "Não. Eles acessam tudo por um link, sem cadastro ou senha." },
   { q: "Posso cancelar quando quiser?", a: "Sim, sem multa e sem burocracia." },
   { q: "Funciona para qualquer tipo de festa?", a: "Sim — casamento, debutante, aniversário infantil, corporativo e formatura." },
-  { q: "Minha casa de eventos já é parceira, preciso pagar de novo?", a: "Não. Se sua casa de eventos participa do programa de parceiros, seu acesso já está incluso." },
   { q: "Posso mudar a cor e o tema depois?", a: "Sim, quantas vezes quiser, direto pelo editor." },
 ];
 
@@ -111,9 +110,6 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       <header className="mx-auto flex max-w-[1160px] items-center justify-between px-8 pt-6">
         <div className="font-display text-xl font-semibold">Convite</div>
         <nav className="flex items-center gap-6">
-          <a href="#parceiros" className="text-sm font-semibold text-ink-soft no-underline hover:text-ink">
-            Sou uma casa de eventos
-          </a>
           <Link href="/painel" className="text-sm font-semibold text-ink-soft no-underline hover:text-ink">
             Entrar
           </Link>
@@ -295,21 +291,6 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
         </div>
       </section>
 
-      {/* Parceiros ---------------------------------------------------- */}
-      <section id="parceiros" className="bg-paper-3 px-8 py-12">
-        <div className="mx-auto flex max-w-[840px] flex-wrap items-center justify-between gap-6">
-          <div>
-            <div className="mb-1 text-[16px] font-semibold">É uma casa de eventos ou buffet?</div>
-            <div className="text-[14.5px] text-ink-soft">
-              Ofereça isso como diferencial para seus clientes.
-            </div>
-          </div>
-          <LinkButton href="/organizacao" variant="outline">
-            Conhecer o programa de parceiros
-          </LinkButton>
-        </div>
-      </section>
-
       {/* FAQ ---------------------------------------------------------- */}
       <section className="mx-auto max-w-[800px] px-8 py-22">
         <h2 className="mb-11 text-center font-display text-[34px] font-semibold">
@@ -357,9 +338,6 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
             </Link>
             <Link href="/painel" className="text-ink-soft no-underline hover:text-ink">
               Painel do cliente
-            </Link>
-            <Link href="/organizacao" className="text-ink-soft no-underline hover:text-ink">
-              Painel da organização
             </Link>
             <Link href="/admin" className="text-ink-soft no-underline hover:text-ink">
               Admin

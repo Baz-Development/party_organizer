@@ -5,8 +5,8 @@
  * próprio: dependem dos módulos que geram os eventos (RSVP, presentes, mídia)
  * e de uma decisão sobre observabilidade e billing.
  *
- * As contagens que **já** são reais — total de eventos e eventos ativos por
- * organização — vêm de `src/lib/db/organizations.ts`, não daqui.
+ * As contagens que **já** são reais — total de eventos e eventos ativos —
+ * vêm de `src/lib/db/events.ts`, não daqui.
  */
 import type { Activity } from "@/lib/types";
 
@@ -23,8 +23,8 @@ export const ACTIVITY: Activity[] = [
 /**
  * Métricas financeiras da plataforma. Dependem de billing, que não existe.
  *
- * Contagem de eventos e de organizações **não** está aqui: essas são reais e
- * saem do banco.
+ * Contagem de eventos e de contas **não** está aqui: essas são reais e saem
+ * do banco.
  */
 export const PLATFORM_FINANCE = {
   convidadosMes: 28450,

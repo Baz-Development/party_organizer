@@ -5,8 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 /**
  * Lista de eventos, escopada pela RLS: um visitante sem sessão recebe só os
  * publicados; um cliente autenticado recebe também os próprios rascunhos; um
- * membro de organização, os da organização. Não há filtro por dono aqui —
- * quem escopa é o banco.
+ * admin recebe todos. Não há filtro por dono aqui — quem escopa é o banco.
  */
 export async function GET() {
   const supabase = await createSupabaseServerClient();

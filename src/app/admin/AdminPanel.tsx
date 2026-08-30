@@ -7,26 +7,17 @@ import { Badge } from "@/components/ui";
 import { ADMIN_SERIES, PLATFORM_FINANCE } from "@/lib/fixtures/painel";
 import { shortDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
-import type { EventSummary, Organization, Profile } from "@/lib/types";
-
-const PLAN_LABEL: Record<Organization["plan"], string> = {
-  parceiro: "Parceiro",
-  premium: "Premium",
-  enterprise: "Enterprise",
-};
+import type { EventSummary, Profile } from "@/lib/types";
 
 const ROLE_LABEL: Record<Profile["role"], string> = {
   cliente: "Cliente",
-  organizacao: "Organização",
   admin: "Admin",
 };
 
 export function AdminPanel({
-  organizations,
   events,
   profiles,
 }: {
-  organizations: Organization[];
   events: EventSummary[];
   profiles: Profile[];
 }) {
@@ -34,6 +25,7 @@ export function AdminPanel({
 
   const eventosAtivos = events.filter((e) => e.status === "publicado").length;
   const rascunhos = events.filter((e) => e.status === "rascunho").length;
+  const clientes = profiles.filter((p) => p.role === "cliente").length;
 
   /**
    * As duas primeiras métricas são contadas do banco. As financeiras seguem
@@ -48,8 +40,8 @@ export function AdminPanel({
       real: true,
     },
     {
-      label: "Organizações",
-      value: String(organizations.length),
+      label: "Contas de cliente",
+      value: String(clientes),
       hint: `${profiles.length} pessoas com conta`,
       real: true,
     },
@@ -73,7 +65,6 @@ export function AdminPanel({
         brand="Convite · Admin"
         items={[
           { href: "/admin", label: "Visão geral" },
-          { href: "/organizacao", label: "Organizações" },
           { href: "/painel", label: "Painel do cliente" },
         ]}
         right={<SairButton />}
@@ -126,30 +117,23 @@ export function AdminPanel({
           </div>
         </div>
 
-        {/* Organizações -------------------------------------------------- */}
-        <SectionHeader title="Organizações parceiras" href="/organizacao" cta="Ver painel" />
-        <TableCard
-          headers={["Organização", "Cidade", "Plano", "Eventos ativos", "Total", "Desde"]}
-          minWidth={760}
-        >
-          {organizations.map((o) => (
-            <tr key={o.id} className="border-b border-[rgba(42,39,36,0.06)]">
-              <td className="px-6 py-4 text-[15px] font-medium">{o.name}</td>
-              <td className="px-6 py-4 text-[14.5px] text-ink-2">{o.city || "—"}</td>
+        {/* Eventos ----------------------------------------------------- */}
+        <SectionHeader title="Eventos" href="/painel" cta="Painel do cliente" />
+        <TableCard headers={["Evento", "Anfitrião", "Cidade", "Estado"]} minWidth={640}>
+          {events.map((e) => (
+            <tr key={e.id} className="border-b border-[rgba(42,39,36,0.06)]">
+              <td className="px-6 py-4 text-[15px] font-medium">{e.title}</td>
+              <td className="px-6 py-4 text-[14.5px] text-ink-2">{e.hosts || "—"}</td>
+              <td className="px-6 py-4 text-[14.5px] text-ink-2">{e.city || "—"}</td>
               <td className="px-6 py-4">
-                <Badge tone={o.plan === "enterprise" ? "accent" : "neutral"}>
-                  {PLAN_LABEL[o.plan]}
-                </Badge>
+                <Badge tone={e.status === "publicado" ? "accent" : "neutral"}>{e.status}</Badge>
               </td>
-              <td className="px-6 py-4 text-[14.5px] text-ink-2">{o.activeEvents}</td>
-              <td className="px-6 py-4 text-[14.5px] text-ink-2">{o.events}</td>
-              <td className="px-6 py-4 text-[14.5px] text-ink-soft">{shortDate(o.since)}</td>
             </tr>
           ))}
-          {organizations.length === 0 && (
+          {events.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-6 py-12 text-center text-[15px] text-ink-faint">
-                Nenhuma organização cadastrada.
+              <td colSpan={4} className="px-6 py-12 text-center text-[15px] text-ink-faint">
+                Nenhum evento cadastrado.
               </td>
             </tr>
           )}

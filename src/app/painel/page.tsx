@@ -12,8 +12,8 @@ export default async function PainelDoCliente() {
   const { supabase, user } = await requireSession("/painel");
 
   // Sem filtro por dono na aplicação: a RLS já entrega só o que é dele. O
-  // `hostProfileId` aqui é para separar "eventos que eu criei" de eventos que
-  // enxergo por pertencer a uma organização.
+  // `hostProfileId` aqui restringe à lista de eventos em que a pessoa é
+  // anfitriã (um admin veria todos sem ele).
   const events = await listEvents(supabase, { hostProfileId: user.id });
   const event = events[0];
 

@@ -59,7 +59,7 @@ describe("pagamentos", () => {
       assert.ok(error);
     });
 
-    it("organização de outro evento não lê o pagamento", async () => {
+    it("anfitrião de outro evento não lê o pagamento", async () => {
       const giftId = await criarPresenteSimples("Presente de A");
       const checkout = await iniciarCheckout(giftId, null, "Comprador");
 
@@ -75,7 +75,7 @@ describe("pagamentos", () => {
         .select("id")
         .eq("id", checkout.payment_id)
         .maybeSingle();
-      assert.equal(paraB, null, "organização de outro evento não pode ver este pagamento");
+      assert.equal(paraB, null, "anfitrião de outro evento não pode ver este pagamento");
     });
 
     it("anon não executa process_payment_event", async () => {

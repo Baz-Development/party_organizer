@@ -7,8 +7,8 @@ import { publicEnv } from "@/lib/env.public";
  *
  * Nenhuma decisão de autorização mora aqui. Um matcher que deixe de cobrir uma
  * rota, ou uma Server Function movida de arquivo, removeria a proteção em
- * silêncio. Quem decide acesso são os layouts de servidor de `/painel`,
- * `/organizacao` e `/admin`, com a RLS do banco como última linha de defesa.
+ * silêncio. Quem decide acesso são os layouts de servidor de `/painel` e
+ * `/admin`, com a RLS do banco como última linha de defesa.
  *
  * Em Next.js 16 o arquivo se chama `proxy.ts` e a função exportada, `proxy`
  * (o antigo `middleware` foi renomeado).

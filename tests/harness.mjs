@@ -60,50 +60,46 @@ async function criarUsuario(email, role) {
 }
 
 /**
- * Monta um cenário completo e isolado: duas organizações que não se conhecem,
- * um cliente sem organização e um admin da plataforma.
+ * Monta um cenário completo e isolado: dois anfitriões (`cliente`) que não se
+ * conhecem e um admin da plataforma. O isolamento a proteger é por evento e por
+ * anfitrião — não há mais fronteira de organização.
+ *
+ * `membroA`/`membroB` são anfitriões comuns; os nomes são históricos, mantidos
+ * para não reescrever os testes que dependem deles.
  *
  * Cada execução usa um sufixo único para que rodar os testes duas vezes
  * seguidas não esbarre em e-mail ou slug repetido.
  */
 export async function montarCenario() {
   const tag = randomUUID().slice(0, 8);
-  const criados = { users: [], organizations: [], events: [] };
+  const criados = { users: [], events: [] };
 
   const [cliente, membroA, membroB, plataforma] = await Promise.all([
     criarUsuario(`cliente-${tag}@teste.local`, "cliente"),
-    criarUsuario(`org-a-${tag}@teste.local`, "organizacao"),
-    criarUsuario(`org-b-${tag}@teste.local`, "organizacao"),
+    criarUsuario(`anfitriao-a-${tag}@teste.local`, "cliente"),
+    criarUsuario(`anfitriao-b-${tag}@teste.local`, "cliente"),
     criarUsuario(`admin-${tag}@teste.local`, "admin"),
   ]);
   criados.users.push(cliente.id, membroA.id, membroB.id, plataforma.id);
 
-  const orgA = await criarOrganizacao(`Organização A ${tag}`, membroA.id);
-  const orgB = await criarOrganizacao(`Organização B ${tag}`, membroB.id);
-  criados.organizations.push(orgA, orgB);
-
   const eventos = {
     aPublicado: await criarEvento({
       slug: `a-publicado-${tag}`,
-      organizationId: orgA,
       hostProfileId: membroA.id,
       status: "publicado",
     }),
     aRascunho: await criarEvento({
       slug: `a-rascunho-${tag}`,
-      organizationId: orgA,
       hostProfileId: membroA.id,
       status: "rascunho",
     }),
     bRascunho: await criarEvento({
       slug: `b-rascunho-${tag}`,
-      organizationId: orgB,
       hostProfileId: membroB.id,
       status: "rascunho",
     }),
     doCliente: await criarEvento({
       slug: `cliente-${tag}`,
-      organizationId: null,
       hostProfileId: cliente.id,
       status: "rascunho",
     }),
@@ -116,35 +112,16 @@ export async function montarCenario() {
     membroA,
     membroB,
     plataforma,
-    orgA,
-    orgB,
     eventos,
     limpar: () => limpar(criados),
   };
 }
 
-async function criarOrganizacao(name, ownerId) {
-  const { data, error } = await admin
-    .from("organizations")
-    .insert({ name, plan: "parceiro" })
-    .select("id")
-    .single();
-  if (error) throw new Error(`Falha ao criar organização: ${error.message}`);
-
-  const { error: memberError } = await admin
-    .from("organization_members")
-    .insert({ organization_id: data.id, profile_id: ownerId, role: "proprietario" });
-  if (memberError) throw new Error(`Falha ao vincular membro: ${memberError.message}`);
-
-  return data.id;
-}
-
-async function criarEvento({ slug, organizationId, hostProfileId, status }) {
+async function criarEvento({ slug, hostProfileId, status }) {
   const { data, error } = await admin
     .from("events")
     .insert({
       slug,
-      organization_id: organizationId,
       host_profile_id: hostProfileId,
       kind: "casamento",
       title: `Evento ${slug}`,
@@ -158,10 +135,9 @@ async function criarEvento({ slug, organizationId, hostProfileId, status }) {
   return data.id;
 }
 
-async function limpar({ users, organizations, events }) {
+async function limpar({ users, events }) {
   // Eventos antes de perfis: host_profile_id não tem cascade.
   await admin.from("events").delete().in("id", events);
-  await admin.from("organizations").delete().in("id", organizations);
   for (const id of users) {
     await admin.auth.admin.deleteUser(id);
   }

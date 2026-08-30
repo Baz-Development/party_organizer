@@ -50,6 +50,12 @@ Os sete changes estão implementados e arquivados em
 `design` e `tasks` de cada módulo foram gerados só quando ele entrou na fila,
 como planejado — decisões de schema tomadas na hora, não seis changes antes.
 
+## Ajustes pós-fundação
+
+| Change | Efeito |
+| --- | --- |
+| `simplificar-papeis-cliente-admin` | Remove o módulo `organizacoes` (papel `organizacao`, tabelas `organizations`/`organization_members`, `/organizacao`, `events.organization_id`). O MVP Villa Glam tem só dois papéis autenticados: `cliente` e `admin`. |
+
 ## Fluxo por change
 
 ```bash

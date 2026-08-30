@@ -46,18 +46,3 @@ export async function updateProfile(
 
   return toProfile(data);
 }
-
-/** Organizações a que o perfil pertence — usado pelos guardas de rota. */
-export async function listMembershipIds(
-  client: Client,
-  profileId: string,
-): Promise<string[]> {
-  const { data, error } = await client
-    .from("organization_members")
-    .select("organization_id")
-    .eq("profile_id", profileId);
-
-  if (error) throw new DbError(error.message, "desconhecido");
-
-  return data.map((row) => row.organization_id);
-}

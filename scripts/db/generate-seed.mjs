@@ -67,11 +67,11 @@ function list(values) {
 
 export async function generateSeed() {
   const mocks = await import(pathToFileURL(MOCK_PATH).href);
-  const { EVENTS, ORGANIZATIONS } = mocks;
+  const { EVENTS } = mocks;
 
   // ---------------------------------------------------------------------
-  // Pessoas: um admin, um proprietário por organização, um anfitrião por
-  // evento. Todos entram por link mágico — não há senha no seed.
+  // Pessoas: um admin e um anfitrião por evento. Todos entram por link
+  // mágico — não há senha no seed.
   // ---------------------------------------------------------------------
   const people = new Map();
 
@@ -84,24 +84,16 @@ export async function generateSeed() {
 
   addPerson(ADMIN_EMAIL, "Admin da plataforma", "admin");
 
-  const orgOwner = new Map();
-  for (const org of ORGANIZATIONS) {
-    const email = org.contact || `${org.id}@${EMAIL_DOMAIN}`;
-    orgOwner.set(org.id, addPerson(email, `Equipe ${org.name}`, "organizacao"));
-  }
-
   const eventHost = new Map();
   for (const event of EVENTS) {
     const email = `${event.slug}@${EMAIL_DOMAIN}`;
     eventHost.set(event.slug, addPerson(email, event.hosts, "cliente"));
   }
 
-  const orgId = (mockId) => uuidv5(`organization:${mockId}`);
   const eventId = (slug) => uuidv5(`event:${slug}`);
 
   const everyone = [...people.values()];
   const userIds = everyone.map((p) => uuid(p.id));
-  const orgIds = ORGANIZATIONS.map((o) => uuid(orgId(o.id)));
   const eventIds = EVENTS.map((e) => uuid(eventId(e.slug)));
 
   const sql = `-- Gerado por \`npm run db:seed\` a partir de src/lib/mock-data.ts.
@@ -119,9 +111,6 @@ begin;
 -- antes de perfis, porque events.host_profile_id não tem cascade.
 delete from public.events where id in (
   ${list(eventIds)}
-);
-delete from public.organizations where id in (
-  ${list(orgIds)}
 );
 delete from auth.users where id in (
   ${list(userIds)}
@@ -163,24 +152,6 @@ on conflict (id) do update
       role = excluded.role;
 
 -- ---------------------------------------------------------------------------
--- Organizações parceiras
--- ---------------------------------------------------------------------------
-
-insert into public.organizations (id, name, city, plan, contact, since)
-values
-${ORGANIZATIONS.map(
-  (org) =>
-    `  (${uuid(orgId(org.id))}, ${txt(org.name)}, ${txt(org.city)}, ${txt(org.plan)}::public.org_plan, ${txt(org.contact)}, ${txt(org.since)}::date)`,
-).join(",\n")};
-
-insert into public.organization_members (organization_id, profile_id, role)
-values
-${ORGANIZATIONS.map(
-  (org) =>
-    `  (${uuid(orgId(org.id))}, ${uuid(orgOwner.get(org.id).id)}, 'proprietario'::public.org_member_role)`,
-).join(",\n")};
-
--- ---------------------------------------------------------------------------
 -- Eventos
 --
 -- Os quatro saem publicados, para que as telas do convidado fiquem navegáveis
@@ -188,16 +159,13 @@ ${ORGANIZATIONS.map(
 -- ---------------------------------------------------------------------------
 
 insert into public.events (
-  id, slug, organization_id, host_profile_id, kind, title, event_at,
+  id, slug, host_profile_id, kind, title, event_at,
   venue, city, hosts, eyebrow, welcome, theme_key, status
 )
 values
 ${EVENTS.map((event) => {
-  const organization = event.organizationId
-    ? uuid(orgId(event.organizationId))
-    : "NULL";
   return `  (
-    ${uuid(eventId(event.slug))}, ${txt(event.slug)}, ${organization},
+    ${uuid(eventId(event.slug))}, ${txt(event.slug)},
     ${uuid(eventHost.get(event.slug).id)},
     ${txt(event.kind)}::public.event_kind, ${txt(event.title)},
     ${txt(`${event.date}${TZ_OFFSET}`)}::timestamptz,

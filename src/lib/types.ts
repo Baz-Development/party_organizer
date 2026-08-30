@@ -43,7 +43,6 @@ export interface EventSummary {
   schedule: ScheduleItem[];
   gallery: string[];
   status: "rascunho" | "publicado" | "encerrado";
-  organizationId?: string;
   /** ISO date-time. Ausente = respostas aceitas até o evento ser encerrado. */
   rsvpDeadline?: string;
   /** Permite RSVP de gente não cadastrada; cria convidado marcado como `unlisted`. */
@@ -56,7 +55,7 @@ export interface EventSummary {
   coverUrl?: string;
 }
 
-export type UserRole = "cliente" | "organizacao" | "admin";
+export type UserRole = "cliente" | "admin";
 
 /** Identidade da plataforma. O convidado não tem perfil — ele não tem conta. */
 export interface Profile {
@@ -65,16 +64,6 @@ export interface Profile {
   displayName: string;
   role: UserRole;
   createdAt: string;
-}
-
-export type OrgMemberRole = "proprietario" | "colaborador";
-
-export interface OrganizationMember {
-  profileId: string;
-  organizationId: string;
-  role: OrgMemberRole;
-  email: string;
-  displayName: string;
 }
 
 export type RsvpStatus = "confirmado" | "recusado" | "pendente";
@@ -158,17 +147,6 @@ export interface SecretSantaParticipant {
   wishlist: string[];
   joinedAt: string;
   hasDrawn: boolean;
-}
-
-export interface Organization {
-  id: string;
-  name: string;
-  city: string;
-  plan: "parceiro" | "premium" | "enterprise";
-  events: number;
-  activeEvents: number;
-  contact: string;
-  since: string;
 }
 
 export interface Activity {

@@ -6,8 +6,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 /**
  * Histórico de mensagens do evento, para a tela de acompanhamento de
  * `/painel/convidados`. Escopado pela RLS via `getEventBySlug`/
- * `listEmailHistory`: um membro de outra organização recebe "evento não
- * encontrado", igual às demais rotas do painel.
+ * `listEmailHistory`: quem não é anfitrião do evento nem admin recebe "evento
+ * não encontrado", igual às demais rotas do painel.
  */
 export async function GET(
   _req: Request,

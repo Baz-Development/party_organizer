@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { forbidden, redirect } from "next/navigation";
 import type { Database } from "@/lib/database.types";
-import { getProfile, listMembershipIds } from "@/lib/db/profiles";
+import { getProfile } from "@/lib/db/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 import { loginPathFor } from "./redirect";
@@ -51,21 +51,4 @@ export async function requireAdmin(pathname: string): Promise<Sessao> {
   if (session.profile.role !== "admin") forbidden();
 
   return session;
-}
-
-export interface SessaoDeOrganizacao extends Sessao {
-  /** Vazio para admin, que enxerga a plataforma inteira. */
-  organizationIds: string[];
-}
-
-/** Exige pertencer a pelo menos uma organização — ou ser admin. */
-export async function requireOrganizationMember(
-  pathname: string,
-): Promise<SessaoDeOrganizacao> {
-  const session = await requireSession(pathname);
-  const organizationIds = await listMembershipIds(session.supabase, session.user.id);
-
-  if (organizationIds.length === 0 && session.profile.role !== "admin") forbidden();
-
-  return { ...session, organizationIds };
 }

@@ -2,8 +2,9 @@ schema: spec-driven
 
 context: |
   Produto: "Convite" — plataforma de páginas de evento (casamento, debutante,
-  infantil, corporativo, formatura). Três públicos: convidado (sem login),
-  cliente/anfitrião (dono do evento), organização parceira e admin da plataforma.
+  infantil, corporativo, formatura). Dois públicos autenticados —
+  cliente/anfitrião (dono do evento) e admin (Equipe Villa Glam) — além do
+  convidado, que acessa sem login.
 
   Stack atual: Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4.
   ATENÇÃO: esta versão do Next.js tem breaking changes — sempre consultar
@@ -18,9 +19,9 @@ context: |
   chaveada por `.env` — nenhum host, chave ou project-ref hardcoded no código.
 
   Decisões já tomadas:
-  - Auth: Supabase Auth (magic link) para cliente/organização/admin. Convidado
+  - Auth: Supabase Auth (magic link) para cliente/admin. Convidado
     acessa por link público do evento + token de convite, sem conta.
-  - Autorização: RLS em todas as tabelas, por organização e por evento.
+  - Autorização: RLS em todas as tabelas, por anfitrião e por evento.
   - Escopo do backend: CRUD + regras de negócio, Storage de imagens, pagamento de
     presentes e notificações por e-mail.
 

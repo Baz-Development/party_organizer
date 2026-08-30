@@ -69,7 +69,6 @@ export const createEventSchema = z.object({
     )
     .max(60)
     .optional(),
-  organizationId: z.uuid("Organização inválida.").optional(),
   modules: z.array(z.enum(MODULE_IDS)).optional(),
 });
 

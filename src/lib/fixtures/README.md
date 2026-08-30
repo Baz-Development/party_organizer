@@ -14,8 +14,8 @@ O cabeçalho de cada arquivo nomeia o change que o remove.
 | `secret-santa.ts` | `add-secret-santa-backend` |
 | `painel.ts` | ainda sem change — métricas e feed de atividade |
 
-O que **não** está aqui já vem do banco: eventos, organizações, perfis,
-módulos habilitados e cronograma.
+O que **não** está aqui já vem do banco: eventos, perfis, módulos habilitados
+e cronograma.
 
 `src/lib/mock-data.ts` continua existindo por um motivo diferente: é a fonte a
 partir da qual `npm run db:seed` gera `supabase/seed.sql`. Nenhuma página ou

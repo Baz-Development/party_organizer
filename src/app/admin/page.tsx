@@ -1,6 +1,5 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
-import { listOrganizations } from "@/lib/db/organizations";
 import { toProfile } from "@/lib/db/mappers";
 import { AdminPanel } from "./AdminPanel";
 
@@ -11,8 +10,7 @@ export default async function Page() {
 
   // Admin enxerga a plataforma inteira — não por filtro aqui, mas porque as
   // políticas de RLS abrem tudo para `is_platform_admin()`.
-  const [organizations, events, profiles] = await Promise.all([
-    listOrganizations(supabase),
+  const [events, profiles] = await Promise.all([
     listEvents(supabase),
     supabase
       .from("profiles")
@@ -22,10 +20,6 @@ export default async function Page() {
   ]);
 
   return (
-    <AdminPanel
-      organizations={organizations}
-      events={events}
-      profiles={(profiles.data ?? []).map(toProfile)}
-    />
+    <AdminPanel events={events} profiles={(profiles.data ?? []).map(toProfile)} />
   );
 }

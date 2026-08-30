@@ -44,11 +44,10 @@ const buildGroups = (
       ],
     },
     {
-      title: "Parceiros e plataforma",
-      desc: "Casas de eventos e administração do produto.",
+      title: "Plataforma",
+      desc: "Administração do produto pela Equipe Villa Glam.",
       items: [
-        { href: "/organizacao", label: "Painel da Organização", note: "Catálogo, endereços e agenda de eventos" },
-        { href: "/admin", label: "Painel Admin", note: "Métricas, organizações e clientes recentes" },
+        { href: "/admin", label: "Painel Admin", note: "Métricas, eventos e clientes recentes" },
       ],
     },
   ];
@@ -59,7 +58,6 @@ const buildApiRoutes = (slug: string) => [
   { method: "GET", path: `/api/eventos/${slug}/convidados` },
   { method: "POST", path: `/api/eventos/${slug}/convidados` },
   { method: "GET", path: `/api/eventos/${slug}/presentes` },
-  { method: "GET", path: "/api/organizacoes" },
   { method: "GET", path: "/api/auth/callback" },
   { method: "POST", path: "/api/auth/sair" },
 ];
@@ -80,7 +78,7 @@ export default async function RotasPage() {
             Todas as telas
           </h1>
           <p className="max-w-[640px] text-[16px] leading-relaxed text-ink-soft">
-            Eventos, organizações e cronograma vêm do banco. Os módulos que
+            Eventos e cronograma vêm do banco. Os módulos que
             ainda não migraram (presentes, galeria, mural, cardápio e amigo
             secreto) leem de{" "}
             <code className="rounded bg-paper-2 px-1.5 py-0.5 text-[14px]">src/lib/fixtures/</code>.

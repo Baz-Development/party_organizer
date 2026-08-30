@@ -3,18 +3,17 @@
 ## Purpose
 
 Define como as pessoas entram na plataforma e o que cada uma alcança: login por
-link mágico sem senha, perfil criado no primeiro acesso, os três papéis
-autenticados (cliente, membro de organização e admin) e a proteção das áreas
-logadas no servidor. Cobre também o acesso do convidado, que usa o evento
-publicado sem nunca precisar de conta.
+link mágico sem senha, perfil criado no primeiro acesso, os dois papéis
+autenticados (cliente e admin) e a proteção das áreas logadas no servidor. Cobre
+também o acesso do convidado, que usa o evento publicado sem nunca precisar de
+conta.
 
 ## Requirements
 
 ### Requirement: Login por link mágico
 
-O sistema MUST permitir que cliente, membro de organização e admin entrem
-informando apenas o e-mail e recebendo um link de acesso de uso único. O sistema
-MUST NOT exigir senha.
+O sistema MUST permitir que cliente e admin entrem informando apenas o e-mail e
+recebendo um link de acesso de uso único. O sistema MUST NOT exigir senha.
 
 #### Scenario: E-mail cadastrado ou novo
 
@@ -54,10 +53,10 @@ primeiro login, contendo ao menos nome de exibição e e-mail.
 
 ### Requirement: Papéis de acesso
 
-O sistema MUST distinguir três papéis autenticados — cliente (anfitrião do evento),
-membro de organização e admin da plataforma — e conceder a cada um apenas o alcance
-correspondente. O papel de admin MUST NOT ser atribuível por qualquer fluxo exposto
-na aplicação.
+O sistema MUST distinguir exatamente dois papéis autenticados — `cliente`
+(anfitrião do evento) e `admin` (Equipe Villa Glam) — e conceder a cada um apenas
+o alcance correspondente. O papel de `admin` MUST NOT ser atribuível por qualquer
+fluxo exposto na aplicação.
 
 #### Scenario: Cliente acessa apenas os próprios eventos
 
@@ -65,16 +64,16 @@ na aplicação.
 - **THEN** vê somente os eventos em que é anfitrião
 - **AND** requisitar dados de um evento de outro cliente retorna erro de autorização
 
-#### Scenario: Membro de organização acessa o portfólio da organização
-
-- **WHEN** um membro de organização autenticado abre o painel da organização
-- **THEN** vê os eventos das organizações às quais pertence
-- **AND** não vê eventos de outras organizações
-
 #### Scenario: Admin acessa a plataforma inteira
 
 - **WHEN** um admin autenticado abre o painel administrativo
-- **THEN** vê organizações e eventos de toda a plataforma
+- **THEN** vê os eventos e as contas de cliente de toda a plataforma
+
+#### Scenario: Não há papel de organização
+
+- **WHEN** qualquer fluxo tenta atribuir a um perfil um papel diferente de
+  `cliente` ou `admin`
+- **THEN** a operação é recusada
 
 #### Scenario: Escalada de privilégio bloqueada
 
@@ -84,14 +83,12 @@ na aplicação.
 
 ### Requirement: Proteção das áreas autenticadas
 
-As áreas de cliente, organização e admin MUST exigir sessão válida, e a
-verificação MUST ocorrer no servidor. Esconder elementos apenas na interface NÃO É
-suficiente.
+As áreas de cliente e de admin MUST exigir sessão válida, e a verificação MUST
+ocorrer no servidor. Esconder elementos apenas na interface NÃO É suficiente.
 
 #### Scenario: Acesso sem sessão
 
-- **WHEN** uma pessoa sem sessão acessa uma rota do painel do cliente, da
-  organização ou do admin
+- **WHEN** uma pessoa sem sessão acessa uma rota do painel do cliente ou do admin
 - **THEN** é redirecionada para a tela de entrada
 - **AND** após autenticar, é levada à rota que tentou acessar originalmente
 

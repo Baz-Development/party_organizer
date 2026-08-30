@@ -5,11 +5,10 @@
  * de exemplo aqui? Rode o seed de novo e o diff do SQL mostra exatamente o que
  * muda no banco.
  *
- * Quem precisa de eventos e organizações em tempo de execução usa
- * `src/lib/db/`, que lê do banco. Os mocks das telas ainda não migradas ficam
- * em `src/lib/fixtures/`.
+ * Quem precisa de eventos em tempo de execução usa `src/lib/db/`, que lê do
+ * banco. Os mocks das telas ainda não migradas ficam em `src/lib/fixtures/`.
  */
-import type { EventSummary, Organization } from "./types";
+import type { EventSummary } from "./types";
 
 /**
  * A galeria não faz parte do seed: fotos e recados nascem de envio de
@@ -17,9 +16,6 @@ import type { EventSummary, Organization } from "./types";
  * a capa é um upload real no bucket `event-media`, sem equivalente estático.
  */
 type SeedEvent = Omit<EventSummary, "gallery" | "coverUrl" | "coverPath">;
-
-/** Organização de exemplo; as contagens reais saem do banco. */
-type SeedOrganization = Omit<Organization, "events" | "activeEvents">;
 
 export const EVENTS: SeedEvent[] = [
   {
@@ -52,7 +48,6 @@ export const EVENTS: SeedEvent[] = [
       { time: "21h00", title: "Festa", desc: "Pista de dança até 02h" },
     ],
     status: "publicado",
-    organizationId: "org-1",
     guestListOpen: false,
     moderationPolicy: "previa",
   },
@@ -77,7 +72,6 @@ export const EVENTS: SeedEvent[] = [
       { time: "23h30", title: "Balada", desc: "DJ até 03h" },
     ],
     status: "publicado",
-    organizationId: "org-1",
     guestListOpen: false,
     moderationPolicy: "previa",
   },
@@ -102,7 +96,6 @@ export const EVENTS: SeedEvent[] = [
       { time: "18h30", title: "Encerramento", desc: "Entrega das lembrancinhas" },
     ],
     status: "rascunho",
-    organizationId: "org-2",
     guestListOpen: false,
     moderationPolicy: "previa",
   },
@@ -127,15 +120,7 @@ export const EVENTS: SeedEvent[] = [
       { time: "14h00", title: "Painéis", desc: "Três trilhas simultâneas" },
     ],
     status: "publicado",
-    organizationId: "org-3",
     guestListOpen: false,
     moderationPolicy: "previa",
   },
-];
-
-export const ORGANIZATIONS: SeedOrganization[] = [
-  { id: "org-1", name: "Fazenda Santa Clara", city: "Itu – SP", plan: "premium", contact: "contato@santaclara.com.br", since: "2024-03-12" },
-  { id: "org-2", name: "Buffet Mundo Mágico", city: "São Paulo – SP", plan: "parceiro", contact: "eventos@mundomagico.com.br", since: "2023-08-01" },
-  { id: "org-3", name: "Nexus Eventos Corporativos", city: "São Paulo – SP", plan: "enterprise", contact: "corp@nexus.com", since: "2025-01-20" },
-  { id: "org-4", name: "Espaço Villa Nova", city: "Campinas – SP", plan: "parceiro", contact: "villa@nova.com.br", since: "2024-11-05" },
 ];

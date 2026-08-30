@@ -12,10 +12,9 @@ type Client = SupabaseClient<Database>;
  * Acesso a eventos.
  *
  * Toda função recebe o client já com a sessão de quem pediu, de modo que a RLS
- * escopa o resultado: um cliente vê só os próprios eventos, um membro de
- * organização vê os da organização, o convidado vê só o que está publicado.
- * Nenhuma destas funções filtra por dono na aplicação — se filtrasse, um
- * esquecimento viraria vazamento.
+ * escopa o resultado: um cliente vê só os próprios eventos, um admin vê todos,
+ * o convidado vê só o que está publicado. Nenhuma destas funções filtra por
+ * dono na aplicação — se filtrasse, um esquecimento viraria vazamento.
  */
 
 /**
@@ -24,7 +23,7 @@ type Client = SupabaseClient<Database>;
  * custaria dois round-trips por página.
  */
 const EVENT_SELECT = `
-  id, slug, organization_id, host_profile_id, kind, title, event_at, venue,
+  id, slug, host_profile_id, kind, title, event_at, venue,
   city, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
   rsvp_deadline, guest_list_open, moderation_policy, cover_path,
   event_modules ( module ),
@@ -32,7 +31,6 @@ const EVENT_SELECT = `
 `;
 
 export interface ListEventsOptions {
-  organizationId?: string;
   hostProfileId?: string;
   status?: Database["public"]["Enums"]["event_status"];
 }
@@ -43,7 +41,6 @@ export async function listEvents(
 ): Promise<EventSummary[]> {
   let query = client.from("events").select(EVENT_SELECT).order("event_at", { ascending: true });
 
-  if (options.organizationId) query = query.eq("organization_id", options.organizationId);
   if (options.hostProfileId) query = query.eq("host_profile_id", options.hostProfileId);
   if (options.status) query = query.eq("status", options.status);
 
@@ -118,7 +115,6 @@ export async function createEvent(
         venue: input.venue ?? null,
         city: input.city ?? null,
         hosts: input.hosts ?? null,
-        organization_id: input.organizationId ?? null,
         host_profile_id: hostProfileId,
         // O evento nasce em rascunho: publicar é um ato deliberado.
         status: "rascunho",
