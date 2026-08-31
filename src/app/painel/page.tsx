@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
 import { getGiftsSummary } from "@/lib/db/gifts";
@@ -8,7 +9,11 @@ import { PainelOverview } from "./PainelOverview";
 export const metadata = { title: "Painel — Convite" };
 
 export default async function PainelDoCliente() {
-  const { supabase, user } = await requireSession("/painel");
+  const { supabase, user, profile } = await requireSession("/painel");
+
+  // O admin não é anfitrião de evento nenhum: sem isto, cairia no aviso de
+  // "página sendo preparada" em vez do painel da plataforma.
+  if (profile.role === "admin") redirect("/admin");
 
   // Sem filtro por dono na aplicação: a RLS já entrega só o que é dele. O
   // `hostProfileId` aqui restringe à lista de eventos em que a pessoa é

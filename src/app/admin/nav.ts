@@ -3,5 +3,4 @@ export const ADMIN_NAV = [
   { href: "/admin", label: "Visão geral" },
   { href: "/admin/clientes", label: "Clientes" },
   { href: "/admin/paginas", label: "Nova página" },
-  { href: "/painel", label: "Painel do cliente" },
 ];

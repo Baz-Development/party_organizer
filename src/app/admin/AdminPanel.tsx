@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Badge } from "@/components/ui";
@@ -101,14 +100,16 @@ export function AdminPanel({
           <Badge>estimado</Badge>
         </div>
         <div className="mb-11 rounded-2xl bg-paper p-7 shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
-          <div className="flex h-48 items-end gap-3">
+          <div className="flex h-48 items-stretch gap-3">
             {ADMIN_SERIES.map((s) => (
               <div key={s.label} className="flex flex-1 flex-col items-center gap-2">
                 <div className="text-[12px] font-semibold text-ink-soft">{s.value}</div>
-                <div
-                  className="w-full rounded-t-md bg-accent/85"
-                  style={{ height: `${(s.value / maxSeries) * 100}%` }}
-                />
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className="w-full rounded-t-md bg-accent/85"
+                    style={{ height: `${(s.value / maxSeries) * 100}%` }}
+                  />
+                </div>
                 <div className="text-[12px] text-ink-faint">{s.label}</div>
               </div>
             ))}
@@ -116,7 +117,7 @@ export function AdminPanel({
         </div>
 
         {/* Eventos ----------------------------------------------------- */}
-        <SectionHeader title="Eventos" href="/painel" cta="Painel do cliente" />
+        <SectionHeader title="Eventos" />
         <TableCard headers={["Evento", "Anfitrião", "Cidade", "Estado"]} minWidth={640}>
           {events.map((e) => (
             <tr key={e.id} className="border-b border-[rgba(42,39,36,0.06)]">
@@ -139,7 +140,7 @@ export function AdminPanel({
 
         {/* Pessoas ------------------------------------------------------- */}
         <div className="mt-11">
-          <SectionHeader title="Contas recentes" href="/painel" cta="Painel do cliente" />
+          <SectionHeader title="Contas recentes" />
           <TableCard headers={["Pessoa", "E-mail", "Papel", "Cadastro"]} minWidth={640}>
             {profiles.map((p) => (
               <tr key={p.id} className="border-b border-[rgba(42,39,36,0.06)]">
@@ -162,13 +163,10 @@ export function AdminPanel({
   );
 }
 
-function SectionHeader({ title, href, cta }: { title: string; href: string; cta: string }) {
+function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="mb-4 flex items-center justify-between">
+    <div className="mb-4 flex items-center">
       <h2 className="font-display text-[20px] font-semibold">{title}</h2>
-      <Link href={href} className="text-sm font-semibold text-accent no-underline">
-        {cta}
-      </Link>
     </div>
   );
 }
