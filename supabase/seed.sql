@@ -27,42 +27,93 @@ delete from auth.users where id in (
 
 -- ---------------------------------------------------------------------------
 -- Identidades
+--
+-- Espelha o que a API admin do GoTrue gravaria: além de auth.users, o
+-- `instance_id` (o GoTrue restringe toda consulta a esse valor), as colunas de
+-- token como string vazia (o GoTrue as lê como texto, não aceita NULL) e uma
+-- linha em auth.identities com provider 'email'. Sem isso o usuário fica
+-- invisível para o GoTrue: o login por link mágico responde 500 e nenhum
+-- e-mail é enviado.
 -- ---------------------------------------------------------------------------
 
 insert into auth.users (
-  id, aud, role, email, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  id, instance_id, aud, role, email, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change,
+  email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token, reauthentication_token
 )
 values
   (
-    '09f235d8-b241-5023-a494-b841bd14ffac'::uuid, 'authenticated', 'authenticated', 'admin@exemplo.local', now(),
+    '09f235d8-b241-5023-a494-b841bd14ffac'::uuid, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', 'admin@exemplo.local', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"display_name":"Admin da plataforma"}'::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
   ),
   (
-    '98b63843-de06-51ec-823b-44e372c12b6b'::uuid, 'authenticated', 'authenticated', 'marina-e-thiago@exemplo.local', now(),
+    '98b63843-de06-51ec-823b-44e372c12b6b'::uuid, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', 'marina-e-thiago@exemplo.local', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"display_name":"Marina & Thiago"}'::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
   ),
   (
-    '07d8aca2-db49-5bfc-86d2-bf53a6a4aed9'::uuid, 'authenticated', 'authenticated', '15-anos-sofia@exemplo.local', now(),
+    '07d8aca2-db49-5bfc-86d2-bf53a6a4aed9'::uuid, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', '15-anos-sofia@exemplo.local', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"display_name":"Sofia Andrade"}'::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
   ),
   (
-    'd7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid, 'authenticated', 'authenticated', 'aniversario-do-bento@exemplo.local', now(),
+    'd7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', 'aniversario-do-bento@exemplo.local', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"display_name":"Família Ribeiro"}'::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
   ),
   (
-    '7043ae5b-163a-5f7e-9de9-7875ba9107eb'::uuid, 'authenticated', 'authenticated', 'convencao-nexus-2026@exemplo.local', now(),
+    '7043ae5b-163a-5f7e-9de9-7875ba9107eb'::uuid, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', 'convencao-nexus-2026@exemplo.local', now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"display_name":"Nexus Tecnologia"}'::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
+  );
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+)
+values
+  (
+    '09f235d8-b241-5023-a494-b841bd14ffac', '09f235d8-b241-5023-a494-b841bd14ffac'::uuid,
+    jsonb_build_object('sub', '09f235d8-b241-5023-a494-b841bd14ffac', 'email', 'admin@exemplo.local', 'email_verified', true),
+    'email', now(), now(), now()
+  ),
+  (
+    '98b63843-de06-51ec-823b-44e372c12b6b', '98b63843-de06-51ec-823b-44e372c12b6b'::uuid,
+    jsonb_build_object('sub', '98b63843-de06-51ec-823b-44e372c12b6b', 'email', 'marina-e-thiago@exemplo.local', 'email_verified', true),
+    'email', now(), now(), now()
+  ),
+  (
+    '07d8aca2-db49-5bfc-86d2-bf53a6a4aed9', '07d8aca2-db49-5bfc-86d2-bf53a6a4aed9'::uuid,
+    jsonb_build_object('sub', '07d8aca2-db49-5bfc-86d2-bf53a6a4aed9', 'email', '15-anos-sofia@exemplo.local', 'email_verified', true),
+    'email', now(), now(), now()
+  ),
+  (
+    'd7ce8523-6863-50c2-910c-6d28b03a6b27', 'd7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid,
+    jsonb_build_object('sub', 'd7ce8523-6863-50c2-910c-6d28b03a6b27', 'email', 'aniversario-do-bento@exemplo.local', 'email_verified', true),
+    'email', now(), now(), now()
+  ),
+  (
+    '7043ae5b-163a-5f7e-9de9-7875ba9107eb', '7043ae5b-163a-5f7e-9de9-7875ba9107eb'::uuid,
+    jsonb_build_object('sub', '7043ae5b-163a-5f7e-9de9-7875ba9107eb', 'email', 'convencao-nexus-2026@exemplo.local', 'email_verified', true),
+    'email', now(), now(), now()
   );
 
 -- O trigger on_auth_user_created já criou os perfis; aqui definimos nome de

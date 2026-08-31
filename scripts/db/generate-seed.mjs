@@ -118,20 +118,47 @@ delete from auth.users where id in (
 
 -- ---------------------------------------------------------------------------
 -- Identidades
+--
+-- Espelha o que a API admin do GoTrue gravaria: além de auth.users, o
+-- \`instance_id\` (o GoTrue restringe toda consulta a esse valor), as colunas de
+-- token como string vazia (o GoTrue as lê como texto, não aceita NULL) e uma
+-- linha em auth.identities com provider 'email'. Sem isso o usuário fica
+-- invisível para o GoTrue: o login por link mágico responde 500 e nenhum
+-- e-mail é enviado.
 -- ---------------------------------------------------------------------------
 
 insert into auth.users (
-  id, aud, role, email, email_confirmed_at,
-  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+  id, instance_id, aud, role, email, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change,
+  email_change_token_new, email_change_token_current,
+  phone_change, phone_change_token, reauthentication_token
 )
 values
 ${everyone
   .map(
     (person) => `  (
-    ${uuid(person.id)}, 'authenticated', 'authenticated', ${txt(person.email)}, now(),
+    ${uuid(person.id)}, '00000000-0000-0000-0000-000000000000',
+    'authenticated', 'authenticated', ${txt(person.email)}, now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     ${txt(JSON.stringify({ display_name: person.displayName }))}::jsonb,
-    now(), now()
+    now(), now(),
+    '', '', '', '', '', '', '', ''
+  )`,
+  )
+  .join(",\n")};
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+)
+values
+${everyone
+  .map(
+    (person) => `  (
+    ${txt(person.id)}, ${uuid(person.id)},
+    jsonb_build_object('sub', ${txt(person.id)}, 'email', ${txt(person.email)}, 'email_verified', true),
+    'email', now(), now(), now()
   )`,
   )
   .join(",\n")};
