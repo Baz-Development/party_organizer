@@ -125,12 +125,21 @@ A criação de evento **não** é self-service. A Equipe Villa Glam (`admin`):
 
 1. cadastra a conta do cliente em `/admin/clientes` (nome + e-mail) — isso
    dispara um convite por e-mail e o perfil nasce já provisionado;
-2. cria a página do evento em `/admin/paginas`, escolhendo a conta anfitriã;
+2. cria a página do evento em `/admin/paginas`, escolhendo a conta anfitriã e o
+   tipo de evento (casamento, debutante, corporativo, aniversário, formatura,
+   confraternização ou outros);
 3. o cliente abre o link de acesso, cai em `/painel` e passa a editar o
-   conteúdo, o cronograma, a capa e a moderação da galeria e do mural.
+   conteúdo, o cronograma, a capa e a moderação da galeria.
 
 Um e-mail que autentica sem ter sido provisionado e sem ser anfitrião de nenhum
 evento cai em `/sem-acesso` — a sessão existe, mas nenhum painel se abre.
+
+### Moderação
+
+A **galeria** pode exigir aprovação prévia: com a política `previa`, a foto
+enviada por um convidado nasce pendente e só aparece depois que o anfitrião
+aprova. O **mural** não tem aprovação prévia — todo recado (com ou sem foto)
+aparece na hora; o anfitrião pode ocultar ou remover depois de publicado.
 
 ## Rotas de API
 

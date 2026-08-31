@@ -79,7 +79,7 @@ export const EVENTS: SeedEvent[] = [
     id: "ev-3",
     slug: "aniversario-do-bento",
     title: "Bento faz 5 anos",
-    kind: "infantil",
+    kind: "aniversario",
     date: "2026-08-22T15:00:00",
     venue: "Buffet Mundo Mágico",
     city: "São Paulo – SP",

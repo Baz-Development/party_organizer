@@ -259,7 +259,9 @@ describe("galeria, mural e storage", () => {
   });
 
   describe("mural", () => {
-    it("recado publicado nasce pendente e mensagem vazia é recusada", async () => {
+    it("recado nasce aprovada mesmo com política prévia e mensagem vazia é recusada", async () => {
+      // O evento aPublicado tem `moderation_policy = 'previa'` (default) — o
+      // mural ignora isso: publica sempre na hora.
       const { data, error } = await anonimo
         .rpc("submit_mural_message", {
           p_event_slug: slug(),
@@ -270,7 +272,7 @@ describe("galeria, mural e storage", () => {
         })
         .single();
       assert.equal(error, null);
-      assert.equal(data.status, "pendente");
+      assert.equal(data.status, "aprovada");
 
       const { error: vazioError } = await anonimo.rpc("submit_mural_message", {
         p_event_slug: slug(),
@@ -294,6 +296,31 @@ describe("galeria, mural e storage", () => {
         })
         .single();
       assert.equal(data.message, "<script>alert(1)</script>");
+    });
+
+    it("recado aceita foto com prefixo do evento e recusa caminho de outro evento", async () => {
+      const { data } = await anonimo
+        .rpc("submit_mural_message", {
+          p_event_slug: slug(),
+          p_author: "Convidado",
+          p_message: "Com foto!",
+          p_visitor_id: visitor(),
+          p_guest_token: null,
+          p_photo_path: `${c.eventos.aPublicado}/recado.jpg`,
+        })
+        .single();
+      assert.equal(data.photo_path, `${c.eventos.aPublicado}/recado.jpg`);
+
+      const { error } = await anonimo.rpc("submit_mural_message", {
+        p_event_slug: slug(),
+        p_author: "Convidado",
+        p_message: "Caminho forjado",
+        p_visitor_id: visitor(),
+        p_guest_token: null,
+        p_photo_path: `${c.eventos.bRascunho}/roubada.jpg`,
+      });
+      assert.ok(error);
+      assert.match(error.message, /caminho_invalido/);
     });
 
     it("limite de recados por intervalo é aplicado", async () => {

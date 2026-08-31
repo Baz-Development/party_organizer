@@ -8,12 +8,16 @@ import { z } from "zod";
  * coluna e não ajuda quem chamou.
  */
 
+// Catálogo da ata Villa Glam (seção 2). `infantil` foi migrado para
+// `aniversario` e sai de uso — permanece no enum do banco mas não é ofertado.
 export const EVENT_KINDS = [
   "casamento",
   "debutante",
-  "infantil",
   "corporativo",
+  "aniversario",
   "formatura",
+  "confraternizacao",
+  "outros",
 ] as const;
 
 export const EVENT_STATUSES = ["rascunho", "publicado", "encerrado"] as const;

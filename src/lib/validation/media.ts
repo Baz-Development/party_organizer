@@ -23,6 +23,8 @@ export const confirmPhotoUploadSchema = z.object({
   caption: z.string().trim().max(300).optional(),
 });
 
+export const requestMuralPhotoUploadSchema = requestPhotoUploadSchema;
+
 export const submitMuralMessageSchema = z.object({
   visitorId,
   guestToken,
@@ -32,6 +34,7 @@ export const submitMuralMessageSchema = z.object({
     .trim()
     .min(1, "Escreva uma mensagem.")
     .max(1000, "O recado excede o limite de caracteres."),
+  photoPath: z.string().trim().min(1).optional(),
 });
 
 export const reactionTargetSchema = z.enum(["foto", "recado"], {

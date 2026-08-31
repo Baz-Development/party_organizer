@@ -5,14 +5,22 @@ TBD - created by archiving change add-media-storage-backend. Update Purpose afte
 ## Requirements
 ### Requirement: Recado no mural
 
-O sistema MUST permitir que um convidado deixe um recado em um evento publicado com
-o módulo de mural habilitado, informando autor e mensagem, ambos obrigatórios.
+O sistema MUST permitir que um convidado deixe um recado em um evento publicado
+com o módulo de mural habilitado, informando autor e mensagem, ambos
+obrigatórios, e opcionalmente **uma foto**. A foto, quando enviada, MUST usar o
+mesmo armazenamento e os mesmos limites de tamanho e formato da galeria.
 
 #### Scenario: Recado publicado
 
 - **WHEN** um convidado envia um recado com autor e mensagem
-- **THEN** o recado é registrado com data de envio
-- **AND** entra no fluxo de moderação configurado pelo anfitrião
+- **THEN** o recado é registrado com data de envio e fica visível imediatamente
+  no mural público
+
+#### Scenario: Recado com foto
+
+- **WHEN** um convidado envia um recado com autor, mensagem e uma foto válida
+- **THEN** o recado é registrado com a foto anexada e ambos ficam visíveis
+  imediatamente no mural público
 
 #### Scenario: Mensagem vazia
 
@@ -24,6 +32,12 @@ o módulo de mural habilitado, informando autor e mensagem, ambos obrigatórios.
 - **WHEN** um recado excede o número máximo de caracteres
 - **THEN** a operação é recusada informando o limite
 
+#### Scenario: Foto fora do formato ou do tamanho
+
+- **WHEN** a foto anexada excede o tamanho máximo ou não é um formato de imagem
+  aceito
+- **THEN** a operação é recusada e o recado não é gravado
+
 #### Scenario: Conteúdo tratado como texto
 
 - **WHEN** um recado contém marcação HTML ou script
@@ -31,13 +45,21 @@ o módulo de mural habilitado, informando autor e mensagem, ambos obrigatórios.
 
 ### Requirement: Moderação do mural
 
-O sistema MUST aplicar ao mural a mesma política de moderação do evento usada na
-galeria, permitindo a quem administra aprovar, ocultar ou remover qualquer recado.
+O mural MUST publicar todo recado imediatamente, sem fila de aprovação prévia,
+independentemente da política de moderação do evento. Quem administra o evento
+MUST poder ocultar ou remover qualquer recado depois de publicado.
 
-#### Scenario: Aprovação prévia ativa
+#### Scenario: Publicação imediata mesmo com aprovação prévia no evento
 
-- **WHEN** um recado é enviado a um evento com aprovação prévia
-- **THEN** ele não aparece no mural público até ser aprovado
+- **WHEN** um recado é enviado a um evento cuja política de moderação é aprovação
+  prévia
+- **THEN** o recado aparece no mural público imediatamente
+- **AND** não existe fila de recados pendentes para esse evento
+
+#### Scenario: Recado ocultado
+
+- **WHEN** quem administra o evento oculta um recado visível
+- **THEN** ele deixa de aparecer no mural público imediatamente
 
 #### Scenario: Recado removido
 
@@ -46,7 +68,7 @@ galeria, permitindo a quem administra aprovar, ocultar ou remover qualquer recad
 
 #### Scenario: Moderação restrita
 
-- **WHEN** um convidado tenta aprovar, ocultar ou remover um recado
+- **WHEN** um convidado tenta ocultar ou remover um recado
 - **THEN** a operação é recusada por falta de autorização
 
 ### Requirement: Limite de envios por convidado

@@ -16,14 +16,23 @@ async function patchJson(url: string, body: unknown) {
 }
 
 /**
- * Fila de aprovação: fotos e recados pendentes ou já visíveis, com ações de
- * aprovar/ocultar/remover. A RLS já garante que só quem administra o evento
- * enxerga pendentes de outros eventos — esta tela só lista o que a API
+ * Fila de moderação. A galeria tem aprovação prévia — fotos podem estar
+ * pendentes. O mural não: todo recado nasce visível, e a moderação é só
+ * reativa (ocultar/remover). A RLS já garante que só quem administra o evento
+ * enxerga o conteúdo de outros eventos — esta tela só lista o que a API
  * devolveu.
  */
 export function ModerationQueue({ event }: { event: EventSummary }) {
   const [tab, setTab] = useState<Tab>("galeria");
   const [status, setStatus] = useState<"pendente" | "aprovada" | "oculta">("pendente");
+
+  // O mural não tem estado "pendente" — só "aprovada"/"oculta".
+  const statusOptions =
+    tab === "galeria"
+      ? (["pendente", "aprovada", "oculta"] as const)
+      : (["aprovada", "oculta"] as const);
+  const effectiveStatus: "pendente" | "aprovada" | "oculta" =
+    tab === "mural" && status === "pendente" ? "aprovada" : status;
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [notes, setNotes] = useState<MuralMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +41,7 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
     let cancelled = false;
     const base = tab === "galeria" ? "galeria" : "mural";
 
-    fetch(`/api/eventos/${event.slug}/${base}?status=${status}&limit=50`)
+    fetch(`/api/eventos/${event.slug}/${base}?status=${effectiveStatus}&limit=50`)
       .then((res) => res.json())
       .then((body: { data: (Photo | MuralMessage)[] }) => {
         if (cancelled) return;
@@ -44,7 +53,7 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
     return () => {
       cancelled = true;
     };
-  }, [event.slug, tab, status]);
+  }, [event.slug, tab, effectiveStatus]);
 
   async function moderatePhoto(id: string, next: "aprovada" | "oculta") {
     const ok = await patchJson(`/api/eventos/${event.slug}/galeria/${id}`, { status: next });
@@ -70,7 +79,8 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
     <main className="mx-auto max-w-[900px] px-6 py-10">
       <h1 className="mb-1 font-display text-[26px] font-semibold">Moderação</h1>
       <p className="mb-6 text-sm text-ink-soft">
-        Política atual: {event.moderationPolicy === "previa" ? "aprovação prévia" : "publicação imediata"}.
+        Galeria: {event.moderationPolicy === "previa" ? "aprovação prévia" : "publicação imediata"}.
+        {" "}Mural: publicação imediata, sem fila — só ocultar ou remover.
       </p>
 
       <div className="mb-5 flex gap-2 rounded-full bg-paper-2 p-1 w-fit">
@@ -88,12 +98,12 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
       </div>
 
       <div className="mb-6 flex gap-2">
-        {(["pendente", "aprovada", "oculta"] as const).map((s) => (
+        {statusOptions.map((s) => (
           <button
             key={s}
             onClick={() => setStatus(s)}
             className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-[12.5px] font-semibold ${
-              status === s ? "border-accent bg-paper-2" : "border-line-strong text-ink-soft"
+              effectiveStatus === s ? "border-accent bg-paper-2" : "border-line-strong text-ink-soft"
             }`}
           >
             {s === "pendente" ? "Pendentes" : s === "aprovada" ? "Aprovados" : "Ocultos"}
@@ -120,12 +130,12 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
               <div className="p-3">
                 <div className="mb-2 text-[12.5px] font-semibold">{p.author}</div>
                 <div className="flex flex-wrap gap-1.5">
-                  {status !== "aprovada" && (
+                  {effectiveStatus !== "aprovada" && (
                     <Button size="sm" onClick={() => moderatePhoto(p.id, "aprovada")}>
                       Aprovar
                     </Button>
                   )}
-                  {status !== "oculta" && (
+                  {effectiveStatus !== "oculta" && (
                     <Button size="sm" variant="outline" onClick={() => moderatePhoto(p.id, "oculta")}>
                       Ocultar
                     </Button>
@@ -149,14 +159,22 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
           {notes.map((n) => (
             <div key={n.id} className="rounded-xl border border-line bg-paper p-4">
               <div className="mb-1 text-[12.5px] font-semibold">{n.author}</div>
+              {n.photoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- URL assinada.
+                <img
+                  src={n.photoUrl}
+                  alt={`Foto de ${n.author}`}
+                  className="mb-3 max-h-40 rounded-lg object-cover"
+                />
+              )}
               <p className="mb-3 text-sm text-ink-2">{n.message}</p>
               <div className="flex flex-wrap gap-1.5">
-                {status !== "aprovada" && (
+                {effectiveStatus !== "aprovada" && (
                   <Button size="sm" onClick={() => moderateNote(n.id, "aprovada")}>
                     Aprovar
                   </Button>
                 )}
-                {status !== "oculta" && (
+                {effectiveStatus !== "oculta" && (
                   <Button size="sm" variant="outline" onClick={() => moderateNote(n.id, "oculta")}>
                     Ocultar
                   </Button>

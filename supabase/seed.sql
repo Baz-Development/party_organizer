@@ -115,7 +115,7 @@ values
   (
     '2d7e36ed-890c-5aeb-8d2f-854c34721dac'::uuid, 'aniversario-do-bento',
     'd7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid,
-    'infantil'::public.event_kind, 'Bento faz 5 anos',
+    'aniversario'::public.event_kind, 'Bento faz 5 anos',
     '2026-08-22T15:00:00-03:00'::timestamptz,
     'Buffet Mundo Mágico', 'São Paulo – SP', 'Família Ribeiro',
     'Festa do Bento', 'O Bento está fazendo 5 aninhos e quer muito comemorar com você! Vai ter bolo, brincadeira e bagunça boa.',

@@ -1,4 +1,11 @@
-export type EventKind = "casamento" | "debutante" | "infantil" | "corporativo" | "formatura";
+export type EventKind =
+  | "casamento"
+  | "debutante"
+  | "corporativo"
+  | "aniversario"
+  | "formatura"
+  | "confraternizacao"
+  | "outros";
 
 export type ModuleId =
   | "rsvp"
@@ -124,6 +131,8 @@ export interface MuralMessage {
   at: string;
   likes: number;
   status: MediaStatus;
+  /** URL assinada da foto anexada, de curta duração. `undefined` quando o recado não tem foto. */
+  photoUrl?: string;
 }
 
 export interface MenuOption {

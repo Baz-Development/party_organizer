@@ -11,9 +11,11 @@ import { EVENT_KINDS } from "@/lib/validation/event";
 const KIND_LABEL: Record<EventKind, string> = {
   casamento: "Casamento",
   debutante: "Debutante (15 anos)",
-  infantil: "Aniversário infantil",
   corporativo: "Evento corporativo",
+  aniversario: "Aniversário",
   formatura: "Formatura",
+  confraternizacao: "Confraternização",
+  outros: "Outros",
 };
 
 export function NovaPaginaForm({ clientes }: { clientes: { id: string; label: string }[] }) {

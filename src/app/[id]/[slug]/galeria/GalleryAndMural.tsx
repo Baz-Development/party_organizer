@@ -29,6 +29,9 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
   const [formError, setFormError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const noteFileInput = useRef<HTMLInputElement>(null);
+  const [notePhoto, setNotePhoto] = useState<{ path: string; previewUrl: string } | null>(null);
+  const [notePhotoUploading, setNotePhotoUploading] = useState(false);
 
   const visitorId = getVisitorId();
 
@@ -72,7 +75,12 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
     const result = await fetchJson<MuralMessage>(`/api/eventos/${event.slug}/mural`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visitorId, author: author.trim(), message: draft.trim() }),
+      body: JSON.stringify({
+        visitorId,
+        author: author.trim(),
+        message: draft.trim(),
+        photoPath: notePhoto?.path,
+      }),
     });
 
     setSending(false);
@@ -81,13 +89,47 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
       return;
     }
 
-    // Aprovação imediata aparece na hora; aprovação prévia só depois da
-    // moderação — nos dois casos, fechar o composer é o mesmo.
-    if (result.data && result.data.status === "aprovada") {
+    // O mural publica sempre na hora — sem aprovação prévia.
+    if (result.data) {
       setNotes((n) => [result.data as MuralMessage, ...n]);
     }
     setDraft("");
+    setNotePhoto(null);
     setComposeOpen(false);
+  }
+
+  async function handleNotePhotoSelected(file: File) {
+    setNotePhotoUploading(true);
+    setFormError(null);
+
+    const uploadReq = await fetchJson<{ path: string; signedUrl: string; token: string }>(
+      `/api/eventos/${event.slug}/mural/upload`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId, contentType: file.type }),
+      },
+    );
+
+    if (!uploadReq.ok || !uploadReq.data) {
+      setNotePhotoUploading(false);
+      setFormError(uploadReq.error ?? "Não foi possível preparar o envio da foto.");
+      return;
+    }
+
+    const putRes = await fetch(uploadReq.data.signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    setNotePhotoUploading(false);
+    if (!putRes.ok) {
+      setFormError("Não foi possível enviar a foto.");
+      return;
+    }
+
+    setNotePhoto({ path: uploadReq.data.path, previewUrl: URL.createObjectURL(file) });
   }
 
   async function handleFileSelected(file: File) {
@@ -277,6 +319,14 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
                   className="rounded-2xl border border-line bg-[#fffdf9] px-3.5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
                 >
                   <div className="mb-2.5 h-0.5 w-7 rounded-sm bg-accent" />
+                  {m.photoUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL assinada, de curta duração.
+                    <img
+                      src={m.photoUrl}
+                      alt={`Foto de ${m.author}`}
+                      className="mb-3 max-h-48 w-full rounded-lg object-cover"
+                    />
+                  )}
                   <div className="mb-3 text-[14.5px] leading-[1.55] text-[#3a3630]">{m.message}</div>
                   <div className="flex items-center justify-between">
                     <div className="text-[12.5px] font-semibold text-ink-faint">{m.author}</div>
@@ -315,11 +365,57 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
           placeholder="Escreva algo especial..."
           className="min-h-28"
         />
-        <div className="my-1.5 mb-5 text-right text-xs text-ink-faint">
+        <div className="my-1.5 text-right text-xs text-ink-faint">
           {draft.length}/{MAX_CHARS}
         </div>
+        <div className="mb-5 mt-2">
+          <input
+            ref={noteFileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void handleNotePhotoSelected(file);
+            }}
+          />
+          {notePhoto ? (
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- prévia local. */}
+              <img
+                src={notePhoto.previewUrl}
+                alt="Prévia da foto"
+                className="h-16 w-16 rounded-lg object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setNotePhoto(null)}
+                className="cursor-pointer text-[13px] font-semibold text-ink-soft underline"
+              >
+                Remover foto
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              disabled={notePhotoUploading}
+              onClick={() => noteFileInput.current?.click()}
+            >
+              {notePhotoUploading ? "Enviando..." : "Adicionar foto (opcional)"}
+            </Button>
+          )}
+        </div>
         {formError && <p className="mb-3 text-sm text-red-600">{formError}</p>}
-        <Button full size="lg" disabled={submitDisabled || sending} onClick={submitNote}>
+        <Button
+          full
+          size="lg"
+          disabled={submitDisabled || sending || notePhotoUploading}
+          onClick={submitNote}
+        >
           {sending ? "Enviando..." : "Enviar recado"}
         </Button>
       </Sheet>

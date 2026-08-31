@@ -66,7 +66,9 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     id: row.id,
     slug: row.slug,
     title: row.title,
-    kind: row.kind,
+    // `infantil` foi migrado para `aniversario` e não é mais ofertado, mas o
+    // valor segue no enum do banco — resolve qualquer linha remanescente.
+    kind: row.kind === "infantil" ? "aniversario" : row.kind,
     date: row.event_at,
     venue: row.venue ?? "",
     city: row.city ?? "",
@@ -139,7 +141,8 @@ export function toPhoto(row: PhotoRow, url: string): Photo {
   };
 }
 
-export function toMuralMessage(row: MuralMessageRow): MuralMessage {
+/** `photoUrl` chega resolvida por quem chama — a URL assinada não é síncrona. */
+export function toMuralMessage(row: MuralMessageRow, photoUrl?: string): MuralMessage {
   return {
     id: row.id,
     author: row.author,
@@ -147,6 +150,7 @@ export function toMuralMessage(row: MuralMessageRow): MuralMessage {
     at: row.created_at,
     likes: row.likes_count,
     status: row.status,
+    photoUrl: photoUrl || undefined,
   };
 }
 

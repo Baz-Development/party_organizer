@@ -224,6 +224,40 @@ export interface SubmitMuralMessageInput {
   message: string;
   visitorId: string;
   guestToken?: string;
+  /** Path já enviado ao Storage (`guest-uploads`), prefixado por `{event_id}/`. */
+  photoPath?: string;
+}
+
+/**
+ * Emite a URL de upload assinada da foto de um recado. Mesmo padrão de
+ * `requestPhotoUpload` — a checagem de "pode enviar" roda em
+ * `assert_can_submit_mural_photo` (módulo `mural` habilitado, limite de
+ * envios), e a emissão em si usa a chave `service-role`.
+ */
+export async function requestMuralPhotoUpload(
+  client: Client,
+  eventSlug: string,
+  visitorId: string,
+  contentType: string,
+): Promise<RequestPhotoUploadResult> {
+  const { data: eventId, error } = await client.rpc("assert_can_submit_mural_photo", {
+    p_event_slug: eventSlug,
+    p_visitor_id: visitorId,
+  });
+  if (error) throw toMediaError(error);
+
+  const path = `${eventId}/${randomUUID()}.${extensionFor(contentType)}`;
+
+  const admin = createSupabaseAdminClient();
+  const { data, error: signError } = await admin.storage
+    .from("guest-uploads")
+    .createSignedUploadUrl(path);
+
+  if (signError || !data) {
+    throw new DbError(signError?.message ?? "Falha ao preparar o envio.", "desconhecido");
+  }
+
+  return { path, token: data.token, signedUrl: data.signedUrl };
 }
 
 export async function submitMuralMessage(
@@ -238,12 +272,22 @@ export async function submitMuralMessage(
       p_message: input.message,
       p_visitor_id: input.visitorId,
       p_guest_token: input.guestToken,
+      p_photo_path: input.photoPath,
     })
     .single();
 
   if (error) throw toMediaError(error);
 
-  return toMuralMessage(data as MuralMessageRow);
+  // O recado nasce sempre visível; a URL da foto (quando há) é resolvida aqui.
+  const row = data as MuralMessageRow;
+  let photoUrl: string | undefined;
+  if (row.photo_path) {
+    const { data: signed } = await client.storage
+      .from("guest-uploads")
+      .createSignedUrl(row.photo_path, READ_URL_TTL_SECONDS);
+    photoUrl = signed?.signedUrl;
+  }
+  return toMuralMessage(row, photoUrl);
 }
 
 export interface ListMuralOptions {
@@ -281,7 +325,17 @@ export async function listMuralMessages(
   const page = rows.slice(0, limit);
   const nextCursor = rows.length > limit ? page[page.length - 1].created_at : null;
 
-  return { items: page.map(toMuralMessage), nextCursor };
+  const items = await Promise.all(
+    page.map(async (row) => {
+      if (!row.photo_path) return toMuralMessage(row);
+      const { data: signed } = await client.storage
+        .from("guest-uploads")
+        .createSignedUrl(row.photo_path, READ_URL_TTL_SECONDS);
+      return toMuralMessage(row, signed?.signedUrl ?? "");
+    }),
+  );
+
+  return { items, nextCursor };
 }
 
 export async function moderateMuralMessage(
@@ -303,6 +357,15 @@ export async function moderateMuralMessage(
 }
 
 export async function deleteMuralMessage(client: Client, messageId: string): Promise<void> {
+  const { data: existing, error: selectError } = await client
+    .from("mural_messages")
+    .select("photo_path")
+    .eq("id", messageId)
+    .maybeSingle();
+
+  if (selectError) throw new DbError(selectError.message, "desconhecido");
+  if (!existing) throw new DbError("Recado não encontrado.", "nao-encontrado");
+
   const { error, count } = await client
     .from("mural_messages")
     .delete({ count: "exact" })
@@ -310,6 +373,11 @@ export async function deleteMuralMessage(client: Client, messageId: string): Pro
 
   if (error) throw new DbError(error.message, "desconhecido");
   if (!count) throw new DbError("Recado não encontrado.", "nao-encontrado");
+
+  // Melhor esforço, como em `deletePhoto`: o registro já não existe.
+  if (existing.photo_path) {
+    await client.storage.from("guest-uploads").remove([existing.photo_path]);
+  }
 }
 
 // --- Curtidas --------------------------------------------------------------
