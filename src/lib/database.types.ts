@@ -188,6 +188,13 @@ export type Database = {
             foreignKeyName: "events_host_profile_id_fkey"
             columns: ["host_profile_id"]
             isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_host_profile_id_fkey"
+            columns: ["host_profile_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -529,6 +536,7 @@ export type Database = {
           id: string
           likes_count: number
           message: string
+          photo_path: string | null
           status: Database["public"]["Enums"]["mural_status"]
           visitor_id: string
         }
@@ -540,6 +548,7 @@ export type Database = {
           id?: string
           likes_count?: number
           message: string
+          photo_path?: string | null
           status?: Database["public"]["Enums"]["mural_status"]
           visitor_id: string
         }
@@ -551,6 +560,7 @@ export type Database = {
           id?: string
           likes_count?: number
           message?: string
+          photo_path?: string | null
           status?: Database["public"]["Enums"]["mural_status"]
           visitor_id?: string
         }
@@ -751,6 +761,7 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          provisioned: boolean
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
@@ -758,6 +769,7 @@ export type Database = {
           display_name?: string | null
           email: string
           id: string
+          provisioned?: boolean
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
@@ -765,6 +777,7 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          provisioned?: boolean
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
@@ -1101,7 +1114,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      client_accounts: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          event_count: number | null
+          id: string | null
+          last_sign_in_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _require_published_module: {
@@ -1172,6 +1195,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      assert_can_submit_mural_photo: {
+        Args: { p_event_slug: string; p_visitor_id: string }
+        Returns: string
       }
       assert_can_submit_photo: {
         Args: { p_event_slug: string; p_visitor_id: string }
@@ -1322,6 +1349,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      list_client_accounts: {
+        Args: never
+        Returns: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          event_count: number | null
+          id: string | null
+          last_sign_in_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "client_accounts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       process_payment_event: {
         Args: {
           p_amount_cents: number
@@ -1404,6 +1448,7 @@ export type Database = {
           p_event_slug: string
           p_guest_token?: string
           p_message: string
+          p_photo_path?: string
           p_visitor_id: string
         }
         Returns: {
@@ -1414,6 +1459,7 @@ export type Database = {
           id: string
           likes_count: number
           message: string
+          photo_path: string | null
           status: Database["public"]["Enums"]["mural_status"]
           visitor_id: string
         }
@@ -1552,6 +1598,9 @@ export type Database = {
         | "infantil"
         | "corporativo"
         | "formatura"
+        | "aniversario"
+        | "confraternizacao"
+        | "outros"
       event_status: "rascunho" | "publicado" | "encerrado"
       gift_status: "disponivel" | "reservado" | "comprado"
       moderation_policy: "previa" | "imediata"
@@ -1715,6 +1764,9 @@ export const Constants = {
         "infantil",
         "corporativo",
         "formatura",
+        "aniversario",
+        "confraternizacao",
+        "outros",
       ],
       event_status: ["rascunho", "publicado", "encerrado"],
       gift_status: ["disponivel", "reservado", "comprado"],

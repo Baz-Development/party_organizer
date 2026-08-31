@@ -104,6 +104,7 @@ export function toProfile(row: ProfileRow): Profile {
     email: row.email,
     displayName: row.display_name ?? row.email,
     role: row.role,
+    provisioned: row.provisioned,
     createdAt: row.created_at,
   };
 }

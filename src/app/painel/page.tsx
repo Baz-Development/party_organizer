@@ -1,4 +1,3 @@
-import { LinkButton } from "@/components/ui";
 import { requireSession } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
 import { getGiftsSummary } from "@/lib/db/gifts";
@@ -21,15 +20,13 @@ export default async function PainelDoCliente() {
     return (
       <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
         <h1 className="mb-3 font-display text-[28px] font-semibold">
-          Você ainda não tem um evento
+          Sua página está sendo preparada
         </h1>
         <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
-          Crie o seu em poucos passos: escolha o tipo de festa, ative os módulos
-          e compartilhe o link.
+          A Equipe Villa Glam monta a página do seu evento e vincula a sua
+          conta como anfitriã. Assim que estiver pronta, ela aparece aqui e você
+          passa a editar o conteúdo e moderar a galeria e o mural.
         </p>
-        <LinkButton href="/onboarding" size="lg">
-          Criar meu evento
-        </LinkButton>
       </div>
     );
   }

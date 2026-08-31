@@ -138,18 +138,21 @@ ${everyone
 
 -- O trigger on_auth_user_created já criou os perfis; aqui definimos nome de
 -- exibição e papel. O papel de admin nunca é atribuível pela aplicação — só
--- por seed ou operação administrativa, ambas sem sessão.
-insert into public.profiles (id, email, display_name, role)
+-- por seed ou operação administrativa, ambas sem sessão. As contas de cliente
+-- entram como provisionadas pelo admin, refletindo o fluxo da ata (a Equipe
+-- Villa Glam cadastra o cliente antes do primeiro acesso).
+insert into public.profiles (id, email, display_name, role, provisioned)
 values
 ${everyone
   .map(
     (person) =>
-      `  (${uuid(person.id)}, ${txt(person.email)}, ${txt(person.displayName)}, ${txt(person.role)}::public.user_role)`,
+      `  (${uuid(person.id)}, ${txt(person.email)}, ${txt(person.displayName)}, ${txt(person.role)}::public.user_role, ${person.role === "cliente"})`,
   )
   .join(",\n")}
 on conflict (id) do update
   set display_name = excluded.display_name,
-      role = excluded.role;
+      role = excluded.role,
+      provisioned = excluded.provisioned;
 
 -- ---------------------------------------------------------------------------
 -- Eventos

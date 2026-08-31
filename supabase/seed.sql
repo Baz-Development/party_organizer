@@ -67,17 +67,20 @@ values
 
 -- O trigger on_auth_user_created já criou os perfis; aqui definimos nome de
 -- exibição e papel. O papel de admin nunca é atribuível pela aplicação — só
--- por seed ou operação administrativa, ambas sem sessão.
-insert into public.profiles (id, email, display_name, role)
+-- por seed ou operação administrativa, ambas sem sessão. As contas de cliente
+-- entram como provisionadas pelo admin, refletindo o fluxo da ata (a Equipe
+-- Villa Glam cadastra o cliente antes do primeiro acesso).
+insert into public.profiles (id, email, display_name, role, provisioned)
 values
-  ('09f235d8-b241-5023-a494-b841bd14ffac'::uuid, 'admin@exemplo.local', 'Admin da plataforma', 'admin'::public.user_role),
-  ('98b63843-de06-51ec-823b-44e372c12b6b'::uuid, 'marina-e-thiago@exemplo.local', 'Marina & Thiago', 'cliente'::public.user_role),
-  ('07d8aca2-db49-5bfc-86d2-bf53a6a4aed9'::uuid, '15-anos-sofia@exemplo.local', 'Sofia Andrade', 'cliente'::public.user_role),
-  ('d7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid, 'aniversario-do-bento@exemplo.local', 'Família Ribeiro', 'cliente'::public.user_role),
-  ('7043ae5b-163a-5f7e-9de9-7875ba9107eb'::uuid, 'convencao-nexus-2026@exemplo.local', 'Nexus Tecnologia', 'cliente'::public.user_role)
+  ('09f235d8-b241-5023-a494-b841bd14ffac'::uuid, 'admin@exemplo.local', 'Admin da plataforma', 'admin'::public.user_role, false),
+  ('98b63843-de06-51ec-823b-44e372c12b6b'::uuid, 'marina-e-thiago@exemplo.local', 'Marina & Thiago', 'cliente'::public.user_role, true),
+  ('07d8aca2-db49-5bfc-86d2-bf53a6a4aed9'::uuid, '15-anos-sofia@exemplo.local', 'Sofia Andrade', 'cliente'::public.user_role, true),
+  ('d7ce8523-6863-50c2-910c-6d28b03a6b27'::uuid, 'aniversario-do-bento@exemplo.local', 'Família Ribeiro', 'cliente'::public.user_role, true),
+  ('7043ae5b-163a-5f7e-9de9-7875ba9107eb'::uuid, 'convencao-nexus-2026@exemplo.local', 'Nexus Tecnologia', 'cliente'::public.user_role, true)
 on conflict (id) do update
   set display_name = excluded.display_name,
-      role = excluded.role;
+      role = excluded.role,
+      provisioned = excluded.provisioned;
 
 -- ---------------------------------------------------------------------------
 -- Eventos

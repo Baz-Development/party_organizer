@@ -5,6 +5,7 @@ import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Badge } from "@/components/ui";
 import { ADMIN_SERIES, PLATFORM_FINANCE } from "@/lib/fixtures/painel";
+import { ADMIN_NAV } from "./nav";
 import { shortDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary, Profile } from "@/lib/types";
@@ -63,10 +64,7 @@ export function AdminPanel({
     <div style={themeVars("terracota")} className="min-h-screen bg-paper-3">
       <PanelNav
         brand="Convite · Admin"
-        items={[
-          { href: "/admin", label: "Visão geral" },
-          { href: "/painel", label: "Painel do cliente" },
-        ]}
+        items={ADMIN_NAV}
         right={<SairButton />}
       />
 

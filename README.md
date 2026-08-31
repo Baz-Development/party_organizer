@@ -97,30 +97,48 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase
 
 | Rota | Tela |
 | --- | --- |
-| `/onboarding` | Onboarding do Cliente |
+| `/onboarding` | "Sua página está sendo preparada" (informativa) |
 | `/painel` | Painel do Cliente |
 | `/painel/convidados` | Gestão de Convidados |
 | `/painel/editor` | Editor da Página |
+| `/sem-acesso` | Conta autenticada sem provisionamento e sem evento |
 
 ### Plataforma
 
 | Rota | Tela |
 | --- | --- |
 | `/admin` | Painel Admin |
+| `/admin/clientes` | Contas de cliente — cadastrar (convite) e listar |
+| `/admin/paginas` | Criar página de evento e atribuir o anfitrião |
 
 Slugs de exemplo carregados pelo seed: `marina-e-thiago`, `15-anos-sofia`,
 `aniversario-do-bento`, `convencao-nexus-2026`.
 
-`/painel`, `/painel/*`, `/onboarding` e `/admin` exigem sessão.
+`/painel`, `/painel/*`, `/onboarding` e `/admin/*` exigem sessão.
 Entre em `/entrar` com um dos e-mails do seed — `admin@exemplo.local` para o
 painel administrativo, `marina-e-thiago@exemplo.local` para o de cliente — e
 abra o link mágico na caixa de e-mail local (`http://127.0.0.1:54424`).
+
+### Fluxo de acesso do cliente
+
+A criação de evento **não** é self-service. A Equipe Villa Glam (`admin`):
+
+1. cadastra a conta do cliente em `/admin/clientes` (nome + e-mail) — isso
+   dispara um convite por e-mail e o perfil nasce já provisionado;
+2. cria a página do evento em `/admin/paginas`, escolhendo a conta anfitriã;
+3. o cliente abre o link de acesso, cai em `/painel` e passa a editar o
+   conteúdo, o cronograma, a capa e a moderação da galeria e do mural.
+
+Um e-mail que autentica sem ter sido provisionado e sem ser anfitrião de nenhum
+evento cai em `/sem-acesso` — a sessão existe, mas nenhum painel se abre.
 
 ## Rotas de API
 
 | Método | Rota | |
 | --- | --- | --- |
 | GET | `/api/eventos` | do banco, escopado por RLS |
+| POST | `/api/eventos` | cria a página — só admin, anfitrião no corpo |
+| GET · POST | `/api/admin/clientes` | lista / cadastra (convite) contas de cliente — só admin |
 | GET | `/api/eventos/[slug]` | do banco, 404 real |
 | GET · POST | `/api/eventos/[slug]/convidados` | evento real, convidados de fixture |
 | GET | `/api/eventos/[slug]/presentes` | evento real, presentes de fixture |
@@ -142,9 +160,10 @@ src/
     page.tsx                 Landing
     entrar/                  Login por link mágico
     rotas/                   Índice de todas as telas
-    onboarding/              Criação real de evento
+    onboarding/              Tela informativa "página em preparação"
+    sem-acesso/              Conta autenticada sem acesso a painel
     painel/                  layout + visão geral, convidados, editor
-    admin/                   Layout que guarda o papel de admin
+    admin/                   Guarda o papel de admin + clientes, paginas
     e/[slug]/                Páginas públicas do evento
     api/                     Route handlers (eventos, sessão)
   components/

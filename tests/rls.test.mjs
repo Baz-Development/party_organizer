@@ -188,6 +188,86 @@ describe("RLS", () => {
     });
   });
 
+  describe("criação de página restrita ao admin", () => {
+    it("cliente não cria evento nem para si mesmo", async () => {
+      const { error } = await c.membroA.client.from("events").insert({
+        slug: `cliente-cria-${c.tag}`,
+        host_profile_id: c.membroA.id,
+        kind: "casamento",
+        title: "Não deveria existir",
+        event_at: "2027-06-06T18:00:00-03:00",
+      });
+
+      assert.ok(error, "events_insert exige is_platform_admin()");
+    });
+
+    it("admin cria evento atribuindo um cliente como anfitrião", async () => {
+      const { data, error } = await c.plataforma.client
+        .from("events")
+        .insert({
+          slug: `admin-cria-${c.tag}`,
+          host_profile_id: c.membroB.id,
+          kind: "casamento",
+          title: "Página montada pela equipe",
+          event_at: "2027-07-07T18:00:00-03:00",
+        })
+        .select("id")
+        .single();
+
+      assert.equal(error, null, "o admin deveria conseguir inserir");
+      assert.ok(data?.id);
+
+      await admin.from("events").delete().eq("id", data.id);
+    });
+
+    it("admin não cria evento com anfitrião que não é cliente", async () => {
+      const { error } = await c.plataforma.client.from("events").insert({
+        slug: `anfitriao-admin-${c.tag}`,
+        host_profile_id: c.plataforma.id,
+        kind: "casamento",
+        title: "Anfitrião inválido",
+        event_at: "2027-08-08T18:00:00-03:00",
+      });
+
+      assert.ok(error, "o with check exige host_profile_id de um perfil cliente");
+    });
+
+    it("cliente anfitrião continua editando o próprio evento", async () => {
+      const { data } = await c.cliente.client
+        .from("events")
+        .update({ title: "Título ajustado pelo anfitrião" })
+        .eq("id", c.eventos.doCliente)
+        .select("title")
+        .maybeSingle();
+
+      assert.equal(data?.title, "Título ajustado pelo anfitrião");
+    });
+  });
+
+  describe("listagem de contas de cliente", () => {
+    it("admin recebe as contas por list_client_accounts()", async () => {
+      const { data, error } = await c.plataforma.client.rpc("list_client_accounts");
+
+      assert.equal(error, null);
+      assert.ok(Array.isArray(data));
+    });
+
+    it("cliente recebe lista vazia — a função checa is_platform_admin()", async () => {
+      const { data, error } = await c.cliente.client.rpc("list_client_accounts");
+
+      assert.equal(error, null);
+      assert.deepEqual(data, []);
+    });
+
+    it("a view client_accounts não é legível diretamente por cliente nem admin", async () => {
+      const { error: comoCliente } = await c.cliente.client.from("client_accounts").select("id");
+      assert.ok(comoCliente, "sem grant de select para authenticated");
+
+      const { error: comoAdmin } = await c.plataforma.client.from("client_accounts").select("id");
+      assert.ok(comoAdmin, "nem o admin lê a view direto — só pela função");
+    });
+  });
+
   describe("amigo secreto — sigilo dos pares (add-secret-santa-backend)", () => {
     it("nenhum papel comum alcança secret_santa_assignments por select direto", async () => {
       const { error: comoAnon } = await anonimo.from("secret_santa_assignments").select("id");

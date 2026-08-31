@@ -35,9 +35,10 @@ const buildGroups = (
     },
     {
       title: "Cliente (quem organiza a festa)",
-      desc: "Onboarding e gestão do próprio evento.",
+      desc: "Gestão do próprio evento, criado pela Equipe Villa Glam.",
       items: [
-        { href: "/onboarding", label: "Onboarding do Cliente", note: "Tipo de evento → módulos → pronto" },
+        { href: "/onboarding", label: "Página em preparação", note: "Informativa — o admin monta a página" },
+        { href: "/sem-acesso", label: "Conta sem acesso", note: "Autenticou mas não foi provisionado" },
         { href: "/painel", label: "Painel do Cliente", note: "Contagem, confirmações, link e atividade" },
         { href: "/painel/convidados", label: "Gestão de Convidados", note: "Busca, filtros, tabela e detalhe" },
         { href: "/painel/editor", label: "Editor da Página", note: "Cor, tipografia e textos com preview ao vivo" },
@@ -48,6 +49,8 @@ const buildGroups = (
       desc: "Administração do produto pela Equipe Villa Glam.",
       items: [
         { href: "/admin", label: "Painel Admin", note: "Métricas, eventos e clientes recentes" },
+        { href: "/admin/clientes", label: "Contas de cliente", note: "Cadastrar (convite) e listar" },
+        { href: "/admin/paginas", label: "Nova página de evento", note: "Criar e atribuir o anfitrião" },
       ],
     },
   ];

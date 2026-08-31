@@ -2,6 +2,7 @@ import "server-only";
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { forbidden, redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import type { Database } from "@/lib/database.types";
 import { getProfile } from "@/lib/db/profiles";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -39,6 +40,18 @@ export async function requireSession(pathname: string): Promise<Sessao> {
   const profile = await getProfile(supabase, user.id);
   if (!profile) redirect(loginPathFor(pathname));
 
+  // Um e-mail qualquer que peça link mágico vira uma sessão de `cliente`. Se
+  // não foi provisionado pelo admin e não é anfitrião de nenhum evento, não há
+  // painel para ele — melhor uma tela dedicada do que um painel vazio.
+  if (profile.role === "cliente" && !profile.provisioned) {
+    const { count } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .eq("host_profile_id", user.id);
+
+    if (!count) redirect("/sem-acesso");
+  }
+
   return { supabase, user, profile };
 }
 
@@ -51,4 +64,26 @@ export async function requireAdmin(pathname: string): Promise<Sessao> {
   if (session.profile.role !== "admin") forbidden();
 
   return session;
+}
+
+/**
+ * Versão para Route Handlers: em vez de `redirect`/`forbidden` (que renderizam
+ * páginas), devolve uma `NextResponse` JSON que a rota repassa ao cliente.
+ */
+export async function requireAdminApi(): Promise<Sessao | { response: NextResponse }> {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { response: NextResponse.json({ error: "Autenticação necessária." }, { status: 401 }) };
+  }
+
+  const profile = await getProfile(supabase, user.id);
+  if (!profile || profile.role !== "admin") {
+    return { response: NextResponse.json({ error: "Acesso restrito ao admin." }, { status: 403 }) };
+  }
+
+  return { supabase, user, profile };
 }

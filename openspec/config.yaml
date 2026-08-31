@@ -21,7 +21,13 @@ context: |
   Decisões já tomadas:
   - Auth: Supabase Auth (magic link) para cliente/admin. Convidado
     acessa por link público do evento + token de convite, sem conta.
+  - Provisionamento: a criação de evento não é self-service. O admin (Equipe
+    Villa Glam) cadastra a conta do cliente por convite de e-mail
+    (`/admin/clientes`) e cria a página do evento atribuindo o anfitrião
+    (`/admin/paginas`). `/onboarding` é só informativa; um e-mail autenticado
+    sem provisionamento e sem evento cai em `/sem-acesso`.
   - Autorização: RLS em todas as tabelas, por anfitrião e por evento.
+    `events_insert` exige `is_platform_admin()`.
   - Escopo do backend: CRUD + regras de negócio, Storage de imagens, pagamento de
     presentes e notificações por e-mail.
 

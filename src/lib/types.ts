@@ -63,6 +63,8 @@ export interface Profile {
   email: string;
   displayName: string;
   role: UserRole;
+  /** A conta foi provisionada pelo admin (convite), não pelo self-service. */
+  provisioned: boolean;
   createdAt: string;
 }
 

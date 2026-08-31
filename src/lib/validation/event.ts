@@ -73,6 +73,16 @@ export const createEventSchema = z.object({
 });
 
 /**
+ * Criação pelo admin: além dos campos do evento, o corpo traz a conta de
+ * cliente que será anfitriã. Quem valida que esse id é mesmo de um `cliente`
+ * é a rota (com uma mensagem clara) e, em última instância, a política de
+ * `events_insert`.
+ */
+export const createEventByAdminSchema = createEventSchema.extend({
+  hostProfileId: z.string().uuid("Escolha uma conta de cliente anfitriã."),
+});
+
+/**
  * Aceita data/hora, string vazia (limpa o prazo) ou ausência (não altera).
  * Validação de "não é passado" fica a cargo de quem chama, que conhece a
  * data de criação do evento a comparar.
@@ -110,4 +120,5 @@ export const eventModulesSchema = z.array(
 export const eventScheduleSchema = z.array(scheduleItem);
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
+export type CreateEventByAdminInput = z.infer<typeof createEventByAdminSchema>;
 export type UpdateEventInput = z.infer<typeof updateEventSchema>;

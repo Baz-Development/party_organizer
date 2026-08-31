@@ -36,14 +36,25 @@ recebendo um link de acesso de uso único. O sistema MUST NOT exigir senha.
 
 ### Requirement: Perfil criado no primeiro acesso
 
-O sistema MUST manter um perfil por usuário autenticado, criado automaticamente no
-primeiro login, contendo ao menos nome de exibição e e-mail.
+O sistema MUST manter um perfil por usuário autenticado, contendo ao menos nome
+de exibição e e-mail. O perfil de um cliente MUST ser provisionado antes pelo
+admin; o primeiro login com aquele e-mail vincula a identidade de autenticação
+ao perfil já existente em vez de criar outro. O perfil de um admin é criado por
+processo administrativo, nunca por fluxo exposto.
 
-#### Scenario: Primeiro login
+#### Scenario: Primeiro login de cliente provisionado
 
-- **WHEN** um usuário autentica pela primeira vez
-- **THEN** um perfil correspondente passa a existir vinculado à sua identidade
-- **AND** logins seguintes reutilizam o mesmo perfil
+- **WHEN** um cliente provisionado autentica pela primeira vez
+- **THEN** sua identidade de autenticação passa a apontar para o perfil que o
+  admin cadastrou, com o mesmo e-mail
+- **AND** logins seguintes reutilizam esse perfil
+
+#### Scenario: Login sem provisionamento
+
+- **WHEN** uma pessoa autentica com um e-mail que não foi provisionado e que não
+  é anfitrião de nenhum evento
+- **THEN** uma sessão é criada mas nenhum painel é acessível
+- **AND** ela vê a mensagem de conta sem acesso
 
 #### Scenario: Usuário edita o próprio perfil
 
