@@ -114,7 +114,7 @@ export function SecretSantaReveal({ event, token }: { event: EventSummary; token
                   style={{
                     borderLeft: "120px solid transparent",
                     borderRight: "120px solid transparent",
-                    borderTop: "88px solid #e7ded1",
+                    borderTop: "88px solid #d9d9d9",
                     transform:
                       stage === "closed" ? "rotateX(0deg)" : "rotateX(-170deg)",
                   }}

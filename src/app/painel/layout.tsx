@@ -9,6 +9,7 @@ import { themeVars } from "@/lib/themes";
 const ITEMS = [
   { href: "/painel", label: "Visão geral" },
   { href: "/painel/convidados", label: "Convidados" },
+  { href: "/painel/presentes", label: "Presentes" },
   { href: "/painel/editor", label: "Editor da página" },
   { href: "/painel/moderacao", label: "Moderação" },
 ];
@@ -27,11 +28,11 @@ export default async function PainelLayout({
 
   return (
     <div
-      style={themeVars(event?.themeKey ?? "terracota")}
+      style={themeVars(event?.themeKey ?? "dourado")}
       className="min-h-screen bg-paper-3"
     >
       <PanelNav
-        brand="Convite"
+        brand="Painel"
         items={ITEMS}
         right={
           <div className="flex items-center gap-2">

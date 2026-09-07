@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
+import { Logo } from "@/components/Logo";
 import { LinkButton, Pill } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
 import type { ShowcaseEvent } from "@/lib/db/featured";
@@ -108,7 +109,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
     <div className="bg-paper text-ink">
       {/* Topo -------------------------------------------------------- */}
       <header className="mx-auto flex max-w-[1160px] items-center justify-between px-8 pt-6">
-        <div className="font-display text-xl font-semibold">Convite</div>
+        <Logo variant="lockup" height={46} priority />
         <nav className="flex items-center gap-6">
           <Link href="/painel" className="text-sm font-semibold text-ink-soft no-underline hover:text-ink">
             Entrar
@@ -320,6 +321,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
 
       {/* CTA final ---------------------------------------------------- */}
       <section className="bg-ink px-8 py-22 text-center">
+        <Logo variant="mark" height={76} className="mx-auto mb-7" />
         <h2 className="mb-4 font-display text-[clamp(26px,5vw,36px)] font-semibold text-paper">
           Sua história merece uma página à altura.
         </h2>
@@ -331,7 +333,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       {/* Rodapé ------------------------------------------------------- */}
       <footer className="px-8 py-12">
         <div className="mx-auto flex max-w-[1160px] flex-wrap justify-between gap-6">
-          <div className="font-display text-[18px] font-semibold">Convite</div>
+          <Logo variant="lockup" height={36} />
           <div className="flex flex-wrap gap-7 text-sm text-ink-soft">
             <Link href="/rotas" className="text-ink-soft no-underline hover:text-ink">
               Todas as telas

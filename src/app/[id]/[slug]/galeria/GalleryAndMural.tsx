@@ -316,7 +316,7 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
                 <div
                   key={m.id}
                   style={{ transform: `rotate(${ROTATIONS[i % ROTATIONS.length]}deg)` }}
-                  className="rounded-2xl border border-line bg-[#fffdf9] px-3.5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
+                  className="rounded-2xl border border-line bg-paper px-3.5 py-4 shadow-[0_4px_14px_rgba(0,0,0,0.05)]"
                 >
                   <div className="mb-2.5 h-0.5 w-7 rounded-sm bg-accent" />
                   {m.photoUrl && (
@@ -327,7 +327,7 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
                       className="mb-3 max-h-48 w-full rounded-lg object-cover"
                     />
                   )}
-                  <div className="mb-3 text-[14.5px] leading-[1.55] text-[#3a3630]">{m.message}</div>
+                  <div className="mb-3 text-[14.5px] leading-[1.55] text-ink-2">{m.message}</div>
                   <div className="flex items-center justify-between">
                     <div className="text-[12.5px] font-semibold text-ink-faint">{m.author}</div>
                     <button

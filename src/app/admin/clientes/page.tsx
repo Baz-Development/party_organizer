@@ -13,8 +13,8 @@ export default async function AdminClientesPage() {
   const clientes = await listClientAccounts(supabase);
 
   return (
-    <div style={themeVars("terracota")} className="min-h-screen bg-paper-3">
-      <PanelNav brand="Convite · Admin" items={ADMIN_NAV} right={<SairButton />} />
+    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+      <PanelNav brand="Admin" items={ADMIN_NAV} right={<SairButton />} />
       <div className="mx-auto max-w-[1160px] px-6 py-10 pb-16">
         <div className="mb-8">
           <div className="mb-1.5 text-[13px] uppercase tracking-[2px] text-accent">Plataforma</div>

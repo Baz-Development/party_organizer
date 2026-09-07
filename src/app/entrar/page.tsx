@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Logo } from "@/components/Logo";
 import { safeNextPath } from "@/lib/auth/redirect";
 import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { themeVars } from "@/lib/themes";
@@ -24,16 +25,13 @@ export default async function EntrarPage({
 
   return (
     <div
-      style={themeVars("terracota")}
+      style={themeVars("dourado")}
       className="flex min-h-screen items-center justify-center bg-paper-3 px-6 py-14"
     >
       <div className="w-full max-w-[440px]">
         <div className="mb-8 text-center">
-          <Link
-            href="/"
-            className="font-display text-[22px] font-semibold text-ink no-underline"
-          >
-            Convite
+          <Link href="/" className="inline-block no-underline">
+            <Logo variant="lockup" height={52} className="mx-auto" priority />
           </Link>
         </div>
 

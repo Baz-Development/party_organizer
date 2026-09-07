@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 export function PanelNav({
   brand,
@@ -17,7 +18,11 @@ export function PanelNav({
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-6 gap-y-3 px-6 py-3.5">
-        <Link href="/" className="font-display text-[18px] font-semibold text-ink no-underline">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 font-display text-[15px] font-semibold text-ink-soft no-underline"
+        >
+          <Logo variant="mark" height={30} />
           {brand}
         </Link>
         <nav className="no-scrollbar flex flex-1 gap-1 overflow-x-auto">

@@ -60,9 +60,9 @@ export function AdminPanel({
   ];
 
   return (
-    <div style={themeVars("terracota")} className="min-h-screen bg-paper-3">
+    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
       <PanelNav
-        brand="Convite · Admin"
+        brand="Admin"
         items={ADMIN_NAV}
         right={<SairButton />}
       />

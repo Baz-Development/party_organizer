@@ -29,7 +29,7 @@ export function ImageSlot({
       aria-label={placeholder}
     >
       <span
-        className={`px-2 text-center font-medium tracking-wide text-[#9c917f] ${
+        className={`px-2 text-center font-medium tracking-wide text-ink-faint ${
           compact ? "text-[9px]" : "text-[11px]"
         }`}
       >

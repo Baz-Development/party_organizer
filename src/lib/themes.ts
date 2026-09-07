@@ -25,9 +25,9 @@ export const THEMES: Record<ThemeKey, Theme> = {
   dourado: {
     key: "dourado",
     label: "Dourado",
-    accent: "#a8925a",
-    accentStrong: "#8d7844",
-    accentSoft: "#d3c49b",
+    accent: "#d4a72c",
+    accentStrong: "#b58e1f",
+    accentSoft: "#e6c875",
   },
 };
 
@@ -38,7 +38,7 @@ export const THEME_LIST = Object.values(THEMES);
  * sem precisar recompilar o Tailwind.
  */
 export function themeVars(key: ThemeKey): React.CSSProperties {
-  const t = THEMES[key] ?? THEMES.terracota;
+  const t = THEMES[key] ?? THEMES.dourado;
   return {
     "--accent": t.accent,
     "--accent-strong": t.accentStrong,
