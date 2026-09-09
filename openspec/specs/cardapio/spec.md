@@ -1,132 +1,56 @@
 # cardapio Specification
 
 ## Purpose
-TBD - created by archiving change add-menu-poll-backend. Update Purpose after archive.
+
+Exibir o cardápio do evento — os pratos servidos, agrupados por etapa da
+refeição — na página pública, como conteúdo editorial que o anfitrião escreve no
+editor. Não há votação: o convidado só lê.
+
 ## Requirements
-### Requirement: Enquete de cardápio por etapa
 
-O sistema MUST permitir que quem administra o evento crie enquetes de cardápio, cada
-uma com etapa da refeição, pergunta, prazo de encerramento e número máximo de
-escolhas por pessoa.
+### Requirement: Itens de cardápio do evento
 
-#### Scenario: Enquete criada
+O sistema MUST permitir que quem administra o evento cadastre itens de cardápio,
+cada um com etapa da refeição (`course`), nome do prato e, opcionalmente, uma
+descrição. A ordem dos itens é definida pelo anfitrião e MUST ser preservada
+entre consultas.
 
-- **WHEN** o anfitrião cria uma enquete de sobremesa com prazo e limite de duas
-  escolhas
-- **THEN** a enquete passa a existir no evento
-- **AND** aparece em `/e/[slug]/cardapio` quando o módulo está habilitado
+#### Scenario: Item cadastrado
 
-#### Scenario: Limite de escolhas inválido
+- **WHEN** o anfitrião adiciona um prato "Petit gâteau" na etapa "Sobremesa"
+- **THEN** o prato passa a existir no cardápio do evento
+- **AND** aparece na seção Cardápio da página quando o módulo `cardapio` está
+  habilitado
 
-- **WHEN** uma enquete é criada com número máximo de escolhas menor que um
-- **THEN** a operação é recusada com erro de validação
+#### Scenario: Agrupamento por etapa
 
-#### Scenario: Prazo no passado
+- **WHEN** o cardápio tem pratos em "Entrada" e "Prato principal"
+- **THEN** a página os apresenta agrupados por etapa, na ordem em que a primeira
+  ocorrência de cada etapa aparece na lista
 
-- **WHEN** uma enquete é criada com prazo de encerramento já vencido
-- **THEN** a operação é recusada com erro de validação
+#### Scenario: Nome obrigatório
+
+- **WHEN** um item é salvo sem etapa ou sem nome
+- **THEN** o item é descartado na gravação (não quebra o salvamento do resto)
 
 #### Scenario: Curadoria restrita
 
-- **WHEN** um convidado tenta criar ou editar uma enquete
+- **WHEN** um convidado tenta cadastrar ou editar itens de cardápio
 - **THEN** a operação é recusada por falta de autorização
 
-### Requirement: Opções da enquete
+### Requirement: Visibilidade herdada do evento
 
-Cada enquete MUST ter ao menos duas opções, com nome obrigatório e, opcionalmente,
-descrição e etiquetas de restrição alimentar.
+Os itens de cardápio MUST seguir a visibilidade do evento: legíveis por qualquer
+pessoa quando o evento está publicado, e por quem administra o evento em
+qualquer estado.
 
-#### Scenario: Enquete publicada com opções suficientes
+#### Scenario: Evento em rascunho
 
-- **WHEN** uma enquete com duas ou mais opções é disponibilizada aos convidados
-- **THEN** todas as opções aparecem na página do cardápio
+- **WHEN** alguém sem vínculo com o evento acessa a página de um evento em
+  rascunho
+- **THEN** não recebe os itens de cardápio (a página inteira responde 404)
 
-#### Scenario: Opções insuficientes
+#### Scenario: Substituição em bloco
 
-- **WHEN** uma enquete com menos de duas opções é disponibilizada
-- **THEN** a operação é recusada
-
-#### Scenario: Remoção de opção votada
-
-- **WHEN** o anfitrião remove uma opção que já recebeu votos
-- **THEN** a remoção exige confirmação explícita
-- **AND** os votos naquela opção deixam de contar na apuração
-
-### Requirement: Voto do convidado
-
-O sistema MUST registrar o voto de um convidado identificado, respeitando o número
-máximo de escolhas da enquete e aceitando apenas opções pertencentes àquela enquete.
-
-#### Scenario: Voto dentro do limite
-
-- **WHEN** um convidado identificado escolhe duas opções em uma enquete que permite
-  duas
-- **THEN** o voto é registrado com as duas escolhas
-
-#### Scenario: Excesso de escolhas
-
-- **WHEN** um convidado escolhe mais opções do que a enquete permite
-- **THEN** a operação é recusada informando o limite
-
-#### Scenario: Opção de outra enquete
-
-- **WHEN** o voto referencia uma opção que não pertence à enquete
-- **THEN** a operação é recusada e nada é gravado
-
-#### Scenario: Visitante não identificado
-
-- **WHEN** alguém sem token de convite tenta votar
-- **THEN** a operação é recusada
-- **AND** as contagens permanecem inalteradas
-
-### Requirement: Um voto por convidado por enquete
-
-O sistema MUST manter no máximo um conjunto de escolhas por convidado por enquete, e
-MUST permitir que ele troque as escolhas enquanto a enquete estiver aberta.
-
-#### Scenario: Troca de voto
-
-- **WHEN** um convidado que já votou envia novas escolhas antes do prazo
-- **THEN** as escolhas anteriores são substituídas
-- **AND** a contagem total de votantes não aumenta
-
-#### Scenario: Votos concorrentes do mesmo convidado
-
-- **WHEN** dois envios do mesmo convidado chegam simultaneamente
-- **THEN** apenas um conjunto de escolhas permanece registrado
-
-### Requirement: Encerramento da enquete
-
-O sistema MUST recusar votos após o prazo de encerramento e MUST NOT alterar o
-resultado apurado depois disso.
-
-#### Scenario: Voto após o prazo
-
-- **WHEN** um convidado tenta votar depois do prazo
-- **THEN** a operação é recusada com aviso de enquete encerrada
-
-#### Scenario: Resultado congelado
-
-- **WHEN** uma enquete encerrada é consultada
-- **THEN** o resultado apresentado é o mesmo em consultas sucessivas
-
-### Requirement: Apuração a partir dos votos
-
-O resultado MUST ser calculado a partir dos votos gravados, e a página do cardápio
-MUST apresentar a contagem por opção.
-
-#### Scenario: Contagem reflete o voto
-
-- **WHEN** um convidado vota em uma opção
-- **THEN** a contagem daquela opção aumenta em um na próxima consulta
-
-#### Scenario: Contagem após troca de voto
-
-- **WHEN** um convidado troca sua escolha de uma opção para outra
-- **THEN** a contagem da opção antiga diminui em um e a da nova aumenta em um
-
-#### Scenario: Empate
-
-- **WHEN** duas opções terminam com a mesma contagem
-- **THEN** ambas são apresentadas como empatadas, sem escolha arbitrária de vencedora
-
+- **WHEN** o anfitrião salva o editor com uma nova lista de pratos
+- **THEN** a lista anterior é substituída inteira pela nova, na nova ordem

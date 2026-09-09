@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth/guards";
 import { DbError, SlugConflictError } from "@/lib/db/errors";
 import { createEvent, listEvents } from "@/lib/db/events";
+import { enqueueEmail } from "@/lib/email/enqueue";
+import { processEmailQueue } from "@/lib/email/processQueue";
 import { createEventByAdminSchema } from "@/lib/validation/event";
+import { createSupabaseAdminClient, getUserEmail } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -53,6 +56,21 @@ export async function POST(req: Request) {
 
   try {
     const event = await createEvent(guard.supabase, eventInput, hostProfileId);
+
+    // O convite ao cliente só sai agora, com a página já existindo — cadastrar
+    // a conta (`POST /api/admin/clientes`) não dispara e-mail nenhum.
+    const hostEmail = await getUserEmail(hostProfileId);
+    if (hostEmail) {
+      const admin = createSupabaseAdminClient();
+      await enqueueEmail(admin, {
+        eventId: event.id,
+        recipientEmail: hostEmail,
+        template: "acesso_painel",
+        data: { eventTitle: event.title },
+      });
+      after(() => processEmailQueue(admin));
+    }
+
     return NextResponse.json({ data: event }, { status: 201 });
   } catch (error) {
     if (error instanceof SlugConflictError) {

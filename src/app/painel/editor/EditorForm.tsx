@@ -1,11 +1,19 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { EventPage } from "@/app/[id]/[slug]/EventPage";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, Textarea, Toggle } from "@/components/ui";
-import { longDate } from "@/lib/format";
 import { THEME_LIST, THEMES } from "@/lib/themes";
-import type { EventSummary, ModerationPolicy, ModuleId, ScheduleItem, ThemeKey } from "@/lib/types";
+import type {
+  BarItem,
+  EventSummary,
+  MenuItem,
+  ModerationPolicy,
+  ModuleId,
+  ScheduleItem,
+  ThemeKey,
+} from "@/lib/types";
 import { salvarEditor } from "./actions";
 
 const MODERATION_OPTIONS: { value: ModerationPolicy; label: string; hint: string }[] = [
@@ -20,32 +28,6 @@ const MODERATION_OPTIONS: { value: ModerationPolicy; label: string; hint: string
     hint: "Aparecem na hora; você pode ocultar depois.",
   },
 ];
-
-const TYPO = {
-  classico: {
-    label: "Clássico",
-    font: "var(--font-playfair), serif",
-    weight: 600,
-    style: "normal" as const,
-    size: "38px",
-  },
-  moderno: {
-    label: "Moderno",
-    font: "var(--font-inter), sans-serif",
-    weight: 700,
-    style: "normal" as const,
-    size: "34px",
-  },
-  romantico: {
-    label: "Romântico",
-    font: "var(--font-cormorant), serif",
-    weight: 600,
-    style: "italic" as const,
-    size: "44px",
-  },
-};
-
-type TypoKey = keyof typeof TYPO;
 
 /** ISO → valor de `<input type="datetime-local">`; ausente vira campo vazio. */
 function toDatetimeLocal(iso: string | undefined): string {
@@ -66,27 +48,67 @@ const MODULE_OPTIONS: { id: ModuleId; label: string }[] = [
   { id: "presentes", label: "Lista de presentes" },
   { id: "galeria", label: "Galeria de fotos" },
   { id: "mural", label: "Mural de recados" },
-  { id: "cardapio", label: "Votação de cardápio" },
+  { id: "cardapio", label: "Cardápio" },
+  { id: "bar", label: "Bar" },
   { id: "amigo-secreto", label: "Amigo secreto" },
 ];
 
+/**
+ * Etapas sugeridas no dropdown do cardápio. O anfitrião pode escolher uma
+ * destas ou digitar uma nova (o campo é um combobox: aceita valor livre).
+ */
+const CURSO_SUGESTOES = [
+  "Entrada",
+  "Prato principal",
+  "Acompanhamento",
+  "Sobremesa",
+  "Bebida",
+] as const;
+
 export function EditorForm({ event }: { event: EventSummary }) {
   const [themeKey, setThemeKey] = useState<ThemeKey>(event.themeKey);
-  const [typo, setTypo] = useState<TypoKey>("classico");
   const [hosts, setHosts] = useState(event.hosts);
   const [eyebrow, setEyebrow] = useState(event.eyebrow);
   const [welcome, setWelcome] = useState(event.welcome);
   const [venue, setVenue] = useState(event.venue);
   const [city, setCity] = useState(event.city);
+  const [address, setAddress] = useState(event.address ?? "");
+  const [postalCode, setPostalCode] = useState(event.postalCode ?? "");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
   const [schedule, setSchedule] = useState<ScheduleItem[]>(event.schedule);
+  const [menu, setMenu] = useState<MenuItem[]>(event.menu);
+  /** Sugestões + etapas já usadas neste cardápio, sem repetição (case-insensitive). */
+  const cursoOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of [...CURSO_SUGESTOES, ...menu.map((m) => m.course)]) {
+      const value = raw.trim();
+      if (!value) continue;
+      const key = value.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(value);
+    }
+    return out;
+  }, [menu]);
+  const [bar, setBar] = useState<BarItem[]>(event.bar.items);
+  const [barService, setBarService] = useState(event.bar.service ?? "");
+  const [barSignatureName, setBarSignatureName] = useState(event.bar.signatureName ?? "");
+  const [barSignatureDesc, setBarSignatureDesc] = useState(event.bar.signatureDesc ?? "");
   const [rsvpDeadline, setRsvpDeadline] = useState(toDatetimeLocal(event.rsvpDeadline));
-  const [guestListOpen, setGuestListOpen] = useState(event.guestListOpen);
   const [moderationPolicy, setModerationPolicy] = useState<ModerationPolicy>(
     event.moderationPolicy,
   );
   const [modules, setModules] = useState<Record<string, boolean>>(
     Object.fromEntries(MODULE_OPTIONS.map((m) => [m.id, event.modules.includes(m.id)])),
   );
+  const [secretSantaBudget, setSecretSantaBudget] = useState(event.secretSanta.budget ?? "");
+  const [secretSantaDrawDate, setSecretSantaDrawDate] = useState(event.secretSanta.drawDate ?? "");
+  const [secretSantaExchangeDate, setSecretSantaExchangeDate] = useState(
+    event.secretSanta.exchangeDate ?? "",
+  );
+  const [secretSantaRules, setSecretSantaRules] = useState(event.secretSanta.rules ?? "");
   const [coverUrl, setCoverUrl] = useState(event.coverUrl);
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -99,6 +121,8 @@ export function EditorForm({ event }: { event: EventSummary }) {
   async function handleCoverSelected(file: File) {
     setCoverUploading(true);
     setCoverError(null);
+    // Prévia imediata enquanto o upload acontece em segundo plano.
+    setCoverUrl(URL.createObjectURL(file));
 
     try {
       const uploadRes = await fetch(`/api/eventos/${event.slug}/capa/upload`, {
@@ -134,18 +158,106 @@ export function EditorForm({ event }: { event: EventSummary }) {
         setCoverError(confirmBody?.error ?? "Não foi possível salvar a capa.");
         return;
       }
-
-      setCoverUrl(URL.createObjectURL(file));
     } finally {
       setCoverUploading(false);
     }
   }
 
+  /**
+   * Consulta o CEP no ViaCEP e preenche endereço e cidade. É um atalho: o
+   * anfitrião pode ignorar e digitar tudo à mão. Falha de rede não trava o
+   * formulário — só some o aviso de "buscando".
+   */
+  async function lookupCep(raw: string) {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+
+    setCepLoading(true);
+    setCepError(null);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = await res.json();
+      if (!res.ok || data?.erro) {
+        setCepError("CEP não encontrado. Preencha o endereço manualmente.");
+        return;
+      }
+      const linha = [data.logradouro, data.bairro].filter(Boolean).join(", ");
+      if (linha) setAddress(linha);
+      if (data.localidade) {
+        setCity(data.uf ? `${data.localidade} - ${data.uf}` : data.localidade);
+      }
+    } catch {
+      setCepError("Não foi possível consultar o CEP agora.");
+    } finally {
+      setCepLoading(false);
+    }
+  }
+
   const theme = THEMES[themeKey];
-  const t = TYPO[typo];
-  const dateLocation = [longDate(event.date), [venue, city].filter(Boolean).join(", ")]
-    .filter(Boolean)
-    .join(" · ");
+
+  /**
+   * Evento sintético que reflete o estado atual do formulário, para alimentar
+   * a mesma <EventPage> que o convidado vê. Assim a pré-visualização mostra
+   * todas as seções ativas (cronograma, local, presentes, galeria, cardápio,
+   * bar, amigo secreto) exatamente como ficarão na página publicada.
+   */
+  const previewEvent: EventSummary = useMemo(
+    () => ({
+      ...event,
+      hosts,
+      eyebrow,
+      welcome,
+      venue,
+      city,
+      address: address || undefined,
+      postalCode: postalCode || undefined,
+      themeKey,
+      moderationPolicy,
+      coverUrl: coverUrl || undefined,
+      modules: [
+        "rsvp",
+        ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
+      ] as ModuleId[],
+      schedule: schedule.filter((item) => item.time.trim() && item.title.trim()),
+      menu: menu.filter((item) => item.course.trim() && item.name.trim()),
+      bar: {
+        service: barService || undefined,
+        signatureName: barSignatureName || undefined,
+        signatureDesc: barSignatureDesc || undefined,
+        items: bar.filter((item) => item.name.trim()),
+      },
+      secretSanta: {
+        budget: secretSantaBudget || undefined,
+        drawDate: secretSantaDrawDate || undefined,
+        exchangeDate: secretSantaExchangeDate || undefined,
+        rules: secretSantaRules || undefined,
+      },
+    }),
+    [
+      event,
+      hosts,
+      eyebrow,
+      welcome,
+      venue,
+      city,
+      address,
+      postalCode,
+      themeKey,
+      moderationPolicy,
+      coverUrl,
+      modules,
+      schedule,
+      menu,
+      bar,
+      barService,
+      barSignatureName,
+      barSignatureDesc,
+      secretSantaBudget,
+      secretSantaDrawDate,
+      secretSantaExchangeDate,
+      secretSantaRules,
+    ],
+  );
 
   const salvar = () => {
     setError(null);
@@ -158,16 +270,26 @@ export function EditorForm({ event }: { event: EventSummary }) {
           welcome,
           venue,
           city,
+          address,
+          postalCode,
           themeKey,
           rsvpDeadline,
-          guestListOpen,
           moderationPolicy,
+          secretSantaBudget,
+          secretSantaDrawDate,
+          secretSantaExchangeDate,
+          secretSantaRules,
+          barService,
+          barSignatureName,
+          barSignatureDesc,
         },
         modules: [
           "rsvp",
           ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
         ],
         schedule: schedule.filter((item) => item.time.trim() && item.title.trim()),
+        menu: menu.filter((item) => item.course.trim() && item.name.trim()),
+        bar: bar.filter((item) => item.name.trim()),
       });
 
       if (result.ok) {
@@ -183,6 +305,12 @@ export function EditorForm({ event }: { event: EventSummary }) {
     setSchedule((items) =>
       items.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
+
+  const patchMenu = (index: number, patch: Partial<MenuItem>) =>
+    setMenu((items) => items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+
+  const patchBar = (index: number, patch: Partial<BarItem>) =>
+    setBar((items) => items.map((item, i) => (i === index ? { ...item, ...patch } : item)));
 
   return (
     <div
@@ -260,41 +388,6 @@ export function EditorForm({ event }: { event: EventSummary }) {
           </div>
         </Group>
 
-        {/* Tipografia */}
-        <Group title="Tema tipográfico">
-          <div className="flex flex-col gap-2.5">
-            {(Object.keys(TYPO) as TypoKey[]).map((key) => {
-              const opt = TYPO[key];
-              const active = typo === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setTypo(key)}
-                  className={`flex cursor-pointer items-center gap-3.5 rounded-[10px] border px-3.5 py-3 text-left ${
-                    active ? "border-accent bg-paper-2" : "border-[rgba(42,39,36,0.15)] bg-white"
-                  }`}
-                >
-                  <span
-                    className="w-8 shrink-0 text-xl"
-                    style={{
-                      fontFamily: opt.font,
-                      fontWeight: opt.weight,
-                      fontStyle: opt.style,
-                    }}
-                  >
-                    Aa
-                  </span>
-                  <span className="text-sm font-semibold">{opt.label}</span>
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
-            A tipografia ainda é só da pré-visualização — não faz parte do que é
-            salvo.
-          </p>
-        </Group>
-
         {/* Textos */}
         <Group title="Textos">
           <div className="flex flex-col gap-3.5">
@@ -333,6 +426,31 @@ export function EditorForm({ event }: { event: EventSummary }) {
                 className="px-3.5 py-2.5 text-sm"
               />
             </SmallField>
+            <SmallField label="CEP">
+              <Input
+                value={postalCode}
+                inputMode="numeric"
+                placeholder="00000-000"
+                onChange={(e) => setPostalCode(e.target.value)}
+                onBlur={(e) => void lookupCep(e.target.value)}
+                className="px-3.5 py-2.5 text-sm"
+              />
+            </SmallField>
+            <SmallField label="Endereço">
+              <Textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Rua, número, bairro"
+                className="min-h-16 resize-none px-3.5 py-2.5 text-sm"
+              />
+            </SmallField>
+            <p className="text-[12px] leading-relaxed text-ink-faint">
+              {cepLoading
+                ? "Buscando endereço pelo CEP…"
+                : cepError
+                  ? cepError
+                  : "O CEP preenche o endereço e a cidade. O endereço posiciona o mapa na seção “Local e mapa”."}
+            </p>
           </div>
         </Group>
 
@@ -404,14 +522,10 @@ export function EditorForm({ event }: { event: EventSummary }) {
                 className="w-full rounded-[10px] border border-line-strong bg-white px-3.5 py-2.5 text-sm"
               />
             </SmallField>
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-sm">Aceitar RSVP de quem não foi convidado</span>
-              <Toggle
-                label="Lista aberta"
-                checked={guestListOpen}
-                onChange={setGuestListOpen}
-              />
-            </div>
+            <p className="text-[13px] leading-relaxed text-ink-soft">
+              Para aceitar RSVP de quem não está na lista, ative o{" "}
+              <strong>link de auto-cadastro</strong> em Convidados.
+            </p>
           </div>
         </Group>
 
@@ -451,6 +565,185 @@ export function EditorForm({ event }: { event: EventSummary }) {
           </div>
         </Group>
 
+        {/* Cardápio */}
+        {modules["cardapio"] && (
+          <Group title="Cardápio">
+            <datalist id="cardapio-cursos">
+              {cursoOptions.map((curso) => (
+                <option key={curso} value={curso} />
+              ))}
+            </datalist>
+            <div className="flex flex-col gap-3">
+              {menu.map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-[10px] border border-[rgba(42,39,36,0.15)] bg-white p-3"
+                >
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={item.course}
+                      onChange={(e) => patchMenu(index, { course: e.target.value })}
+                      list="cardapio-cursos"
+                      placeholder="Etapa"
+                      aria-label="Etapa"
+                      className="px-3 py-2 text-sm sm:w-36 sm:shrink-0"
+                    />
+                    <Input
+                      value={item.name}
+                      onChange={(e) => patchMenu(index, { name: e.target.value })}
+                      placeholder="Carpaccio de abobrinha"
+                      aria-label="Prato"
+                      className="min-w-0 flex-1 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <Input
+                    value={item.desc}
+                    onChange={(e) => patchMenu(index, { desc: e.target.value })}
+                    placeholder="Detalhe (opcional)"
+                    aria-label="Descrição"
+                    className="px-3 py-2 text-sm"
+                  />
+                  <button
+                    onClick={() => setMenu((items) => items.filter((_, i) => i !== index))}
+                    className="mt-2 cursor-pointer text-[12.5px] font-semibold text-danger"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setMenu((items) => [...items, { course: "", name: "", desc: "" }])
+                }
+              >
+                Adicionar prato
+              </Button>
+            </div>
+            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+              Escolha uma etapa da lista ou digite uma nova. Os pratos aparecem
+              agrupados pela etapa, na ordem desta lista.
+            </p>
+          </Group>
+        )}
+
+        {/* Bar */}
+        {modules["bar"] && (
+          <Group title="Bar">
+            <div className="flex flex-col gap-3.5">
+              <SmallField label="Serviço de bar (opcional)">
+                <Input
+                  value={barService}
+                  onChange={(e) => setBarService(e.target.value)}
+                  placeholder="Open bar a noite toda"
+                  className="px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+              <SmallField label="Drink de assinatura — nome (opcional)">
+                <Input
+                  value={barSignatureName}
+                  onChange={(e) => setBarSignatureName(e.target.value)}
+                  placeholder="Flor de Itu"
+                  className="px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+              <SmallField label="Drink de assinatura — descrição (opcional)">
+                <Textarea
+                  value={barSignatureDesc}
+                  onChange={(e) => setBarSignatureDesc(e.target.value)}
+                  className="min-h-16 resize-none px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+            </div>
+
+            <div className="mt-3.5 flex flex-col gap-3">
+              {bar.map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-[10px] border border-[rgba(42,39,36,0.15)] bg-white p-3"
+                >
+                  <Input
+                    value={item.name}
+                    onChange={(e) => patchBar(index, { name: e.target.value })}
+                    placeholder="Gin tônica"
+                    aria-label="Bebida"
+                    className="mb-2 px-3 py-2 text-sm"
+                  />
+                  <Input
+                    value={item.desc}
+                    onChange={(e) => patchBar(index, { desc: e.target.value })}
+                    placeholder="Detalhe (opcional)"
+                    aria-label="Descrição"
+                    className="px-3 py-2 text-sm"
+                  />
+                  <button
+                    onClick={() => setBar((items) => items.filter((_, i) => i !== index))}
+                    className="mt-2 cursor-pointer text-[12.5px] font-semibold text-danger"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBar((items) => [...items, { name: "", desc: "" }])}
+              >
+                Adicionar bebida
+              </Button>
+            </div>
+            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+              Serviço, drink de assinatura e carta de bebidas — tudo opcional.
+            </p>
+          </Group>
+        )}
+
+        {/* Amigo secreto */}
+        {modules["amigo-secreto"] && (
+          <Group title="Amigo secreto">
+            <div className="flex flex-col gap-3.5">
+              <SmallField label="Valor sugerido (opcional)">
+                <Input
+                  value={secretSantaBudget}
+                  onChange={(e) => setSecretSantaBudget(e.target.value)}
+                  placeholder="R$ 80"
+                  className="px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+              <SmallField label="Data do sorteio (opcional)">
+                <input
+                  type="date"
+                  value={secretSantaDrawDate}
+                  onChange={(e) => setSecretSantaDrawDate(e.target.value)}
+                  className="w-full rounded-[10px] border border-line-strong bg-white px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+              <SmallField label="Data da troca (opcional)">
+                <input
+                  type="date"
+                  value={secretSantaExchangeDate}
+                  onChange={(e) => setSecretSantaExchangeDate(e.target.value)}
+                  className="w-full rounded-[10px] border border-line-strong bg-white px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+              <SmallField label="Regras (opcional)">
+                <Textarea
+                  value={secretSantaRules}
+                  onChange={(e) => setSecretSantaRules(e.target.value)}
+                  className="min-h-20 resize-none px-3.5 py-2.5 text-sm"
+                />
+              </SmallField>
+            </div>
+            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+              Tudo aqui é opcional — sem preencher, o convidado só não vê a sugestão dos
+              anfitriões na tela de participação.
+            </p>
+          </Group>
+        )}
+
         <Button full size="lg" className="mt-2" disabled={pending} onClick={salvar}>
           {pending ? "Salvando…" : saved ? "Alterações salvas ✓" : "Salvar alterações"}
         </Button>
@@ -463,50 +756,27 @@ export function EditorForm({ event }: { event: EventSummary }) {
       </aside>
 
       {/* Pré-visualização --------------------------------------------- */}
-      <main className="flex flex-1 flex-col items-center bg-paper-3 px-6 py-12">
-        <div className="mb-5 text-[13px] uppercase tracking-wider text-ink-soft">
-          Pré-visualização ao vivo
+      <main className="flex flex-1 flex-col bg-paper-3 px-4 py-8 sm:px-8 lg:h-[calc(100vh-57px)] lg:overflow-hidden">
+        <div className="mb-4 shrink-0 text-center text-[13px] uppercase tracking-wider text-ink-soft">
+          Pré-visualização ao vivo — página completa do convidado
         </div>
 
-        <div className="w-full max-w-[390px] overflow-hidden rounded-[28px] bg-paper shadow-[0_20px_60px_rgba(0,0,0,0.12)]">
-          <div className="relative h-[460px] w-full">
-            <ImageSlot placeholder="Foto de capa" />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,18,15,0.05)_0%,rgba(20,18,15,0.15)_55%,rgba(20,18,15,0.72)_100%)]" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 px-5 pb-6.5 pt-6 text-center">
-              <div className="mb-2 text-xs uppercase tracking-[2.5px] text-paper-2/85">
-                {eyebrow}
-              </div>
-              <div
-                className="leading-[1.1] text-white"
-                style={{
-                  fontFamily: t.font,
-                  fontWeight: t.weight,
-                  fontStyle: t.style,
-                  fontSize: t.size,
-                }}
-              >
-                {hosts}
-              </div>
-              <div className="mt-3 text-sm text-paper-2">{dateLocation}</div>
-            </div>
-          </div>
-          <div className="px-6 pb-2 pt-7 text-center">
-            <p className="text-[15px] leading-[1.65] text-ink-2">{welcome}</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-2 px-6 pt-5">
-            {MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => (
-              <span
-                key={m.id}
-                className="rounded-full border border-line-strong px-3 py-1.5 text-[12px] text-ink-soft"
-              >
-                {m.label}
-              </span>
-            ))}
-          </div>
-          <div className="px-6 pb-8 pt-5">
-            <Button full size="lg">
-              Confirmar Presença
-            </Button>
+        <div className="h-[70vh] shrink-0 overflow-hidden rounded-[20px] border border-line bg-paper shadow-[0_20px_60px_rgba(0,0,0,0.12)] lg:h-auto lg:min-h-0 lg:flex-1">
+          {/* onClickCapture neutraliza a navegação: os links internos da
+              EventPage (ver lista completa, enviar fotos…) sairiam do editor
+              e descartariam as alterações não salvas. Os botões (Confirmar
+              Presença, Participar do sorteio) continuam ativos. */}
+          <div
+            className="h-full overflow-y-auto"
+            onClickCapture={(e) => {
+              const anchor = (e.target as HTMLElement).closest("a");
+              if (anchor) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+          >
+            <EventPage event={previewEvent} />
           </div>
         </div>
       </main>

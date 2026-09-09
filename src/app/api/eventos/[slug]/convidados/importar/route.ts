@@ -28,7 +28,7 @@ export async function POST(
   }
 
   try {
-    const result = await importGuests(supabase, event.id, parsed.data.rows);
+    const result = await importGuests(supabase, event, parsed.data.rows);
     return NextResponse.json({ data: result.accepted, rejected: result.rejected });
   } catch (error) {
     if (error instanceof DbError) {

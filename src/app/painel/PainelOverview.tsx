@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import type { GiftsSummary } from "@/lib/db/gifts";
 import type { GuestStats } from "@/lib/db/guests";
 import { useCountdown } from "@/components/Countdown";
 import { Button } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
-import { ACTIVITY } from "@/lib/fixtures/painel";
-import { brl, longDate } from "@/lib/format";
-import type { EventSummary } from "@/lib/types";
+import { brl, longDate, timeAgo } from "@/lib/format";
+import type { Activity, EventSummary } from "@/lib/types";
+import { alterarStatusEvento } from "./actions";
 
 const KIND_COLORS: Record<string, string> = {
   rsvp: "bg-accent",
@@ -24,16 +25,36 @@ export function PainelOverview({
   siteUrl,
   guestStats: stats,
   giftsSummary,
+  activity,
 }: {
   event: EventSummary;
   siteUrl: string;
   guestStats: GuestStats;
   giftsSummary: GiftsSummary;
+  activity: Activity[];
 }) {
+  const router = useRouter();
   const { days, hours, mins } = useCountdown(event.date);
 
-  // Atividade continua vindo de fixture — chega nos changes seguintes
-  // (presentes, galeria, mural).
+  const isPublished = event.status === "publicado";
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusPending, startStatusTransition] = useTransition();
+
+  const togglePublish = () => {
+    setStatusError(null);
+    startStatusTransition(async () => {
+      const result = await alterarStatusEvento({
+        eventId: event.id,
+        status: isPublished ? "rascunho" : "publicado",
+      });
+      if (result.ok) {
+        router.refresh();
+      } else {
+        setStatusError(result.message);
+      }
+    });
+  };
+
   const pct = stats.convidados ? Math.round((stats.confirmados / stats.convidados) * 100) : 0;
 
   const [copied, setCopied] = useState(false);
@@ -52,8 +73,8 @@ export function PainelOverview({
     },
     {
       title: "Presentes",
-      desc: "Acompanhe a lista de presentes e as contribuições recebidas.",
-      href: eventUrl(event, "/presentes"),
+      desc: "Cadastre a lista de presentes e acompanhe as contribuições recebidas.",
+      href: "/painel/presentes",
     },
     {
       title: "Galeria e mural",
@@ -184,10 +205,15 @@ export function PainelOverview({
             Convite do evento
           </div>
           <div className="text-[16px] text-paper">{publicUrl}</div>
-          {event.status !== "publicado" && (
-            <div className="mt-2 text-[13px] text-accent-soft">
-              Em {event.status} — o link só responde para você até publicar.
-            </div>
+          <div className="mt-2 text-[13px] text-accent-soft">
+            {isPublished
+              ? "Publicada — o link está no ar para os convidados."
+              : `Em ${event.status} — o link só responde para você até publicar.`}
+          </div>
+          {statusError && (
+            <p role="alert" className="mt-1.5 text-[13px] text-warn">
+              {statusError}
+            </p>
           )}
         </div>
         <div className="flex gap-2.5">
@@ -201,7 +227,19 @@ export function PainelOverview({
           >
             {copied ? "Copiado!" : "Copiar link"}
           </button>
-          <Button>Compartilhar</Button>
+          {isPublished ? (
+            <button
+              onClick={togglePublish}
+              disabled={statusPending}
+              className="cursor-pointer rounded-[10px] border border-paper/30 px-6 py-3 text-[14.5px] font-semibold text-paper disabled:opacity-60"
+            >
+              {statusPending ? "Salvando…" : "Despublicar"}
+            </button>
+          ) : (
+            <Button onClick={togglePublish} disabled={statusPending}>
+              {statusPending ? "Salvando…" : "Publicar página"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -224,7 +262,7 @@ export function PainelOverview({
       {/* Atividade ----------------------------------------------------- */}
       <h2 className="mb-4 font-display text-[20px] font-semibold">Atividade recente</h2>
       <div className="overflow-hidden rounded-2xl bg-paper shadow-[0_6px_20px_rgba(0,0,0,0.04)]">
-        {ACTIVITY.map((a, i) => (
+        {activity.map((a, i) => (
           <div
             key={a.id}
             className={`flex items-center gap-4 px-6 py-4 ${i > 0 ? "border-t border-line" : ""}`}
@@ -233,9 +271,15 @@ export function PainelOverview({
             <div className="flex-1 text-[14.5px]">
               <span className="font-semibold">{a.who}</span> {a.what}
             </div>
-            <div className="shrink-0 text-[13px] text-ink-faint">{a.at}</div>
+            <div className="shrink-0 text-[13px] text-ink-faint">{timeAgo(a.at)}</div>
           </div>
         ))}
+        {activity.length === 0 && (
+          <div className="px-6 py-10 text-center text-[14.5px] text-ink-faint">
+            Nenhuma atividade ainda — RSVPs, presentes, fotos e recados aparecem aqui assim que
+            acontecerem.
+          </div>
+        )}
       </div>
     </div>
   );

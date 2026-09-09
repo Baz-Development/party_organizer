@@ -34,6 +34,7 @@ export const MODULE_IDS = [
   "galeria",
   "mural",
   "cardapio",
+  "bar",
   "amigo-secreto",
 ] as const;
 
@@ -52,6 +53,17 @@ const scheduleItem = z.object({
   time: z.string().trim().min(1, "Informe o horário do item."),
   title: z.string().trim().min(1, "Informe o título do item."),
   desc: z.string().trim().default(""),
+});
+
+const menuItem = z.object({
+  course: z.string().trim().min(1, "Informe a etapa da refeição.").max(60),
+  name: z.string().trim().min(1, "Informe o nome do prato.").max(160),
+  desc: z.string().trim().max(500).default(""),
+});
+
+const barItem = z.object({
+  name: z.string().trim().min(1, "Informe o nome da bebida.").max(160),
+  desc: z.string().trim().max(500).default(""),
 });
 
 const optionalText = z.string().trim().max(2000).optional();
@@ -97,24 +109,44 @@ const rsvpDeadline = z
   .transform((value) => (value === "" ? null : new Date(value).toISOString()))
   .optional();
 
+/** Aceita `YYYY-MM-DD`, string vazia (limpa o campo) ou ausência (não altera). */
+const optionalCalendarDate = z
+  .string()
+  .refine((value) => value === "" || !Number.isNaN(Date.parse(value)), "Data inválida.")
+  .transform((value) => (value === "" ? null : value))
+  .optional();
+
 export const updateEventSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   date: eventDate.optional(),
   venue: optionalText,
   city: optionalText,
+  address: z.string().trim().max(300).optional(),
+  postalCode: z.string().trim().max(12).optional(),
   hosts: optionalText,
   eyebrow: optionalText,
   welcome: optionalText,
   themeKey: z.enum(THEME_KEYS, { message: "Tema de cor não suportado." }).optional(),
   rsvpDeadline,
-  guestListOpen: z.boolean().optional(),
   moderationPolicy: z.enum(MODERATION_POLICIES, {
     message: "Política de moderação desconhecida.",
   }).optional(),
+  secretSantaBudget: z.string().trim().max(40).optional(),
+  secretSantaDrawDate: optionalCalendarDate,
+  secretSantaExchangeDate: optionalCalendarDate,
+  secretSantaRules: optionalText,
+  barService: z.string().trim().max(200).optional(),
+  barSignatureName: z.string().trim().max(160).optional(),
+  barSignatureDesc: z.string().trim().max(500).optional(),
 });
 
 export const eventStatusSchema = z.enum(EVENT_STATUSES, {
   message: "Estado de evento desconhecido.",
+});
+
+/** Corpo de `POST /api/eventos/[slug]/auto-cadastro`: liga/desliga o link. */
+export const selfSignupSchema = z.object({
+  active: z.boolean(),
 });
 
 export const eventModulesSchema = z.array(
@@ -122,6 +154,10 @@ export const eventModulesSchema = z.array(
 );
 
 export const eventScheduleSchema = z.array(scheduleItem);
+
+export const eventMenuSchema = z.array(menuItem);
+
+export const eventBarSchema = z.array(barItem);
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 export type CreateEventByAdminInput = z.infer<typeof createEventByAdminSchema>;

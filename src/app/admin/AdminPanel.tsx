@@ -3,7 +3,7 @@
 import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Badge } from "@/components/ui";
-import { ADMIN_SERIES, PLATFORM_FINANCE } from "@/lib/fixtures/painel";
+import { PLATFORM_FINANCE } from "@/lib/fixtures/painel";
 import { ADMIN_NAV } from "./nav";
 import { shortDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
@@ -17,20 +17,26 @@ const ROLE_LABEL: Record<Profile["role"], string> = {
 export function AdminPanel({
   events,
   profiles,
+  eventsPerMonth,
+  guestsThisMonth,
 }: {
   events: EventSummary[];
   profiles: Profile[];
+  eventsPerMonth: { label: string; value: number }[];
+  guestsThisMonth: number;
 }) {
-  const maxSeries = Math.max(...ADMIN_SERIES.map((s) => s.value));
+  const maxSeries = Math.max(1, ...eventsPerMonth.map((s) => s.value));
 
   const eventosAtivos = events.filter((e) => e.status === "publicado").length;
   const rascunhos = events.filter((e) => e.status === "rascunho").length;
   const clientes = profiles.filter((p) => p.role === "cliente").length;
 
   /**
-   * As duas primeiras métricas são contadas do banco. As financeiras seguem
-   * de fixture — não existe billing — e por isso vêm marcadas como estimadas,
-   * em vez de se passarem por número real.
+   * As três primeiras métricas são contadas do banco. "MRR" segue de fixture
+   * — a plataforma não cobra assinatura do cliente anfitrião, só o convidado
+   * paga (por um presente), então não existe receita recorrente real para
+   * medir — e por isso vem marcada como estimada, em vez de se passar por
+   * número real.
    */
   const metrics = [
     {
@@ -46,15 +52,15 @@ export function AdminPanel({
       real: true,
     },
     {
+      label: "Convidados no mês",
+      value: guestsThisMonth.toLocaleString("pt-BR"),
+      hint: "Cadastrados em todos os eventos",
+      real: true,
+    },
+    {
       label: "MRR",
       value: PLATFORM_FINANCE.receitaMes,
       hint: `${PLATFORM_FINANCE.crescimento} vs. mês passado`,
-      real: false,
-    },
-    {
-      label: "Ticket médio",
-      value: PLATFORM_FINANCE.ticketMedio,
-      hint: `${PLATFORM_FINANCE.convidadosMes.toLocaleString("pt-BR")} convidados no mês`,
       real: false,
     },
   ];
@@ -97,11 +103,10 @@ export function AdminPanel({
         {/* Novos eventos por mês ---------------------------------------- */}
         <div className="mb-4 flex items-center gap-2">
           <h2 className="font-display text-[20px] font-semibold">Novos eventos por mês</h2>
-          <Badge>estimado</Badge>
         </div>
         <div className="mb-11 rounded-2xl bg-paper p-7 shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
           <div className="flex h-48 items-stretch gap-3">
-            {ADMIN_SERIES.map((s) => (
+            {eventsPerMonth.map((s) => (
               <div key={s.label} className="flex flex-1 flex-col items-center gap-2">
                 <div className="text-[12px] font-semibold text-ink-soft">{s.value}</div>
                 <div className="flex w-full flex-1 items-end">

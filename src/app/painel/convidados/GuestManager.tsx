@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Badge, Button, Input, Sheet } from "@/components/ui";
+import { Badge, Button, Input, Sheet, Toggle } from "@/components/ui";
 import { shortDate } from "@/lib/format";
 import type { Guest, RsvpStatus } from "@/lib/types";
 
@@ -35,6 +35,64 @@ interface EmailHistoryEntry {
   status: string;
   lastError: string | null;
   createdAt: string;
+}
+
+/** Link `wa.me` com uma mensagem pronta. Com telefone, endereça o número;
+ * sem telefone, abre o WhatsApp para a pessoa escolher o contato. */
+function whatsappLink(url: string, name: string, eventTitle: string, phone?: string) {
+  const greeting = name.trim() ? `Oi, ${name}!` : "Olá!";
+  const msg = `${greeting} Você foi convidado para ${eventTitle}. Confirme sua presença: ${url}`;
+  const digits = phone?.replace(/\D/g, "");
+  const base = digits ? `https://wa.me/${digits}` : "https://wa.me/";
+  return `${base}?text=${encodeURIComponent(msg)}`;
+}
+
+function InviteActions({
+  url,
+  name,
+  eventTitle,
+  phone,
+}: {
+  url: string;
+  name: string;
+  eventTitle: string;
+  phone?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard indisponível — o campo continua selecionável para cópia manual */
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <input
+          readOnly
+          value={url}
+          onFocus={(e) => e.currentTarget.select()}
+          className="min-w-0 flex-1 rounded-lg border border-line bg-paper-2 px-3 py-2 text-[12.5px] text-ink-soft"
+        />
+        <Button variant="outline" onClick={copy}>
+          {copied ? "Copiado!" : "Copiar"}
+        </Button>
+      </div>
+      <a
+        href={whatsappLink(url, name, eventTitle, phone)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded-lg bg-[#25D366] px-4 py-2.5 text-center text-[14px] font-semibold text-white no-underline"
+      >
+        Enviar pelo WhatsApp
+      </a>
+    </div>
+  );
 }
 
 const FILTERS: { key: RsvpStatus | "todos"; label: string }[] = [
@@ -78,9 +136,16 @@ const EMPTY_STATS: Stats = {
   taxaResposta: 0,
 };
 
+interface SelfSignup {
+  active: boolean;
+  url: string | null;
+}
+
 export function GuestManager({ event }: { event: { slug: string; title: string } }) {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
+  const [selfSignup, setSelfSignup] = useState<SelfSignup>({ active: false, url: null });
+  const [selfSignupBusy, setSelfSignupBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<RsvpStatus | "todos">("todos");
@@ -98,6 +163,7 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
     const body = await res.json();
     setGuests(body.data ?? []);
     setStats(body.stats ?? EMPTY_STATS);
+    setSelfSignup(body.selfSignup ?? { active: false, url: null });
     setLoading(false);
   }, [event.slug]);
 
@@ -110,6 +176,7 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
         if (cancelled) return;
         setGuests(body.data ?? []);
         setStats(body.stats ?? EMPTY_STATS);
+        setSelfSignup(body.selfSignup ?? { active: false, url: null });
         setLoading(false);
       });
 
@@ -117,6 +184,18 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
       cancelled = true;
     };
   }, [event.slug]);
+
+  async function toggleSelfSignup(active: boolean) {
+    setSelfSignupBusy(true);
+    const res = await fetch(`/api/eventos/${event.slug}/auto-cadastro`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active }),
+    });
+    const body = await res.json().catch(() => null);
+    setSelfSignupBusy(false);
+    if (res.ok && body?.data) setSelfSignup(body.data);
+  }
 
   const groups = useMemo(
     () => Array.from(new Set(guests.map((g) => g.group).filter(Boolean))),
@@ -171,6 +250,19 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
     setHistory(body?.data ?? []);
   }
 
+  async function copyAllLinks() {
+    const lines = filtered
+      .filter((g) => g.inviteUrl)
+      .map((g) => `${g.name}: ${g.inviteUrl}`);
+    if (lines.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      setInviteResult(`${lines.length} link(s) de convite copiado(s).`);
+    } catch {
+      setInviteResult("Não foi possível copiar os links.");
+    }
+  }
+
   async function handleExport() {
     const res = await fetch(`/api/eventos/${event.slug}/convidados/exportar`);
     const body = await res.json();
@@ -197,8 +289,11 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
           <Button variant="outline" onClick={openHistory}>
             Histórico de e-mails
           </Button>
+          <Button variant="outline" onClick={copyAllLinks}>
+            Copiar todos os links
+          </Button>
           <Button variant="outline" disabled={sendingInvites} onClick={() => handleSendInvites()}>
-            {sendingInvites ? "Enviando..." : "Enviar convites pendentes"}
+            {sendingInvites ? "Enviando..." : "Enviar convites por e-mail"}
           </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             Importar lista
@@ -211,6 +306,32 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
       </div>
 
       {inviteResult && <p className="mb-4 text-[13.5px] text-ink-soft">{inviteResult}</p>}
+
+      {/* Link de auto-cadastro -------------------------------------- */}
+      <div className="mt-5 rounded-2xl bg-paper p-5 shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[15px] font-semibold">Link de auto-cadastro</div>
+            <p className="mt-1 max-w-[560px] text-[13px] leading-relaxed text-ink-soft">
+              Um link único que qualquer pessoa pode abrir para se cadastrar e
+              confirmar presença. Use quando não quiser montar a lista nome por
+              nome. Quem entra por ele aparece marcado como “não listado”.
+            </p>
+          </div>
+          <Toggle
+            label="Ativar link de auto-cadastro"
+            checked={selfSignup.active}
+            onChange={(v) => {
+              if (!selfSignupBusy) toggleSelfSignup(v);
+            }}
+          />
+        </div>
+        {selfSignup.active && selfSignup.url && (
+          <div className="mt-4">
+            <InviteActions url={selfSignup.url} name="" eventTitle={event.title} />
+          </div>
+        )}
+      </div>
 
       {/* Resumo -------------------------------------------------------- */}
       <div className="my-8 flex flex-wrap gap-7">
@@ -351,13 +472,26 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
             </dl>
 
             <div className="flex flex-col gap-2.5">
+              {detail.inviteUrl && (
+                <div className="rounded-xl border border-line bg-paper-2 p-3">
+                  <div className="mb-2 text-[13px] font-semibold text-ink-soft">
+                    Link de convite
+                  </div>
+                  <InviteActions
+                    url={detail.inviteUrl}
+                    name={detail.name}
+                    eventTitle={event.title}
+                    phone={detail.phone}
+                  />
+                </div>
+              )}
               <Button
                 full
                 variant="outline"
                 disabled={!detail.email || sendingInvites}
                 onClick={() => handleSendInvites([detail.id])}
               >
-                {detail.email ? "Reenviar convite" : "Sem e-mail cadastrado"}
+                {detail.email ? "Reenviar convite por e-mail" : "Sem e-mail cadastrado"}
               </Button>
               <div className="flex gap-2.5">
                 <Button variant="outline" full onClick={() => setDetail(null)}>
@@ -405,6 +539,7 @@ export function GuestManager({ event }: { event: { slug: string; title: string }
         open={addOpen}
         onClose={() => setAddOpen(false)}
         eventSlug={event.slug}
+        eventTitle={event.title}
         onCreated={load}
       />
 
@@ -423,11 +558,13 @@ function AddGuestSheet({
   open,
   onClose,
   eventSlug,
+  eventTitle,
   onCreated,
 }: {
   open: boolean;
   onClose: () => void;
   eventSlug: string;
+  eventTitle: string;
   onCreated: () => void;
 }) {
   const [name, setName] = useState("");
@@ -436,6 +573,16 @@ function AddGuestSheet({
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [created, setCreated] = useState<Guest | null>(null);
+
+  function reset() {
+    setName("");
+    setGroup("");
+    setEmail("");
+    setPhone("");
+    setError(null);
+    setCreated(null);
+  }
 
   async function submit() {
     setSaving(true);
@@ -453,34 +600,86 @@ function AddGuestSheet({
       return;
     }
 
-    setName("");
-    setGroup("");
-    setEmail("");
-    setPhone("");
+    // Recarrega a lista, mas mantém o sheet aberto mostrando o link pronto.
     onCreated();
-    onClose();
+    setCreated(body.data as Guest);
   }
 
   return (
-    <Sheet open={open} onClose={onClose} maxWidth={420}>
-      <div>
-        <div className="mb-5 font-display text-[22px] font-semibold">Adicionar convidado</div>
-        <div className="flex flex-col gap-3">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" />
-          <Input value={group} onChange={(e) => setGroup(e.target.value)} placeholder="Grupo" />
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-mail" />
-          <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefone" />
+    <Sheet
+      open={open}
+      onClose={() => {
+        reset();
+        onClose();
+      }}
+      maxWidth={420}
+    >
+      {created ? (
+        <div>
+          <div className="mb-1 font-display text-[22px] font-semibold">
+            {created.name} está na lista
+          </div>
+          <p className="mb-4 text-[13.5px] text-ink-soft">
+            Compartilhe o link de convite dele por onde preferir.
+          </p>
+          {created.inviteUrl && (
+            <InviteActions
+              url={created.inviteUrl}
+              name={created.name}
+              eventTitle={eventTitle}
+              phone={created.phone}
+            />
+          )}
+          <div className="mt-6 flex gap-2.5">
+            <Button variant="outline" full onClick={reset}>
+              Adicionar outro
+            </Button>
+            <Button
+              full
+              onClick={() => {
+                reset();
+                onClose();
+              }}
+            >
+              Concluir
+            </Button>
+          </div>
         </div>
-        {error && <p className="mt-3 text-[13.5px] text-danger">{error}</p>}
-        <div className="mt-6 flex gap-2.5">
-          <Button variant="outline" full onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button full disabled={!name.trim() || saving} onClick={submit}>
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
+      ) : (
+        <div>
+          <div className="mb-5 font-display text-[22px] font-semibold">Adicionar convidado</div>
+          <div className="flex flex-col gap-3">
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" />
+            <Input value={group} onChange={(e) => setGroup(e.target.value)} placeholder="Grupo" />
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Telefone (para enviar pelo WhatsApp)"
+            />
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="E-mail (opcional)"
+            />
+          </div>
+          {error && <p className="mt-3 text-[13.5px] text-danger">{error}</p>}
+          <div className="mt-6 flex gap-2.5">
+            <Button
+              variant="outline"
+              full
+              onClick={() => {
+                reset();
+                onClose();
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button full disabled={!name.trim() || saving} onClick={submit}>
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </Sheet>
   );
 }

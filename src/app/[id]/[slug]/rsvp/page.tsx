@@ -8,11 +8,11 @@ export default async function Page({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ convite?: string }>;
+  searchParams: Promise<{ convite?: string; lista?: string }>;
 }) {
   const { id } = await params;
-  const { convite } = await searchParams;
+  const { convite, lista } = await searchParams;
   const event = await loadPublicEvent(id, "rsvp");
 
-  return <RsvpFlow event={event} token={convite ?? null} />;
+  return <RsvpFlow event={event} token={convite ?? null} signupToken={lista ?? null} />;
 }

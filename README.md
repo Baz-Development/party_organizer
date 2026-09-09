@@ -3,9 +3,9 @@
 Protótipo visual das 14 telas do projeto Claude Design
 (`af466763-6cc2-4746-9103-6226934b80a5`), portado para Next.js.
 
-Eventos, perfis e cronograma vivem no Supabase (Postgres + Auth),
+Eventos, perfis, cronograma, cardápio e bar vivem no Supabase (Postgres + Auth),
 com RLS em todas as tabelas. Os módulos ainda não migrados (presentes, galeria,
-mural, cardápio, amigo secreto) continuam lendo fixtures em `src/lib/fixtures/`
+mural, amigo secreto) continuam lendo fixtures em `src/lib/fixtures/`
 até que cada um ganhe seu próprio change.
 
 ## Rodando
@@ -51,17 +51,18 @@ o código é o mesmo, só mudam as variáveis.
 
 | Serviço | URL |
 | --- | --- |
-| API (Supabase) | `http://127.0.0.1:54421` |
-| Postgres | `postgresql://postgres:postgres@127.0.0.1:54422/postgres` |
-| Studio | `http://127.0.0.1:54423` |
-| Caixa de e-mail | `http://127.0.0.1:54424` |
+| API (Supabase) | `http://127.0.0.1:55421` |
+| Postgres | `postgresql://postgres:postgres@127.0.0.1:55422/postgres` |
+| Studio | `http://127.0.0.1:55423` |
+| Caixa de e-mail | `http://127.0.0.1:55424` |
 
 Os links mágicos enviados em desenvolvimento **não saem da máquina**: abra a
-caixa de e-mail local em `54424` para clicar no link.
+caixa de e-mail local em `55424` para clicar no link.
 
-> As portas saem da faixa `544xx` em vez da `543xx` padrão do Supabase CLI para
-> não conflitar com outro projeto Supabase rodando na mesma máquina. Elas vivem
-> em `supabase/config.toml`.
+> As portas saem da faixa `554xx` em vez da `543xx` padrão do Supabase CLI para
+> não conflitar com outro projeto Supabase rodando na mesma máquina e para
+> escapar da faixa que o Windows/WinNAT reserva dinamicamente (`544xx` caiu
+> nela). Elas vivem em `supabase/config.toml`.
 
 ### Comandos de banco
 
@@ -89,7 +90,6 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · Supabase
 | `/e/[slug]/rsvp` | Fluxo RSVP (3 passos) |
 | `/e/[slug]/presentes` | Lista de Presentes → checkout → sucesso |
 | `/e/[slug]/galeria` | Galeria e Mural (com estado vazio) |
-| `/e/[slug]/cardapio` | Votação de Cardápio |
 | `/e/[slug]/amigo-secreto` | Amigo Secreto — Cadastro |
 | `/e/[slug]/amigo-secreto/revelacao` | Amigo Secreto — Revelação |
 
@@ -117,7 +117,7 @@ Slugs de exemplo carregados pelo seed: `marina-e-thiago`, `15-anos-sofia`,
 `/painel`, `/painel/*`, `/onboarding` e `/admin/*` exigem sessão.
 Entre em `/entrar` com um dos e-mails do seed — `admin@exemplo.local` para o
 painel administrativo, `marina-e-thiago@exemplo.local` para o de cliente — e
-abra o link mágico na caixa de e-mail local (`http://127.0.0.1:54424`).
+abra o link mágico na caixa de e-mail local (`http://127.0.0.1:55424`).
 
 ### Fluxo de acesso do cliente
 

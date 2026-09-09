@@ -18,10 +18,12 @@
 
 SUPABASE := npx --no-install supabase
 
-# Portas da faixa 544xx — a 543xx padrão do CLI está ocupada por outro projeto
-# Supabase nesta máquina. Os valores de verdade estão em supabase/config.toml.
-STUDIO_URL := http://127.0.0.1:54423
-MAIL_URL   := http://127.0.0.1:54424
+# Portas da faixa 554xx — a 543xx padrão do CLI está ocupada por outro projeto
+# Supabase nesta máquina, e a 544xx caiu dentro da faixa que o Windows reserva
+# dinamicamente para Hyper-V/WSL (netsh interface ipv4 show excludedportrange).
+# Os valores de verdade estão em supabase/config.toml.
+STUDIO_URL := http://127.0.0.1:55423
+MAIL_URL   := http://127.0.0.1:55424
 APP_URL    := http://localhost:3000
 
 # O make do Windows reinterpreta a codificação do texto que passa pela linha de
@@ -45,8 +47,8 @@ dev: node_modules db-up .env.local db-migrate
 
 #dev>
 #dev>   Aplicação:       http://localhost:3000
-#dev>   Studio:          http://127.0.0.1:54423
-#dev>   Caixa de e-mail: http://127.0.0.1:54424
+#dev>   Studio:          http://127.0.0.1:55423
+#dev>   Caixa de e-mail: http://127.0.0.1:55424
 #dev>
 #dev>   Entre em /entrar com um e-mail do seed e abra o link mágico na caixa
 #dev>   de e-mail acima — em desenvolvimento nenhum e-mail sai da máquina.

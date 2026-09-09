@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getEventBySlug } from "@/lib/db/events";
 import { DbError } from "@/lib/db/errors";
 import { computeGuestStats, createGuest, listGuests } from "@/lib/db/guests";
+import { selfSignupUrl } from "@/lib/event-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createGuestSchema, guestStatusFilterSchema } from "@/lib/validation/guest";
 
@@ -28,10 +29,17 @@ export async function GET(
     return NextResponse.json({ error: "Estado de resposta desconhecido." }, { status: 400 });
   }
 
-  const guests = await listGuests(supabase, event.id, { status: parsedStatus?.data });
-  const all = statusParam ? await listGuests(supabase, event.id) : guests;
+  const guests = await listGuests(supabase, event, { status: parsedStatus?.data });
+  const all = statusParam ? await listGuests(supabase, event) : guests;
 
-  return NextResponse.json({ data: guests, stats: computeGuestStats(all) });
+  return NextResponse.json({
+    data: guests,
+    stats: computeGuestStats(all),
+    selfSignup: {
+      active: event.selfSignupToken != null,
+      url: event.selfSignupToken ? selfSignupUrl(event, event.selfSignupToken) : null,
+    },
+  });
 }
 
 export async function POST(
@@ -56,7 +64,7 @@ export async function POST(
   }
 
   try {
-    const guest = await createGuest(supabase, event.id, {
+    const guest = await createGuest(supabase, event, {
       name: parsed.data.name,
       group: parsed.data.group,
       email: parsed.data.email || undefined,

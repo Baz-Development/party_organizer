@@ -15,6 +15,7 @@ export type ModuleId =
   | "galeria"
   | "mural"
   | "cardapio"
+  | "bar"
   | "amigo-secreto";
 
 export type ThemeKey = "oliva" | "terracota" | "marinho" | "dourado";
@@ -33,33 +34,80 @@ export interface ScheduleItem {
   desc: string;
 }
 
+/** Um prato do cardápio, agrupado na página pela etapa (`course`). */
+export interface MenuItem {
+  /** Etapa da refeição: "Entrada", "Prato principal", "Sobremesa"... */
+  course: string;
+  name: string;
+  desc: string;
+}
+
+/** Uma bebida da carta do bar. */
+export interface BarItem {
+  name: string;
+  desc: string;
+}
+
 export interface EventSummary {
   id: string;
   slug: string;
   title: string;
+  /** Conta de cliente anfitriã (`profiles.id`). */
+  hostProfileId: string;
   kind: EventKind;
   /** ISO date-time */
   date: string;
   venue: string;
   city: string;
+  /** Endereço completo (rua, número, bairro) — alimenta o mapa e o link de rota. */
+  address?: string;
+  /** CEP do local, formato livre (`00000-000`). */
+  postalCode?: string;
   hosts: string;
   eyebrow: string;
   welcome: string;
   themeKey: ThemeKey;
   modules: ModuleId[];
   schedule: ScheduleItem[];
+  /** Pratos do cardápio, na ordem definida pelo anfitrião. */
+  menu: MenuItem[];
+  /** Conteúdo da seção Bar: serviço, drink de assinatura e carta de bebidas. */
+  bar: {
+    /** Texto livre: "Open bar a noite toda", "Bar pago", "Carta de vinhos"... */
+    service?: string;
+    /** Drink de assinatura da festa — nome e descrição, ambos opcionais juntos. */
+    signatureName?: string;
+    signatureDesc?: string;
+    items: BarItem[];
+  };
   gallery: string[];
   status: "rascunho" | "publicado" | "encerrado";
   /** ISO date-time. Ausente = respostas aceitas até o evento ser encerrado. */
   rsvpDeadline?: string;
-  /** Permite RSVP de gente não cadastrada; cria convidado marcado como `unlisted`. */
-  guestListOpen: boolean;
+  /**
+   * Token do link de auto-cadastro do evento (`?lista=<token>`), que habilita
+   * RSVP de gente não cadastrada. `null` quando o auto-cadastro está desligado.
+   * Só é preenchido para quem administra o evento — nunca chega ao público.
+   */
+  selfSignupToken: string | null;
   /** Aprovação prévia ou publicação imediata para envios de convidado (galeria/mural). */
   moderationPolicy: ModerationPolicy;
   /** Path do objeto no bucket `event-media`. `undefined` quando não há capa. */
   coverPath?: string;
   /** URL assinada da capa, resolvida por quem carrega o evento — `undefined` até ser resolvida. */
   coverUrl?: string;
+  /**
+   * Sugestão do anfitrião para o amigo secreto — tudo opcional, o módulo
+   * funciona sem nenhum campo preenchido (só não mostra a sugestão ao
+   * convidado).
+   */
+  secretSanta: {
+    budget?: string;
+    /** ISO date (`YYYY-MM-DD`), sem horário — é só uma data do calendário. */
+    drawDate?: string;
+    exchangeDate?: string;
+    rules?: string;
+  };
 }
 
 export type UserRole = "cliente" | "admin";
@@ -89,8 +137,13 @@ export interface Guest {
   dietary?: string;
   invitedAt: string;
   respondedAt?: string;
-  /** Criado pelo próprio RSVP de lista aberta, sem ter sido cadastrado antes. */
+  /** Criado pelo próprio RSVP de auto-cadastro, sem ter sido cadastrado antes. */
   unlisted?: boolean;
+  /**
+   * Link de convite com o token deste convidado, pronto para compartilhar
+   * (copiar / WhatsApp). Só chega a quem administra o evento.
+   */
+  inviteUrl?: string;
 }
 
 export type GiftStatus = "disponivel" | "reservado" | "comprado";
@@ -133,23 +186,6 @@ export interface MuralMessage {
   status: MediaStatus;
   /** URL assinada da foto anexada, de curta duração. `undefined` quando o recado não tem foto. */
   photoUrl?: string;
-}
-
-export interface MenuOption {
-  id: string;
-  name: string;
-  desc: string;
-  votes: number;
-  tags: string[];
-}
-
-export interface MenuPoll {
-  id: string;
-  course: string;
-  question: string;
-  closesAt: string;
-  maxChoices: number;
-  options: MenuOption[];
 }
 
 export interface SecretSantaParticipant {

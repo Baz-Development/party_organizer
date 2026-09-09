@@ -65,6 +65,52 @@ function list(values) {
   return values.join(",\n  ");
 }
 
+/**
+ * Cardápio e bar: `update` das colunas de texto em `events` e `insert` nas
+ * tabelas de itens. Só emite cada bloco quando há dados — `insert ... values ;`
+ * sem linhas é erro de sintaxe.
+ */
+function menuBarSql(events, eventId) {
+  const blocks = [];
+
+  const barUpdates = events
+    .filter((e) => e.bar.service || e.bar.signatureName || e.bar.signatureDesc)
+    .map(
+      (e) =>
+        `update public.events set bar_service = ${txt(e.bar.service)}, ` +
+        `bar_signature_name = ${txt(e.bar.signatureName)}, ` +
+        `bar_signature_desc = ${txt(e.bar.signatureDesc)} ` +
+        `where id = ${uuid(eventId(e.slug))};`,
+    );
+  if (barUpdates.length) blocks.push(barUpdates.join("\n"));
+
+  const menuRows = events.flatMap((e) =>
+    e.menu.map(
+      (item, index) =>
+        `  (${uuid(eventId(e.slug))}, ${index}, ${txt(item.course)}, ${txt(item.name)}, ${txt(item.desc)})`,
+    ),
+  );
+  if (menuRows.length) {
+    blocks.push(
+      `insert into public.menu_items (event_id, position, course, name, description)\nvalues\n${menuRows.join(",\n")};`,
+    );
+  }
+
+  const barRows = events.flatMap((e) =>
+    e.bar.items.map(
+      (item, index) =>
+        `  (${uuid(eventId(e.slug))}, ${index}, ${txt(item.name)}, ${txt(item.desc)})`,
+    ),
+  );
+  if (barRows.length) {
+    blocks.push(
+      `insert into public.bar_items (event_id, position, name, description)\nvalues\n${barRows.join(",\n")};`,
+    );
+  }
+
+  return blocks.length ? `\n${blocks.join("\n\n")}\n` : "";
+}
+
 export async function generateSeed() {
   const mocks = await import(pathToFileURL(MOCK_PATH).href);
   const { EVENTS } = mocks;
@@ -190,7 +236,7 @@ on conflict (id) do update
 
 insert into public.events (
   id, slug, host_profile_id, kind, title, event_at,
-  venue, city, hosts, eyebrow, welcome, theme_key, status
+  venue, city, address, postal_code, hosts, eyebrow, welcome, theme_key, status
 )
 values
 ${EVENTS.map((event) => {
@@ -199,7 +245,8 @@ ${EVENTS.map((event) => {
     ${uuid(eventHost.get(event.slug).id)},
     ${txt(event.kind)}::public.event_kind, ${txt(event.title)},
     ${txt(`${event.date}${TZ_OFFSET}`)}::timestamptz,
-    ${txt(event.venue)}, ${txt(event.city)}, ${txt(event.hosts)},
+    ${txt(event.venue)}, ${txt(event.city)},
+    ${txt(event.address)}, ${txt(event.postalCode)}, ${txt(event.hosts)},
     ${txt(event.eyebrow)}, ${txt(event.welcome)},
     ${txt(event.themeKey)}::public.theme_key, 'publicado'::public.event_status
   )`;
@@ -222,7 +269,7 @@ ${EVENTS.flatMap((event) =>
       `  (${uuid(eventId(event.slug))}, ${index}, ${txt(item.time)}, ${txt(item.title)}, ${txt(item.desc)})`,
   ),
 ).join(",\n")};
-
+${menuBarSql(EVENTS, eventId)}
 commit;
 `;
 

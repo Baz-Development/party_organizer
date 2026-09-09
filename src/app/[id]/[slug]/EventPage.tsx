@@ -8,7 +8,7 @@ import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
 import { brl, longDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
-import type { EventSummary, Gift, ModuleId } from "@/lib/types";
+import type { EventSummary, Gift, MenuItem, ModuleId } from "@/lib/types";
 
 const MODULE_LABELS: Partial<Record<ModuleId, string>> = {
   cronograma: "Cronograma",
@@ -17,6 +17,7 @@ const MODULE_LABELS: Partial<Record<ModuleId, string>> = {
   galeria: "Galeria",
   mural: "Mural",
   cardapio: "Cardápio",
+  bar: "Bar",
   "amigo-secreto": "Amigo Secreto",
 };
 
@@ -28,6 +29,23 @@ export function EventPage({ event }: { event: EventSummary }) {
   const nav = (Object.keys(MODULE_LABELS) as ModuleId[])
     .filter(has)
     .map((m) => ({ id: m, label: MODULE_LABELS[m]!, href: `#${m}` }));
+
+  // Cardápio agrupado por etapa, preservando a ordem em que o anfitrião cadastrou.
+  const menuCourses: { course: string; items: MenuItem[] }[] = [];
+  for (const item of event.menu) {
+    const bucket = menuCourses.find((c) => c.course === item.course);
+    if (bucket) bucket.items.push(item);
+    else menuCourses.push({ course: item.course, items: [item] });
+  }
+
+  // Consulta do mapa: o endereço completo é o melhor alvo; sem ele, cai para
+  // "local, cidade". Serve tanto o mapa embutido quanto o link "ver rota".
+  const mapsQuery = [event.address, event.venue, event.city]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(", ");
+  const mapsEmbedSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed`;
+  const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
 
   const [featuredGifts, setFeaturedGifts] = useState<Gift[]>([]);
 
@@ -137,16 +155,37 @@ export function EventPage({ event }: { event: EventSummary }) {
               <h2 className="mb-2.5 font-display text-[clamp(26px,4vw,38px)] font-semibold">
                 {event.venue}
               </h2>
-              <div className="mb-6 text-[17px] text-ink-soft">{event.city}</div>
-              <a
-                href="#"
-                className="inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
-              >
-                Ver rota no mapa
-              </a>
+              <div className="mb-2 text-[17px] text-ink-soft">{event.city}</div>
+              {event.address && (
+                <div className="mb-1 text-[15px] text-ink-soft">{event.address}</div>
+              )}
+              {event.postalCode && (
+                <div className="mb-6 text-[15px] text-ink-faint">CEP {event.postalCode}</div>
+              )}
+              {mapsQuery && (
+                <a
+                  href={mapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
+                >
+                  Ver rota no mapa
+                </a>
+              )}
             </div>
             <div className="h-[240px] overflow-hidden rounded-[20px] lg:h-[320px]">
-              <ImageSlot placeholder="Mapa de localização" />
+              {mapsQuery ? (
+                <iframe
+                  title={`Mapa — ${event.venue || event.city}`}
+                  src={mapsEmbedSrc}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              ) : (
+                <ImageSlot placeholder="Mapa de localização" />
+              )}
             </div>
           </section>
         )}
@@ -202,20 +241,84 @@ export function EventPage({ event }: { event: EventSummary }) {
         {/* Cardápio -------------------------------------------------- */}
         {has("cardapio") && (
           <section id="cardapio" className="bg-paper-2 px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">Sua opinião importa</div>
-            <h2 className="mb-4 font-display text-[clamp(26px,4vw,38px)] font-semibold">
-              Votação de cardápio
-            </h2>
-            <p className="mx-auto mb-7 max-w-[480px] text-[16px] leading-relaxed text-ink-soft">
-              Ajude a escolher a entrada, o prato principal e a sobremesa da noite. Leva menos de um
-              minuto.
-            </p>
-            <Link
-              href={eventUrl(event, "/cardapio")}
-              className="inline-block rounded-xl bg-accent px-8 py-4 text-[15px] font-semibold text-on-accent no-underline"
-            >
-              Votar no cardápio
-            </Link>
+            <div className="eyebrow mb-2.5">À mesa</div>
+            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">Cardápio</h2>
+            {menuCourses.length === 0 ? (
+              <p className="text-[16px] leading-relaxed text-ink-soft">
+                O cardápio será divulgado em breve.
+              </p>
+            ) : (
+              <div className="mx-auto flex max-w-[720px] flex-col gap-10 text-left">
+                {menuCourses.map((group) => (
+                  <div key={group.course}>
+                    <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
+                      {group.course}
+                    </div>
+                    <div className="flex flex-col gap-5">
+                      {group.items.map((item, i) => (
+                        <div key={`${item.name}-${i}`}>
+                          <div className="font-display text-[19px] font-semibold">{item.name}</div>
+                          {item.desc && (
+                            <div className="mt-1 text-[15px] leading-relaxed text-ink-soft">
+                              {item.desc}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Bar ----------------------------------------------------- */}
+        {has("bar") && (
+          <section id="bar" className="px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">Para brindar</div>
+            <h2 className="mb-4 font-display text-[clamp(26px,4vw,38px)] font-semibold">Bar</h2>
+            {event.bar.service && (
+              <p className="mx-auto mb-9 max-w-[480px] text-[16px] leading-relaxed text-ink-soft">
+                {event.bar.service}
+              </p>
+            )}
+            {event.bar.signatureName && (
+              <div className="mx-auto mb-9 max-w-[420px] rounded-[20px] bg-paper-2 px-6 py-7">
+                <div className="mb-1.5 text-[12px] uppercase tracking-[2.5px] text-accent">
+                  Drink de assinatura
+                </div>
+                <div className="font-display text-[22px] font-semibold">
+                  {event.bar.signatureName}
+                </div>
+                {event.bar.signatureDesc && (
+                  <div className="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                    {event.bar.signatureDesc}
+                  </div>
+                )}
+              </div>
+            )}
+            {event.bar.items.length > 0 && (
+              <div className="mx-auto grid max-w-[720px] gap-5 text-left sm:grid-cols-2">
+                {event.bar.items.map((item, i) => (
+                  <div key={`${item.name}-${i}`} className="border-t border-line pt-3.5">
+                    <div className="font-display text-[17px] font-semibold">{item.name}</div>
+                    {item.desc && (
+                      <div className="mt-1 text-[14px] leading-relaxed text-ink-soft">
+                        {item.desc}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!event.bar.service &&
+              !event.bar.signatureName &&
+              event.bar.items.length === 0 && (
+                <p className="text-[16px] leading-relaxed text-ink-soft">
+                  As informações do bar serão divulgadas em breve.
+                </p>
+              )}
           </section>
         )}
 

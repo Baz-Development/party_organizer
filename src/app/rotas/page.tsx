@@ -28,7 +28,6 @@ const buildGroups = (
         { href: eventUrl(event, "/rsvp"), label: "Fluxo RSVP", note: "3 passos: identificar, responder, agradecer" },
         { href: eventUrl(event, "/presentes"), label: "Lista de Presentes", note: "Lista → checkout (Pix/cartão) → sucesso" },
         { href: eventUrl(event, "/galeria"), label: "Galeria e Mural", note: "Mosaico de fotos + recados (tem estado vazio)" },
-        { href: eventUrl(event, "/cardapio"), label: "Votação de Cardápio", note: "Bebidas, entrada, prato e sobremesa" },
         { href: eventUrl(event, "/amigo-secreto"), label: "Amigo Secreto — Cadastro", note: "Lista de desejos do participante" },
         { href: eventUrl(event, "/amigo-secreto/revelacao"), label: "Amigo Secreto — Revelação", note: "Envelope animado com o sorteado" },
       ],
@@ -41,7 +40,7 @@ const buildGroups = (
         { href: "/sem-acesso", label: "Conta sem acesso", note: "Autenticou mas não foi provisionado" },
         { href: "/painel", label: "Painel do Cliente", note: "Contagem, confirmações, link e atividade" },
         { href: "/painel/convidados", label: "Gestão de Convidados", note: "Busca, filtros, tabela e detalhe" },
-        { href: "/painel/editor", label: "Editor da Página", note: "Cor, tipografia e textos com preview ao vivo" },
+        { href: "/painel/editor", label: "Editor da Página", note: "Cor, textos, cronograma, cardápio e bar com preview ao vivo" },
       ],
     },
     {
@@ -81,9 +80,9 @@ export default async function RotasPage() {
             Todas as telas
           </h1>
           <p className="max-w-[640px] text-[16px] leading-relaxed text-ink-soft">
-            Eventos e cronograma vêm do banco. Os módulos que
-            ainda não migraram (presentes, galeria, mural, cardápio e amigo
-            secreto) leem de{" "}
+            Eventos, cronograma, cardápio e bar vêm do banco. Os módulos que
+            ainda não migraram (presentes, galeria, mural e amigo secreto) leem
+            de{" "}
             <code className="rounded bg-paper-2 px-1.5 py-0.5 text-[14px]">src/lib/fixtures/</code>.
           </p>
         </div>

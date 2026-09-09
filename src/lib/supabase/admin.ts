@@ -46,21 +46,26 @@ export type InviteClientResult =
   | { ok: false; reason: "conflito" | "desconhecido"; message: string };
 
 /**
- * Provisiona uma conta de cliente por convite de e-mail.
+ * Provisiona uma conta de cliente, sem disparar e-mail nenhum.
  *
- * `inviteUserByEmail` cria a linha em `auth.users` já com `invited_at`, dispara
- * o e-mail de acesso e faz o trigger `handle_new_user` nascer o perfil como
- * `provisioned`. O nome vai em `raw_user_meta_data.display_name`, de onde o
- * trigger também o lê. É a única forma de "cadastrar antes do primeiro login"
- * sem manter estado próprio de convite.
+ * `createUser` cria a linha em `auth.users` já confirmada (login por magic
+ * link não depende de confirmação por e-mail) e faz o trigger
+ * `handle_new_user` nascer o perfil como `provisioned`. O nome vai em
+ * `raw_user_meta_data.display_name`, de onde o trigger também o lê.
+ *
+ * O convite por e-mail só é disparado depois, quando a primeira página do
+ * cliente é criada (`enqueueEmail` com o modelo `acesso_painel` em
+ * `POST /api/eventos`) — cadastrar a conta sozinha não avisa ninguém.
  */
-export async function inviteClient(
+export async function createClientAccount(
   email: string,
   displayName: string,
 ): Promise<InviteClientResult> {
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { display_name: displayName },
+  const { error } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    user_metadata: { display_name: displayName },
   });
 
   if (!error) return { ok: true };
@@ -76,4 +81,16 @@ export async function inviteClient(
       ? "Já existe uma conta com esse e-mail."
       : "Não foi possível cadastrar o cliente.",
   };
+}
+
+/**
+ * E-mail de uma conta de cliente pelo id do perfil (== id em `auth.users`).
+ * Usado para enfileirar o `acesso_painel` na criação da primeira página —
+ * `profiles` não guarda e-mail, só `auth.users`.
+ */
+export async function getUserEmail(userId: string): Promise<string | null> {
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data.user) return null;
+  return data.user.email ?? null;
 }

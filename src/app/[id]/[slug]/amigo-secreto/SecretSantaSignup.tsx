@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { GuestShell } from "@/components/GuestShell";
 import { Button, Input, LinkButton } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
-import { SECRET_SANTA_CONFIG } from "@/lib/fixtures/secret-santa";
 import { longDate } from "@/lib/format";
 import type { EventSummary } from "@/lib/types";
 
@@ -168,17 +167,33 @@ export function SecretSantaSignup({ event, token }: { event: EventSummary; token
           </div>
         )}
 
-        <div className="mb-7 rounded-2xl bg-ink px-4.5 py-4">
-          <div className="mb-1.5 text-xs uppercase tracking-wider text-accent-soft">
-            Sugestão dos anfitriões
+        {(event.secretSanta.budget || event.secretSanta.drawDate || event.secretSanta.rules) && (
+          <div className="mb-7 rounded-2xl bg-ink px-4.5 py-4">
+            <div className="mb-1.5 text-xs uppercase tracking-wider text-accent-soft">
+              Sugestão dos anfitriões
+            </div>
+            {event.secretSanta.budget && (
+              <div className="text-[15px] text-paper">
+                Valor sugerido: {event.secretSanta.budget}
+              </div>
+            )}
+            {event.secretSanta.drawDate && (
+              <div className="mt-1 text-[13px] text-paper/60">
+                Sorteio em {longDate(event.secretSanta.drawDate)}
+              </div>
+            )}
+            {event.secretSanta.exchangeDate && (
+              <div className="mt-1 text-[13px] text-paper/60">
+                Troca em {longDate(event.secretSanta.exchangeDate)}
+              </div>
+            )}
+            {event.secretSanta.rules && (
+              <div className="mt-2 text-[13px] leading-relaxed text-paper/80">
+                {event.secretSanta.rules}
+              </div>
+            )}
           </div>
-          <div className="text-[15px] text-paper">
-            Valor sugerido: {SECRET_SANTA_CONFIG.budget}
-          </div>
-          <div className="mt-1 text-[13px] text-paper/60">
-            Sorteio em {longDate(SECRET_SANTA_CONFIG.drawDate)}
-          </div>
-        </div>
+        )}
 
         <span className="mb-2.5 block text-[13px] tracking-wide text-ink-soft">
           O que você gostaria de ganhar? ({wishlist.length}/{MAX_ITEMS})

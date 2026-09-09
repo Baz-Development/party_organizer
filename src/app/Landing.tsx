@@ -1,12 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Logo } from "@/components/Logo";
+import { PartnerStrip } from "@/components/PartnerStrip";
+import { BENEFIT_ICONS, type BenefitIconKey } from "@/components/benefit-icons";
 import { LinkButton, Pill } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
+import type { Partner } from "@/lib/partners";
 import type { ShowcaseEvent } from "@/lib/db/featured";
+
+const PRICE_TAGLINE = "Preço por evento — sem mensalidade eterna.";
+
+const NAV = [
+  { href: "#como-funciona", label: "Como funciona" },
+  { href: "#tipos-de-festa", label: "Tipos de festa" },
+  { href: "#planos", label: "Planos" },
+  { href: "#faq", label: "FAQ" },
+];
 
 const STEPS = [
   {
@@ -29,6 +41,8 @@ const STEPS = [
 const EVENT_TYPES = {
   casamento: {
     label: "Casamento",
+    hero: { title: "Marina & Thiago", meta: "12 dez 2026 · Itu, SP", cta: "Confirmar presença" },
+    mockup: null as string | null,
     features: [
       "RSVP com acompanhantes e restrições",
       "Lista de presentes com cotas",
@@ -38,6 +52,8 @@ const EVENT_TYPES = {
   },
   debutante: {
     label: "Debutante",
+    hero: { title: "15 Anos da Sofia", meta: "5 set 2026 · São Paulo, SP", cta: "Confirmar presença" },
+    mockup: null as string | null,
     features: [
       "Contagem regressiva para os 15 anos",
       "Votação do tema da festa",
@@ -47,6 +63,8 @@ const EVENT_TYPES = {
   },
   infantil: {
     label: "Aniversário infantil",
+    hero: { title: "Bento faz 5!", meta: "18 out 2026 · Campinas, SP", cta: "Confirmar presença" },
+    mockup: null as string | null,
     features: [
       "Confirmação fácil para os pais",
       "Lista de presentes por faixa etária",
@@ -56,6 +74,8 @@ const EVENT_TYPES = {
   },
   corporativo: {
     label: "Corporativo",
+    hero: { title: "Convenção Nexus 2026", meta: "3 nov 2026 · São Paulo, SP", cta: "Fazer check-in" },
+    mockup: null as string | null,
     features: [
       "Check-in rápido para convidados",
       "Cronograma e palestrantes",
@@ -67,31 +87,33 @@ const EVENT_TYPES = {
 
 type EventTypeKey = keyof typeof EVENT_TYPES;
 
-const BENEFITS = [
-  { title: "Convidados confirmam presença em segundos", desc: "Sem ligação, sem grupo de WhatsApp — só um toque no link." },
-  { title: "Lista de presentes sem duplicidade", desc: "Cada presente é reservado uma única vez, sem graça repetida." },
-  { title: "Amigo secreto sem bagunça", desc: "Sorteio automático e revelação surpresa, sem planilha." },
-  { title: "Sua casa de eventos já recomenda", desc: "Feito em parceria com buffets e espaços de festa de confiança." },
-  { title: "Editor sem código", desc: "Troque foto, cor e texto em minutos — sem precisar de designer." },
+const BENEFITS: { title: string; desc: string; icon: BenefitIconKey }[] = [
+  { icon: "tap", title: "Convidados confirmam presença em segundos", desc: "Sem ligação, sem grupo de WhatsApp — só um toque no link." },
+  { icon: "gift", title: "Lista de presentes sem duplicidade", desc: "Cada presente é reservado uma única vez, sem graça repetida." },
+  { icon: "shuffle", title: "Amigo secreto sem bagunça", desc: "Sorteio automático e revelação surpresa, sem planilha." },
+  { icon: "seal", title: "Sua casa de eventos já recomenda", desc: "Feito em parceria com buffets e espaços de festa de confiança." },
+  { icon: "brush", title: "Editor sem código", desc: "Troque foto, cor e texto em minutos — sem precisar de designer." },
 ];
 
-const TESTIMONIALS = [
-  { name: "Marina Costa", role: "Casamento, dez 2026", quote: "Criei a página do nosso casamento em uma tarde. Os convidados amaram poder confirmar presença e escolher presentes pelo celular." },
-  { name: "Renata Andrade", role: "Mãe de debutante", quote: "A votação do cardápio foi um sucesso — a Sofia adorou ver os convidados escolhendo o tema junto com ela." },
-  { name: "Felipe Nogueira", role: "Organizador corporativo", quote: "Conseguimos confirmar presença de mais de 300 convidados em dois dias, sem uma única planilha." },
+const TESTIMONIALS: { name: string; role: string; quote: string; avatar: string | null }[] = [
+  { name: "Marina Costa", role: "Casamento, dez 2026", avatar: null, quote: "Criei a página do nosso casamento em uma tarde. Os convidados amaram poder confirmar presença e escolher presentes pelo celular." },
+  { name: "Renata Andrade", role: "Mãe de debutante", avatar: null, quote: "A votação do cardápio foi um sucesso — a Sofia adorou ver os convidados escolhendo o tema junto com ela." },
+  { name: "Felipe Nogueira", role: "Organizador corporativo", avatar: null, quote: "Conseguimos confirmar presença de mais de 300 convidados em dois dias, sem uma única planilha." },
 ];
 
 const PLANS = [
   { name: "Essencial", price: "R$ 49", features: ["Página do evento", "RSVP", "Galeria de fotos", "Editor sem código"], cta: "Começar", featured: false },
   { name: "Premium", price: "R$ 129", features: ["Tudo do Essencial", "Lista de presentes", "Amigo Secreto", "Votação de cardápio", "Cor personalizada"], cta: "Criar minha página", featured: true },
-  { name: "Corporativo", price: "Sob consulta", features: ["Múltiplos eventos", "Suporte dedicado", "Marca própria", "Relatórios de presença"], cta: "Falar com a equipe", featured: false },
+  { name: "Empresas", price: "Sob consulta", features: ["Múltiplos eventos", "Suporte dedicado", "Marca e domínio próprios", "Relatórios de presença"], cta: "Falar com a equipe", featured: false },
 ];
 
 const FAQS = [
   { q: "Preciso saber programar?", a: "Não. Todo o editor é visual — você troca foto, cor e texto sem escrever uma linha de código." },
   { q: "Meus convidados precisam criar conta?", a: "Não. Eles acessam tudo por um link, sem cadastro ou senha." },
+  { q: "Meus convidados pagam alguma coisa ou precisam de aplicativo?", a: "Não. O acesso é gratuito para o convidado e abre direto no navegador do celular — nada para instalar. Só há pagamento se ele escolher presentear pela lista de presentes." },
   { q: "Posso cancelar quando quiser?", a: "Sim, sem multa e sem burocracia." },
   { q: "Funciona para qualquer tipo de festa?", a: "Sim — casamento, debutante, aniversário infantil, corporativo e formatura." },
+  { q: "Posso usar meu próprio domínio?", a: "Sim, no plano Empresas a página do evento pode rodar no domínio da sua marca." },
   { q: "Posso mudar a cor e o tema depois?", a: "Sim, quantas vezes quiser, direto pelo editor." },
 ];
 
@@ -99,18 +121,68 @@ const FAQS = [
  * `demoEvent` é o evento publicado que o botão "Ver exemplo ao vivo" abre.
  * Vem do servidor porque depende do banco; sem nenhum evento publicado, o
  * botão simplesmente não aparece.
+ *
+ * `partners` é conteúdo de marketing (`src/lib/partners.ts`); vazio esconde a
+ * faixa de logos e a frase de parceria.
  */
-export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
+export function Landing({
+  demoEvent,
+  partners,
+}: {
+  demoEvent: ShowcaseEvent | null;
+  partners: Partner[];
+}) {
   const [eventType, setEventType] = useState<EventTypeKey>("casamento");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [showFloatingCta, setShowFloatingCta] = useState(false);
   const active = EVENT_TYPES[eventType];
+
+  const heroRef = useRef<HTMLElement | null>(null);
+  const finalRef = useRef<HTMLElement | null>(null);
+
+  // CTA flutuante: aparece quando o hero saiu de vista e some de novo quando o
+  // CTA final entra — sem lib, só IntersectionObserver.
+  useEffect(() => {
+    const hero = heroRef.current;
+    const final = finalRef.current;
+    if (!hero || !final) return;
+
+    let heroVisible = true;
+    let finalVisible = false;
+    const sync = () => setShowFloatingCta(!heroVisible && !finalVisible);
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.target === hero) heroVisible = e.isIntersecting;
+          if (e.target === final) finalVisible = e.isIntersecting;
+        }
+        sync();
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(hero);
+    obs.observe(final);
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <div className="bg-paper text-ink">
       {/* Topo -------------------------------------------------------- */}
-      <header className="mx-auto flex max-w-[1160px] items-center justify-between px-8 pt-6">
+      <header className="mx-auto flex max-w-[1160px] items-center justify-between gap-4 px-8 pt-6">
         <Logo variant="lockup" height={46} priority />
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-5 sm:gap-6">
+          <div className="hidden items-center gap-6 md:flex">
+            {NAV.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-sm font-semibold text-ink-soft no-underline hover:text-ink"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
           <Link href="/painel" className="text-sm font-semibold text-ink-soft no-underline hover:text-ink">
             Entrar
           </Link>
@@ -118,12 +190,18 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </header>
 
       {/* Hero -------------------------------------------------------- */}
-      <section className="mx-auto grid max-w-[1160px] items-center gap-14 px-8 pb-18 pt-14 md:grid-cols-[1.1fr_1fr]">
+      <section
+        ref={heroRef}
+        className="mx-auto grid max-w-[1160px] items-center gap-14 px-8 pb-18 pt-14 md:grid-cols-[1.1fr_1fr]"
+      >
         <div>
+          <div className="eyebrow mb-4">
+            Casamento · Debutante · Aniversário infantil · Corporativo · Formatura
+          </div>
           <h1 className="mb-6 font-display text-[clamp(36px,6vw,52px)] font-semibold leading-[1.12]">
             A festa dos seus sonhos, organizada em um só lugar
           </h1>
-          <p className="mb-8 max-w-[460px] text-[18px] leading-relaxed text-ink-soft">
+          <p className="mb-6 max-w-[460px] text-[18px] leading-relaxed text-ink-soft">
             Site do evento, confirmação de presença, lista de presentes e amigo secreto — tudo em um
             único link, lindo e fácil de compartilhar.
           </p>
@@ -137,21 +215,26 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
               </LinkButton>
             )}
           </div>
+          <p className="mt-3 text-[13.5px] font-semibold text-ink-faint">{PRICE_TAGLINE}</p>
         </div>
 
         <div className="relative flex justify-center">
           <div className="w-[250px] overflow-hidden rounded-[22px] bg-white shadow-[0_24px_60px_rgba(0,0,0,0.14)]">
             <div className="relative h-[300px] w-full">
-              <ImageSlot placeholder="Foto de capa" />
+              <ImageSlot
+                neutral
+                src={active.mockup}
+                placeholder={`Página de evento — ${active.label}`}
+              />
               <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(20,18,15,0.05)_0%,rgba(20,18,15,0.7)_100%)]" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 text-center">
-                <div className="font-display text-xl font-semibold text-white">Marina &amp; Thiago</div>
-                <div className="mt-1 text-[11px] text-paper-2">12 dez 2026 · Itu, SP</div>
+                <div className="font-display text-xl font-semibold text-white">{active.hero.title}</div>
+                <div className="mt-1 text-[11px] text-paper-2">{active.hero.meta}</div>
               </div>
             </div>
             <div className="p-3.5">
               <div className="rounded-lg bg-accent px-3 py-2.5 text-center text-[12.5px] font-semibold text-on-accent">
-                Confirmar Presença
+                {active.hero.cta}
               </div>
             </div>
           </div>
@@ -160,18 +243,23 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
 
       {/* Prova social ------------------------------------------------ */}
       <div className="border-y border-line px-8 py-7">
-        <div className="mx-auto flex max-w-[1160px] flex-wrap items-center justify-center gap-x-12 gap-y-3">
-          <div className="font-display text-[22px] font-semibold text-ink-soft">
-            +2.000 festas organizadas
+        <div className="mx-auto flex max-w-[1160px] flex-col items-center gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-3">
+            <div className="font-display text-[22px] font-semibold text-ink-soft">
+              +2.000 festas organizadas
+            </div>
+            {partners.length > 0 && (
+              <div className="text-sm text-ink-faint">
+                Disponível em parceria com casas de eventos e buffets em todo o Brasil
+              </div>
+            )}
           </div>
-          <div className="text-sm text-ink-faint">
-            Disponível em parceria com casas de eventos e buffets em todo o Brasil
-          </div>
+          <PartnerStrip partners={partners} />
         </div>
       </div>
 
       {/* Como funciona ----------------------------------------------- */}
-      <section className="mx-auto max-w-[1160px] px-8 py-22">
+      <section id="como-funciona" className="mx-auto max-w-[1160px] scroll-mt-24 px-8 py-22">
         <h2 className="mb-13 text-center font-display text-[34px] font-semibold">Como funciona</h2>
         <div className="grid gap-10 sm:grid-cols-3">
           {STEPS.map((s) => (
@@ -185,7 +273,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </section>
 
       {/* Tipos de festa ---------------------------------------------- */}
-      <section className="bg-paper-2 px-8 py-22">
+      <section id="tipos-de-festa" className="scroll-mt-24 bg-paper-2 px-8 py-22">
         <div className="mx-auto max-w-[1160px]">
           <h2 className="mb-9 text-center font-display text-[34px] font-semibold">
             Feito para o seu tipo de festa
@@ -208,7 +296,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
             </div>
             <div className="flex justify-center">
               <div className="h-[280px] w-[220px] overflow-hidden rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.1)]">
-                <ImageSlot placeholder={`Mockup — ${active.label}`} />
+                <ImageSlot neutral src={active.mockup} placeholder={`Mockup — ${active.label}`} />
               </div>
             </div>
           </div>
@@ -221,13 +309,18 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
           Por que escolher a Convite
         </h2>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {BENEFITS.map((b) => (
-            <div key={b.title}>
-              <div className="mb-4 h-[38px] w-[38px] rounded-[10px] border-[1.5px] border-accent" />
-              <div className="mb-2 font-display text-[18px] font-semibold">{b.title}</div>
-              <p className="text-[15px] leading-relaxed text-ink-soft">{b.desc}</p>
-            </div>
-          ))}
+          {BENEFITS.map((b) => {
+            const Icon = BENEFIT_ICONS[b.icon];
+            return (
+              <div key={b.title}>
+                <div className="mb-4 flex h-[38px] w-[38px] items-center justify-center rounded-[10px] border-[1.5px] border-accent text-accent">
+                  <Icon className="h-[20px] w-[20px]" />
+                </div>
+                <div className="mb-2 font-display text-[18px] font-semibold">{b.title}</div>
+                <p className="text-[15px] leading-relaxed text-ink-soft">{b.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -241,7 +334,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
             {TESTIMONIALS.map((t) => (
               <div key={t.name} className="rounded-[18px] bg-paper p-7">
                 <div className="mb-4 h-[52px] w-[52px] overflow-hidden rounded-full">
-                  <ImageSlot shape="circle" placeholder="Foto" compact />
+                  <ImageSlot neutral shape="circle" src={t.avatar} placeholder={`Foto de ${t.name}`} />
                 </div>
                 <p className="mb-4 font-display text-[17px] italic leading-relaxed">“{t.quote}”</p>
                 <div className="text-sm font-semibold">{t.name}</div>
@@ -253,13 +346,11 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </section>
 
       {/* Planos ------------------------------------------------------- */}
-      <section className="mx-auto max-w-[1160px] px-8 py-22">
+      <section id="planos" className="mx-auto max-w-[1160px] scroll-mt-24 px-8 py-22">
         <h2 className="mb-4 text-center font-display text-[34px] font-semibold">
           Planos simples, sem pegadinha
         </h2>
-        <p className="mb-12 text-center text-[16px] text-ink-soft">
-          Preço por evento, sem mensalidade eterna.
-        </p>
+        <p className="mb-12 text-center text-[16px] text-ink-soft">{PRICE_TAGLINE}</p>
         <div className="mx-auto grid max-w-[940px] gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {PLANS.map((p) => (
             <div
@@ -293,7 +384,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </section>
 
       {/* FAQ ---------------------------------------------------------- */}
-      <section className="mx-auto max-w-[800px] px-8 py-22">
+      <section id="faq" className="mx-auto max-w-[800px] scroll-mt-24 px-8 py-22">
         <h2 className="mb-11 text-center font-display text-[34px] font-semibold">
           Perguntas frequentes
         </h2>
@@ -320,7 +411,7 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </section>
 
       {/* CTA final ---------------------------------------------------- */}
-      <section className="bg-ink px-8 py-22 text-center">
+      <section ref={finalRef} className="bg-ink-charcoal px-8 py-22 text-center">
         <Logo variant="mark" height={76} className="mx-auto mb-7" />
         <h2 className="mb-4 font-display text-[clamp(26px,5vw,36px)] font-semibold text-paper">
           Sua história merece uma página à altura.
@@ -331,22 +422,32 @@ export function Landing({ demoEvent }: { demoEvent: ShowcaseEvent | null }) {
       </section>
 
       {/* Rodapé ------------------------------------------------------- */}
-      <footer className="px-8 py-12">
-        <div className="mx-auto flex max-w-[1160px] flex-wrap justify-between gap-6">
+      <footer className="bg-ink-charcoal px-8 pb-12 pt-2 text-paper">
+        <div className="mx-auto flex max-w-[1160px] flex-wrap items-center justify-between gap-6 border-t border-[rgba(245,243,238,0.12)] pt-8">
           <Logo variant="lockup" height={36} />
-          <div className="flex flex-wrap gap-7 text-sm text-ink-soft">
-            <Link href="/rotas" className="text-ink-soft no-underline hover:text-ink">
-              Todas as telas
-            </Link>
-            <Link href="/painel" className="text-ink-soft no-underline hover:text-ink">
-              Painel do cliente
-            </Link>
-            <Link href="/admin" className="text-ink-soft no-underline hover:text-ink">
-              Admin
-            </Link>
-          </div>
+          <nav className="flex flex-wrap gap-7 text-sm">
+            {NAV.map((item) => (
+              <a key={item.href} href={item.href} className="text-paper-2 no-underline hover:text-paper">
+                {item.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </footer>
+
+      {/* CTA flutuante --------------------------------------------------- */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-[800] flex justify-center px-4 pb-4 transition-all duration-300 ${
+          showFloatingCta ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+        }`}
+      >
+        <LinkButton
+          href="/onboarding"
+          className="shadow-[0_12px_32px_rgba(0,0,0,0.24)]"
+        >
+          Criar minha página do evento
+        </LinkButton>
+      </div>
     </div>
   );
 }

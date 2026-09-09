@@ -1,8 +1,10 @@
 import type { Database } from "@/lib/database.types";
 import type {
+  BarItem,
   EventSummary,
   Gift,
   Guest,
+  MenuItem,
   ModuleId,
   MuralMessage,
   Photo,
@@ -35,6 +37,11 @@ export type EventRowWithContent = EventRow & {
     Tables["schedule_items"]["Row"],
     "position" | "time" | "title" | "description"
   >[];
+  menu_items: Pick<
+    Tables["menu_items"]["Row"],
+    "position" | "course" | "name" | "description"
+  >[];
+  bar_items: Pick<Tables["bar_items"]["Row"], "position" | "name" | "description">[];
 };
 
 /**
@@ -50,6 +57,7 @@ const MODULE_ORDER: ModuleId[] = [
   "galeria",
   "mural",
   "cardapio",
+  "bar",
   "amigo-secreto",
 ];
 
@@ -62,31 +70,55 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     .sort((a, b) => a.position - b.position)
     .map(toScheduleItem);
 
+  const menu = [...row.menu_items]
+    .sort((a, b) => a.position - b.position)
+    .map(toMenuItem);
+
+  const barItems = [...row.bar_items]
+    .sort((a, b) => a.position - b.position)
+    .map(toBarItem);
+
   return {
     id: row.id,
     slug: row.slug,
     title: row.title,
+    hostProfileId: row.host_profile_id,
     // `infantil` foi migrado para `aniversario` e não é mais ofertado, mas o
     // valor segue no enum do banco — resolve qualquer linha remanescente.
     kind: row.kind === "infantil" ? "aniversario" : row.kind,
     date: row.event_at,
     venue: row.venue ?? "",
     city: row.city ?? "",
+    address: row.address ?? undefined,
+    postalCode: row.postal_code ?? undefined,
     hosts: row.hosts ?? "",
     eyebrow: row.eyebrow ?? "",
     welcome: row.welcome ?? "",
     themeKey: row.theme_key,
     modules,
     schedule,
+    menu,
+    bar: {
+      service: row.bar_service ?? undefined,
+      signatureName: row.bar_signature_name ?? undefined,
+      signatureDesc: row.bar_signature_desc ?? undefined,
+      items: barItems,
+    },
     // A galeria em si é paginada e carregada à parte (src/lib/db/media.ts);
     // este campo alimenta só a prévia da página pública do evento, resolvida
     // por quem chama `toEventSummary` quando precisa dela.
     gallery: [],
     status: row.status,
     rsvpDeadline: row.rsvp_deadline ?? undefined,
-    guestListOpen: row.guest_list_open,
+    selfSignupToken: row.self_signup_token,
     moderationPolicy: row.moderation_policy,
     coverPath: row.cover_path ?? undefined,
+    secretSanta: {
+      budget: row.secret_santa_budget ?? undefined,
+      drawDate: row.secret_santa_draw_date ?? undefined,
+      exchangeDate: row.secret_santa_exchange_date ?? undefined,
+      rules: row.secret_santa_rules ?? undefined,
+    },
   };
 }
 
@@ -96,6 +128,21 @@ function toScheduleItem(
   return {
     time: row.time,
     title: row.title,
+    desc: row.description ?? "",
+  };
+}
+
+function toMenuItem(row: EventRowWithContent["menu_items"][number]): MenuItem {
+  return {
+    course: row.course,
+    name: row.name,
+    desc: row.description ?? "",
+  };
+}
+
+function toBarItem(row: EventRowWithContent["bar_items"][number]): BarItem {
+  return {
+    name: row.name,
     desc: row.description ?? "",
   };
 }
@@ -111,7 +158,9 @@ export function toProfile(row: ProfileRow): Profile {
   };
 }
 
-export function toGuest(row: GuestRow): Guest {
+/** `inviteUrl` chega resolvida por quem chama — depende do evento e da env do
+ * site, não é derivável só da linha do convidado. */
+export function toGuest(row: GuestRow, inviteUrl?: string): Guest {
   return {
     id: row.id,
     name: row.name,
@@ -125,6 +174,7 @@ export function toGuest(row: GuestRow): Guest {
     invitedAt: row.invited_at,
     respondedAt: row.responded_at ?? undefined,
     unlisted: row.unlisted,
+    inviteUrl,
   };
 }
 

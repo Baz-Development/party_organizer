@@ -39,5 +39,7 @@ export async function loadPublicEvent(
       )
     : [];
 
-  return { ...event, gallery, coverUrl };
+  // O token de auto-cadastro é dado de gestão — nunca vai para o navegador na
+  // página pública. Quem tem o link já carrega o token na própria URL.
+  return { ...event, selfSignupToken: null, gallery, coverUrl };
 }

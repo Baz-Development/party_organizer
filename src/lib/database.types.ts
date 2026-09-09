@@ -11,6 +11,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bar_items: {
+        Row: {
+          description: string | null
+          event_id: string
+          id: string
+          name: string
+          position: number
+        }
+        Insert: {
+          description?: string | null
+          event_id: string
+          id?: string
+          name: string
+          position: number
+        }
+        Update: {
+          description?: string | null
+          event_id?: string
+          id?: string
+          name?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bar_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_messages: {
         Row: {
           attempts: number
@@ -121,18 +153,27 @@ export type Database = {
       }
       events: {
         Row: {
+          address: string | null
+          bar_service: string | null
+          bar_signature_desc: string | null
+          bar_signature_name: string | null
           city: string | null
           cover_path: string | null
           created_at: string
           event_at: string
           eyebrow: string | null
-          guest_list_open: boolean
           host_profile_id: string
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy: Database["public"]["Enums"]["moderation_policy"]
+          postal_code: string | null
           rsvp_deadline: string | null
+          secret_santa_budget: string | null
+          secret_santa_draw_date: string | null
+          secret_santa_exchange_date: string | null
+          secret_santa_rules: string | null
+          self_signup_token: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
           theme_key: Database["public"]["Enums"]["theme_key"]
@@ -142,18 +183,27 @@ export type Database = {
           welcome: string | null
         }
         Insert: {
+          address?: string | null
+          bar_service?: string | null
+          bar_signature_desc?: string | null
+          bar_signature_name?: string | null
           city?: string | null
           cover_path?: string | null
           created_at?: string
           event_at: string
           eyebrow?: string | null
-          guest_list_open?: boolean
           host_profile_id: string
           hosts?: string | null
           id?: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
+          postal_code?: string | null
           rsvp_deadline?: string | null
+          secret_santa_budget?: string | null
+          secret_santa_draw_date?: string | null
+          secret_santa_exchange_date?: string | null
+          secret_santa_rules?: string | null
+          self_signup_token?: string | null
           slug: string
           status?: Database["public"]["Enums"]["event_status"]
           theme_key?: Database["public"]["Enums"]["theme_key"]
@@ -163,18 +213,27 @@ export type Database = {
           welcome?: string | null
         }
         Update: {
+          address?: string | null
+          bar_service?: string | null
+          bar_signature_desc?: string | null
+          bar_signature_name?: string | null
           city?: string | null
           cover_path?: string | null
           created_at?: string
           event_at?: string
           eyebrow?: string | null
-          guest_list_open?: boolean
           host_profile_id?: string
           hosts?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["event_kind"]
           moderation_policy?: Database["public"]["Enums"]["moderation_policy"]
+          postal_code?: string | null
           rsvp_deadline?: string | null
+          secret_santa_budget?: string | null
+          secret_santa_draw_date?: string | null
+          secret_santa_exchange_date?: string | null
+          secret_santa_rules?: string | null
+          self_signup_token?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["event_status"]
           theme_key?: Database["public"]["Enums"]["theme_key"]
@@ -405,124 +464,37 @@ export type Database = {
           },
         ]
       }
-      menu_options: {
+      menu_items: {
         Row: {
-          created_at: string
+          course: string
           description: string | null
-          id: string
-          name: string
-          poll_id: string
-          tags: string[]
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          poll_id: string
-          tags?: string[]
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          poll_id?: string
-          tags?: string[]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "menu_options_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "menu_polls"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      menu_polls: {
-        Row: {
-          closes_at: string
-          course: string
-          created_at: string
           event_id: string
           id: string
-          max_choices: number
-          question: string
-          updated_at: string
+          name: string
+          position: number
         }
         Insert: {
-          closes_at: string
           course: string
-          created_at?: string
+          description?: string | null
           event_id: string
           id?: string
-          max_choices?: number
-          question: string
-          updated_at?: string
+          name: string
+          position: number
         }
         Update: {
-          closes_at?: string
           course?: string
-          created_at?: string
+          description?: string | null
           event_id?: string
           id?: string
-          max_choices?: number
-          question?: string
-          updated_at?: string
+          name?: string
+          position?: number
         }
         Relationships: [
           {
-            foreignKeyName: "menu_polls_event_id_fkey"
+            foreignKeyName: "menu_items_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      menu_votes: {
-        Row: {
-          created_at: string
-          guest_id: string
-          id: string
-          option_id: string
-          poll_id: string
-        }
-        Insert: {
-          created_at?: string
-          guest_id: string
-          id?: string
-          option_id: string
-          poll_id: string
-        }
-        Update: {
-          created_at?: string
-          guest_id?: string
-          id?: string
-          option_id?: string
-          poll_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "menu_votes_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "guests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_votes_option_id_fkey"
-            columns: ["option_id"]
-            isOneToOne: false
-            referencedRelation: "menu_options"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_votes_poll_id_fkey"
-            columns: ["poll_id"]
-            isOneToOne: false
-            referencedRelation: "menu_polls"
             referencedColumns: ["id"]
           },
         ]
@@ -1133,18 +1105,27 @@ export type Database = {
           p_module: Database["public"]["Enums"]["module_id"]
         }
         Returns: {
+          address: string | null
+          bar_service: string | null
+          bar_signature_desc: string | null
+          bar_signature_name: string | null
           city: string | null
           cover_path: string | null
           created_at: string
           event_at: string
           eyebrow: string | null
-          guest_list_open: boolean
           host_profile_id: string
           hosts: string | null
           id: string
           kind: Database["public"]["Enums"]["event_kind"]
           moderation_policy: Database["public"]["Enums"]["moderation_policy"]
+          postal_code: string | null
           rsvp_deadline: string | null
+          secret_santa_budget: string | null
+          secret_santa_draw_date: string | null
+          secret_santa_exchange_date: string | null
+          secret_santa_rules: string | null
+          self_signup_token: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
           theme_key: Database["public"]["Enums"]["theme_key"]
@@ -1268,28 +1249,6 @@ export type Database = {
           kids: number
           name: string
           status: Database["public"]["Enums"]["rsvp_status"]
-        }[]
-      }
-      get_menu_polls_publicos: {
-        Args: { p_event_slug: string }
-        Returns: {
-          closes_at: string
-          course: string
-          max_choices: number
-          option_desc: string
-          option_id: string
-          option_name: string
-          option_tags: string[]
-          poll_id: string
-          question: string
-          votes: number
-        }[]
-      }
-      get_menu_votes_by_token: {
-        Args: { p_token: string }
-        Returns: {
-          option_id: string
-          poll_id: string
         }[]
       }
       get_my_secret_santa: {
@@ -1438,10 +1397,6 @@ export type Database = {
           status: Database["public"]["Enums"]["payment_status"]
         }[]
       }
-      submit_menu_vote: {
-        Args: { p_option_ids: string[]; p_poll_id: string; p_token: string }
-        Returns: string[]
-      }
       submit_mural_message: {
         Args: {
           p_author: string
@@ -1466,39 +1421,6 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "mural_messages"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      submit_open_rsvp: {
-        Args: {
-          p_companions: number
-          p_dietary: string
-          p_event_slug: string
-          p_kids: number
-          p_name: string
-          p_status: Database["public"]["Enums"]["rsvp_status"]
-        }
-        Returns: {
-          companions: number
-          created_at: string
-          dietary: string | null
-          email: string | null
-          event_id: string
-          group_name: string | null
-          id: string
-          invited_at: string
-          kids: number
-          name: string
-          phone: string | null
-          responded_at: string | null
-          status: Database["public"]["Enums"]["rsvp_status"]
-          unlisted: boolean
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "guests"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1538,6 +1460,40 @@ export type Database = {
           p_kids: number
           p_status: Database["public"]["Enums"]["rsvp_status"]
           p_token: string
+        }
+        Returns: {
+          companions: number
+          created_at: string
+          dietary: string | null
+          email: string | null
+          event_id: string
+          group_name: string | null
+          id: string
+          invited_at: string
+          kids: number
+          name: string
+          phone: string | null
+          responded_at: string | null
+          status: Database["public"]["Enums"]["rsvp_status"]
+          unlisted: boolean
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "guests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      submit_self_signup_rsvp: {
+        Args: {
+          p_companions: number
+          p_dietary: string
+          p_event_slug: string
+          p_kids: number
+          p_name: string
+          p_signup_token: string
+          p_status: Database["public"]["Enums"]["rsvp_status"]
         }
         Returns: {
           companions: number
@@ -1613,6 +1569,7 @@ export type Database = {
         | "mural"
         | "cardapio"
         | "amigo-secreto"
+        | "bar"
       mural_status: "pendente" | "aprovada" | "oculta"
       payment_status: "pendente" | "pago" | "falho" | "reembolsado"
       photo_status: "pendente" | "aprovada" | "oculta"
@@ -1780,6 +1737,7 @@ export const Constants = {
         "mural",
         "cardapio",
         "amigo-secreto",
+        "bar",
       ],
       mural_status: ["pendente", "aprovada", "oculta"],
       payment_status: ["pendente", "pago", "falho", "reembolsado"],

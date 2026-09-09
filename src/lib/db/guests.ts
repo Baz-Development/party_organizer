@@ -1,10 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import { guestInviteUrl } from "@/lib/event-url";
 import type { Guest, RsvpStatus } from "@/lib/types";
 import { DbError, UNIQUE_VIOLATION, toRsvpError } from "./errors";
 import { toGuest, type GuestRow } from "./mappers";
 
 type Client = SupabaseClient<Database>;
+
+/** O evento a que o convidado pertence — precisa do `id` e do `slug` para
+ * montar o link de convite compartilhável. */
+export type EventRef = { id: string; slug: string };
+
+/** Extrai o token de convite de uma linha de `guests` com `guest_invites`
+ * embutido (`select("*, guest_invites(token)")`). */
+function inviteTokenOf(row: unknown): string | undefined {
+  const gi = (row as { guest_invites?: { token: string } | { token: string }[] | null })
+    .guest_invites;
+  if (!gi) return undefined;
+  return Array.isArray(gi) ? gi[0]?.token : gi.token;
+}
+
+/** Mapeia a linha para `Guest` já resolvendo `inviteUrl` a partir do token. */
+function toGuestWithInvite(event: EventRef, row: unknown): Guest {
+  const token = inviteTokenOf(row);
+  return toGuest(row as GuestRow, token ? guestInviteUrl(event, token) : undefined);
+}
 
 /** Índice de deduplicação compara e-mail em minúsculas; nome mantém a caixa
  * como digitado, só sem espaço nas pontas. */
@@ -55,16 +75,20 @@ export function computeGuestStats(guests: Guest[]): GuestStats {
 
 export async function listGuests(
   client: Client,
-  eventId: string,
+  event: EventRef,
   options: { status?: RsvpStatus } = {},
 ): Promise<Guest[]> {
-  let query = client.from("guests").select("*").eq("event_id", eventId).order("name");
+  let query = client
+    .from("guests")
+    .select("*, guest_invites(token)")
+    .eq("event_id", event.id)
+    .order("name");
   if (options.status) query = query.eq("status", options.status);
 
   const { data, error } = await query;
   if (error) throw new DbError(error.message, "desconhecido");
 
-  return (data as GuestRow[]).map(toGuest);
+  return (data ?? []).map((row) => toGuestWithInvite(event, row));
 }
 
 export interface CreateGuestInput {
@@ -76,13 +100,13 @@ export interface CreateGuestInput {
 
 export async function createGuest(
   client: Client,
-  eventId: string,
+  event: EventRef,
   input: CreateGuestInput,
 ): Promise<Guest> {
   const { data, error } = await client
     .from("guests")
     .insert({
-      event_id: eventId,
+      event_id: event.id,
       name: input.name,
       group_name: input.group ?? null,
       email: normalizeEmail(input.email),
@@ -93,9 +117,16 @@ export async function createGuest(
 
   if (error) throw new DbError(error.message, "desconhecido");
 
-  await client.from("guest_invites").insert({ guest_id: data.id });
+  const { data: invite } = await client
+    .from("guest_invites")
+    .insert({ guest_id: data.id })
+    .select("token")
+    .single();
 
-  return toGuest(data as GuestRow);
+  return toGuest(
+    data as GuestRow,
+    invite ? guestInviteUrl(event, invite.token) : undefined,
+  );
 }
 
 export interface UpdateGuestInput {
@@ -161,7 +192,7 @@ export interface ImportResult {
  */
 export async function importGuests(
   client: Client,
-  eventId: string,
+  event: EventRef,
   rows: ImportGuestRow[],
 ): Promise<ImportResult> {
   const accepted: Guest[] = [];
@@ -179,7 +210,7 @@ export async function importGuests(
     const { data, error } = await client
       .from("guests")
       .insert({
-        event_id: eventId,
+        event_id: event.id,
         name,
         group_name: row.group ?? null,
         email,
@@ -189,8 +220,14 @@ export async function importGuests(
       .single();
 
     if (!error) {
-      accepted.push(toGuest(data as GuestRow));
-      await client.from("guest_invites").insert({ guest_id: data.id });
+      const { data: invite } = await client
+        .from("guest_invites")
+        .insert({ guest_id: data.id })
+        .select("token")
+        .single();
+      accepted.push(
+        toGuest(data as GuestRow, invite ? guestInviteUrl(event, invite.token) : undefined),
+      );
       continue;
     }
 
@@ -201,8 +238,8 @@ export async function importGuests(
 
     const { data: existing, error: selectError } = await client
       .from("guests")
-      .select("*")
-      .eq("event_id", eventId)
+      .select("*, guest_invites(token)")
+      .eq("event_id", event.id)
       .eq("name", name)
       .eq("email", email)
       .maybeSingle();
@@ -212,14 +249,14 @@ export async function importGuests(
       continue;
     }
 
-    accepted.push(toGuest(existing as GuestRow));
+    accepted.push(toGuestWithInvite(event, existing));
   }
 
   return { accepted, rejected };
 }
 
-export async function exportGuests(client: Client, eventId: string): Promise<Guest[]> {
-  return listGuests(client, eventId);
+export async function exportGuests(client: Client, event: EventRef): Promise<Guest[]> {
+  return listGuests(client, event);
 }
 
 export interface InvitedGuest {
@@ -281,15 +318,23 @@ export async function submitRsvp(
   return toGuest(data as GuestRow);
 }
 
-export async function submitOpenRsvp(
+/**
+ * RSVP de quem não está na lista, pelo link de auto-cadastro do evento
+ * (`?lista=<token>`). A função `security definer` recusa se o token não bate,
+ * o evento não está publicado, o módulo de RSVP está desligado ou o prazo
+ * passou.
+ */
+export async function submitSelfSignupRsvp(
   client: Client,
   eventSlug: string,
+  signupToken: string,
   name: string,
   input: SubmitRsvpInput,
 ): Promise<Guest> {
   const { data, error } = await client
-    .rpc("submit_open_rsvp", {
+    .rpc("submit_self_signup_rsvp", {
       p_event_slug: eventSlug,
+      p_signup_token: signupToken,
       p_name: name,
       p_status: input.status,
       p_companions: input.companions,

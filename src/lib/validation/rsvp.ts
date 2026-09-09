@@ -17,6 +17,8 @@ export const submitRsvpSchema = z.object({
 
 export const submitOpenRsvpSchema = submitRsvpSchema.extend({
   name: z.string().trim().min(1, "Informe o nome do convidado.").max(120),
+  /** Token do link de auto-cadastro do evento (`?lista=<token>`). */
+  signupToken: z.string().trim().min(1, "Link de auto-cadastro inválido."),
 });
 
 export type SubmitRsvpInput = z.infer<typeof submitRsvpSchema>;

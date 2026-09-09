@@ -15,7 +15,10 @@ import type { EventSummary } from "./types";
  * convidado, não de dado fixo. `coverUrl`/`coverPath` também ficam de fora —
  * a capa é um upload real no bucket `event-media`, sem equivalente estático.
  */
-type SeedEvent = Omit<EventSummary, "gallery" | "coverUrl" | "coverPath">;
+type SeedEvent = Omit<
+  EventSummary,
+  "gallery" | "coverUrl" | "coverPath" | "hostProfileId" | "secretSanta"
+>;
 
 export const EVENTS: SeedEvent[] = [
   {
@@ -26,6 +29,8 @@ export const EVENTS: SeedEvent[] = [
     date: "2026-12-12T16:00:00",
     venue: "Fazenda Santa Clara",
     city: "Itu – SP",
+    address: "Rod. do Açúcar, km 5, Bairro Pirapitingui",
+    postalCode: "13300-000",
     hosts: "Marina & Thiago",
     eyebrow: "Estamos casando",
     welcome:
@@ -39,6 +44,7 @@ export const EVENTS: SeedEvent[] = [
       "galeria",
       "mural",
       "cardapio",
+      "bar",
       "amigo-secreto",
     ],
     schedule: [
@@ -47,8 +53,26 @@ export const EVENTS: SeedEvent[] = [
       { time: "19h00", title: "Jantar", desc: "Salão principal" },
       { time: "21h00", title: "Festa", desc: "Pista de dança até 02h" },
     ],
+    menu: [
+      { course: "Entrada", name: "Carpaccio de abobrinha", desc: "Com lascas de parmesão e pesto de manjericão" },
+      { course: "Entrada", name: "Sopa de abóbora com gengibre", desc: "" },
+      { course: "Prato principal", name: "Filé ao molho de vinho tinto", desc: "Acompanha risoto de funghi" },
+      { course: "Prato principal", name: "Ravioli de burrata", desc: "Opção vegetariana, com manteiga de sálvia" },
+      { course: "Sobremesa", name: "Petit gâteau", desc: "Com sorvete de creme" },
+    ],
+    bar: {
+      service: "Open bar a noite toda, com carta de vinhos selecionada.",
+      signatureName: "Flor de Itu",
+      signatureDesc: "Gin, licor de flor de sabugueiro, limão siciliano e espuma de prosecco.",
+      items: [
+        { name: "Gin tônica clássico", desc: "Com zimbro e alecrim" },
+        { name: "Aperol spritz", desc: "" },
+        { name: "Caipirinha de cachaça artesanal", desc: "Limão, morango ou maracujá" },
+        { name: "Mocktail de frutas vermelhas", desc: "Sem álcool" },
+      ],
+    },
     status: "publicado",
-    guestListOpen: false,
+    selfSignupToken: null,
     moderationPolicy: "previa",
   },
   {
@@ -59,20 +83,33 @@ export const EVENTS: SeedEvent[] = [
     date: "2026-09-05T20:00:00",
     venue: "Espaço Villa Nova",
     city: "Campinas – SP",
+    address: "Av. das Amoreiras, 1200, Jardim Nova Europa",
+    postalCode: "13040-000",
     hosts: "Sofia Andrade",
     eyebrow: "Meus 15 anos",
     welcome:
       "Chegou a hora de celebrar! Venha comigo viver uma noite inesquecível cheia de música, dança e muito brilho.",
     themeKey: "dourado",
-    modules: ["rsvp", "cronograma", "local", "galeria", "mural", "cardapio"],
+    modules: ["rsvp", "cronograma", "local", "galeria", "mural", "cardapio", "bar"],
     schedule: [
       { time: "20h00", title: "Recepção", desc: "Coquetel de boas-vindas" },
       { time: "21h00", title: "Valsa", desc: "Entrada da debutante" },
       { time: "22h00", title: "Jantar", desc: "Buffet completo" },
       { time: "23h30", title: "Balada", desc: "DJ até 03h" },
     ],
+    menu: [
+      { course: "Jantar", name: "Buffet italiano completo", desc: "Massas, risotos e carnes na chapa" },
+      { course: "Sobremesa", name: "Mesa de doces finos", desc: "" },
+    ],
+    bar: {
+      service: "Bar de drinks autorais e refrigerantes à vontade.",
+      items: [
+        { name: "Pink lemonade", desc: "Sem álcool" },
+        { name: "Frozen de morango", desc: "" },
+      ],
+    },
     status: "publicado",
-    guestListOpen: false,
+    selfSignupToken: null,
     moderationPolicy: "previa",
   },
   {
@@ -83,6 +120,8 @@ export const EVENTS: SeedEvent[] = [
     date: "2026-08-22T15:00:00",
     venue: "Buffet Mundo Mágico",
     city: "São Paulo – SP",
+    address: "R. das Perdizes, 45, Perdizes",
+    postalCode: "05021-000",
     hosts: "Família Ribeiro",
     eyebrow: "Festa do Bento",
     welcome:
@@ -95,8 +134,10 @@ export const EVENTS: SeedEvent[] = [
       { time: "17h00", title: "Parabéns", desc: "Bolo e docinhos" },
       { time: "18h30", title: "Encerramento", desc: "Entrega das lembrancinhas" },
     ],
+    menu: [],
+    bar: { items: [] },
     status: "rascunho",
-    guestListOpen: false,
+    selfSignupToken: null,
     moderationPolicy: "previa",
   },
   {
@@ -107,6 +148,8 @@ export const EVENTS: SeedEvent[] = [
     date: "2026-10-14T09:00:00",
     venue: "Centro de Convenções Anhembi",
     city: "São Paulo – SP",
+    address: "Av. Olavo Fontoura, 1209, Santana",
+    postalCode: "02012-021",
     hosts: "Nexus Tecnologia",
     eyebrow: "Encontro anual",
     welcome:
@@ -119,8 +162,10 @@ export const EVENTS: SeedEvent[] = [
       { time: "12h30", title: "Almoço", desc: "Área externa" },
       { time: "14h00", title: "Painéis", desc: "Três trilhas simultâneas" },
     ],
+    menu: [],
+    bar: { items: [] },
     status: "publicado",
-    guestListOpen: false,
+    selfSignupToken: null,
     moderationPolicy: "previa",
   },
 ];

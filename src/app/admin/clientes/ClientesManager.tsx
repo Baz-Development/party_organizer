@@ -7,9 +7,11 @@ import type { ClientAccount } from "@/lib/db/clients";
 import { shortDate } from "@/lib/format";
 
 /**
- * Cadastro e listagem de contas de cliente. O cadastro convida a pessoa por
- * e-mail (`POST /api/admin/clientes`); a conta nasce "aguardando primeiro
- * acesso" e passa a "ativa" quando ela entra pela primeira vez.
+ * Cadastro e listagem de contas de cliente. O cadastro (`POST
+ * /api/admin/clientes`) só cria a conta — nenhum e-mail sai daqui; o convite
+ * de acesso é enviado quando a primeira página do cliente é criada. A conta
+ * nasce "aguardando primeiro acesso" e passa a "ativa" quando ela entra pela
+ * primeira vez.
  */
 export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
   const router = useRouter();
@@ -34,7 +36,7 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
         setError(body.error ?? "Não foi possível cadastrar o cliente.");
         return;
       }
-      setOk(`Convite enviado para ${email}.`);
+      setOk(`Conta criada para ${email}. O convite vai por e-mail quando você criar a página dele.`);
       setEmail("");
       setDisplayName("");
       router.refresh();
@@ -57,7 +59,7 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
               required
             />
           </Field>
-          <Field label="E-mail" hint="Recebe o link de acesso à conta.">
+          <Field label="E-mail" hint="Recebe o link de acesso quando a página dele for criada.">
             <Input
               type="email"
               value={email}
@@ -73,7 +75,7 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
           )}
           {ok && <p className="text-[13.5px] text-ok">{ok}</p>}
           <Button type="submit" disabled={pending}>
-            {pending ? "Enviando…" : "Cadastrar e convidar"}
+            {pending ? "Cadastrando…" : "Cadastrar cliente"}
           </Button>
         </div>
       </form>

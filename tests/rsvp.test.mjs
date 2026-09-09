@@ -218,10 +218,20 @@ describe("convidados e RSVP", () => {
     });
   });
 
-  describe("lista aberta", () => {
-    it("lista fechada recusa RSVP de quem não foi convidado", async () => {
-      const { error } = await anonimo.rpc("submit_open_rsvp", {
+  describe("auto-cadastro por link", () => {
+    const SIGNUP_TOKEN = "token-de-auto-cadastro-de-teste-1234567890";
+
+    after(async () => {
+      await admin
+        .from("events")
+        .update({ self_signup_token: null })
+        .eq("id", c.eventos.aPublicado);
+    });
+
+    it("sem link de auto-cadastro recusa RSVP de quem não foi convidado", async () => {
+      const { error } = await anonimo.rpc("submit_self_signup_rsvp", {
         p_event_slug: `a-publicado-${c.tag}`,
+        p_signup_token: "qualquer-coisa",
         p_name: "Visitante",
         p_status: "confirmado",
         p_companions: 0,
@@ -233,15 +243,16 @@ describe("convidados e RSVP", () => {
       assert.match(error.message, /lista_fechada/);
     });
 
-    it("lista aberta cria convidado não listado", async () => {
+    it("link de auto-cadastro válido cria convidado não listado", async () => {
       await admin
         .from("events")
-        .update({ guest_list_open: true })
+        .update({ self_signup_token: SIGNUP_TOKEN })
         .eq("id", c.eventos.aPublicado);
 
       const { data, error } = await anonimo
-        .rpc("submit_open_rsvp", {
+        .rpc("submit_self_signup_rsvp", {
           p_event_slug: `a-publicado-${c.tag}`,
+          p_signup_token: SIGNUP_TOKEN,
           p_name: "Visitante Sem Convite",
           p_status: "confirmado",
           p_companions: 1,
@@ -253,11 +264,49 @@ describe("convidados e RSVP", () => {
       assert.equal(error, null);
       assert.equal(data.unlisted, true);
       assert.equal(data.name, "Visitante Sem Convite");
+    });
 
+    it("token de auto-cadastro que não bate é recusado", async () => {
       await admin
         .from("events")
-        .update({ guest_list_open: false })
+        .update({ self_signup_token: SIGNUP_TOKEN })
         .eq("id", c.eventos.aPublicado);
+
+      const { error } = await anonimo.rpc("submit_self_signup_rsvp", {
+        p_event_slug: `a-publicado-${c.tag}`,
+        p_signup_token: "token-errado",
+        p_name: "Visitante",
+        p_status: "confirmado",
+        p_companions: 0,
+        p_kids: 0,
+        p_dietary: null,
+      });
+
+      assert.ok(error);
+      assert.match(error.message, /lista_fechada/);
+    });
+  });
+
+  describe("link de convite visível para quem administra", () => {
+    it("o anfitrião lê o token de convite dos seus convidados", async () => {
+      const { data, error } = await c.membroA.client
+        .from("guests")
+        .select("id, guest_invites(token)")
+        .eq("id", c.guestA)
+        .single();
+
+      assert.equal(error, null);
+      const gi = Array.isArray(data.guest_invites) ? data.guest_invites[0] : data.guest_invites;
+      assert.ok(gi?.token, "o token do convite deveria vir junto");
+    });
+
+    it("outro anfitrião não lê o token de convite", async () => {
+      const { data } = await c.membroB.client
+        .from("guest_invites")
+        .select("token")
+        .eq("guest_id", c.guestA);
+
+      assert.deepEqual(data, []);
     });
   });
 

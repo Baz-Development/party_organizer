@@ -30,6 +30,10 @@
   --ok: #4a7c59;
   --warn: #b58e1f;
   --danger: #a8443a;
+
+  /* Tom escuro da mesma família do off-white, para o CTA final e o rodapé —
+     evita o corte seco de creme para preto puro. */
+  --ink-charcoal: #211d17;
 }
 
 @theme inline {
@@ -40,6 +44,7 @@
   --color-ink-2: var(--ink-2);
   --color-ink-soft: var(--ink-soft);
   --color-ink-faint: var(--ink-faint);
+  --color-ink-charcoal: var(--ink-charcoal);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
@@ -83,6 +88,18 @@ body {
   background: var(--paper-3);
   color: var(--ink);
   font-family: var(--font-sans);
+}
+
+/* Navegação âncora da landing: rolagem suave e respeito a quem pediu menos
+   movimento. `scroll-mt-*` nas seções compensa o cabeçalho. */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 ::selection {

@@ -22,6 +22,11 @@ const schema = z.object({
   // enviadas (design.md, decisão "mockEmailProvider e redirecionamento por
   // ambiente").
   EMAIL_TEST_REDIRECT_ADDRESS: z.email("precisa ser um e-mail válido").optional(),
+  // Servidor SMTP de desenvolvimento (Mailpit local). Quando `EMAIL_SMTP_HOST`
+  // está definido, o provedor de e-mail deixa de ser o mock e passa a entregar
+  // por SMTP — o que torna o e-mail inspecionável no Mailpit.
+  EMAIL_SMTP_HOST: z.string().min(1).optional(),
+  EMAIL_SMTP_PORT: z.coerce.number().int().positive().optional(),
 });
 
 export const emailEnv = parseEmailEnv();
@@ -33,6 +38,8 @@ function parseEmailEnv(): z.infer<typeof schema> {
     EMAIL_QUEUE_CRON_SECRET: process.env.EMAIL_QUEUE_CRON_SECRET,
     EMAIL_PROVIDER_API_KEY: process.env.EMAIL_PROVIDER_API_KEY,
     EMAIL_TEST_REDIRECT_ADDRESS: process.env.EMAIL_TEST_REDIRECT_ADDRESS || undefined,
+    EMAIL_SMTP_HOST: process.env.EMAIL_SMTP_HOST || undefined,
+    EMAIL_SMTP_PORT: process.env.EMAIL_SMTP_PORT || undefined,
   });
 
   if (!result.success) {

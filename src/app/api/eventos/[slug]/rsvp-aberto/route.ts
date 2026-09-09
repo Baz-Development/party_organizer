@@ -1,14 +1,14 @@
 import { after, NextResponse } from "next/server";
 import { RsvpError } from "@/lib/db/errors";
-import { submitOpenRsvp } from "@/lib/db/guests";
+import { submitSelfSignupRsvp } from "@/lib/db/guests";
 import { enqueueRsvpConfirmationEmail } from "@/lib/email/enqueue";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { submitOpenRsvpSchema } from "@/lib/validation/rsvp";
 
 /**
- * RSVP de quem não está na lista, só aceito quando o evento tem lista
- * aberta habilitada — `submit_open_rsvp` recusa o resto.
+ * RSVP de quem não está na lista, só aceito pelo link de auto-cadastro do
+ * evento (`?lista=<token>`) — `submit_self_signup_rsvp` recusa o resto.
  */
 export async function POST(
   req: Request,
@@ -28,7 +28,13 @@ export async function POST(
   const supabase = await createSupabaseServerClient();
 
   try {
-    const guest = await submitOpenRsvp(supabase, slug, parsed.data.name, parsed.data);
+    const guest = await submitSelfSignupRsvp(
+      supabase,
+      slug,
+      parsed.data.signupToken,
+      parsed.data.name,
+      parsed.data,
+    );
 
     after(() =>
       enqueueRsvpConfirmationEmail(createSupabaseAdminClient(), guest.id, parsed.data.status, parsed.data),

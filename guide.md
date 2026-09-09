@@ -18,12 +18,13 @@ aplicação.
 | Serviço | URL |
 | --- | --- |
 | Aplicação | http://localhost:3000 |
-| Studio (Supabase) | http://127.0.0.1:54423 |
-| Caixa de e-mail (Mailpit) | http://127.0.0.1:54424 |
+| Studio (Supabase) | http://127.0.0.1:55423 |
+| Caixa de e-mail (Mailpit) | http://127.0.0.1:55424 |
 | Índice de todas as telas | http://localhost:3000/rotas |
 
-> As portas usam a faixa `544xx` em vez da `543xx` padrão do Supabase CLI
-> porque outro projeto Supabase já ocupa essa faixa nesta máquina. Os valores
+> As portas usam a faixa `554xx` em vez da `543xx` padrão do Supabase CLI
+> porque outro projeto Supabase já ocupa essa faixa nesta máquina, e a faixa
+> `544xx` caiu na reserva dinâmica de portas do Windows/WinNAT. Os valores
 > reais vivem em `supabase/config.toml`.
 
 Outros comandos úteis: `make reset` (recria banco com seed, apaga dados
@@ -43,7 +44,7 @@ mudando apenas o e-mail digitado.
 3. Envie o formulário — a resposta na tela é sempre a mesma frase genérica,
    exista ou não conta com aquele e-mail (evita que alguém descubra quais
    e-mails têm conta)
-4. Abra a caixa de e-mail local: http://127.0.0.1:54424 (Mailpit) — em
+4. Abra a caixa de e-mail local: http://127.0.0.1:55424 (Mailpit) — em
    desenvolvimento nenhum e-mail sai da máquina, tudo é capturado ali
 5. Clique no link mágico do e-mail mais recente
 6. Isso troca o link por uma sessão (`/api/auth/callback`) e te redireciona
@@ -90,6 +91,10 @@ Além disso, toda tabela tem RLS (Row Level Security) no Postgres como última
 linha de defesa — mesmo que uma rota de API esqueça de checar o papel, o
 banco recusa a leitura/escrita fora do escopo do usuário.
 
+> A landing pública (`/`) **não** linka `/painel`, `/admin` nem `/rotas` — essas
+> rotas continuam acessíveis por URL direta e, para a equipe/cliente, pelo botão
+> "Entrar" no cabeçalho. O índice `/rotas` segue existindo para desenvolvimento.
+
 ## 4. O que tem em cada painel
 
 ### Painel Admin (`/admin`)
@@ -115,7 +120,6 @@ organização.
 | `/e/[slug]/rsvp` | Confirmação de presença (3 passos) |
 | `/e/[slug]/presentes` | Lista de presentes → checkout → sucesso |
 | `/e/[slug]/galeria` | Galeria e mural de fotos |
-| `/e/[slug]/cardapio` | Votação de cardápio |
 | `/e/[slug]/amigo-secreto` | Amigo secreto — cadastro |
 | `/e/[slug]/amigo-secreto/revelacao` | Amigo secreto — revelação |
 
@@ -129,7 +133,7 @@ profiles (role: admin | organizacao | cliente)
   └─ organizations ← organization_members
        └─ events (+ event_content, rsvp_settings, media_settings)
             ├─ guests / guest_invites / rsvp_responses
-            ├─ menu_polls / menu_options / menu_votes
+            ├─ schedule_items / menu_items / bar_items
             ├─ photos / mural (+ reações, buckets de storage)
             ├─ gifts / gift_reservations / payments / payment_events
             └─ amigo secreto: secret_santa_participants, wishlists,
@@ -169,7 +173,7 @@ supabase/
   seed.sql              Gerado a partir de mock-data.ts
 ```
 
-Alguns módulos (presentes, galeria, mural, cardápio, amigo secreto) ainda leem
+Alguns módulos (presentes, galeria, mural, amigo secreto) ainda leem
 fixtures em `src/lib/fixtures/` em vez do banco — cada um migra em seu
 próprio change.
 

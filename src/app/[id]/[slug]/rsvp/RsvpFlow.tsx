@@ -25,7 +25,15 @@ interface InvitedGuest {
   dietary: string | null;
 }
 
-export function RsvpFlow({ event, token }: { event: EventSummary; token: string | null }) {
+export function RsvpFlow({
+  event,
+  token,
+  signupToken,
+}: {
+  event: EventSummary;
+  token: string | null;
+  signupToken: string | null;
+}) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [invited, setInvited] = useState<InvitedGuest | null>(null);
@@ -64,7 +72,8 @@ export function RsvpFlow({ event, token }: { event: EventSummary; token: string 
   const identified = !!invited;
   const step1Disabled = name.trim().length === 0;
   const firstName = (name || "amigo").split(" ")[0];
-  const guestListClosed = !token && !event.guestListOpen;
+  // Sem token de convidado e sem link de auto-cadastro: não há como responder.
+  const needsInvite = !token && !signupToken;
 
   const dietPeople: DietPerson[] = useMemo(() => {
     const list: DietPerson[] = [{ id: "me", label: "Você" }];
@@ -92,7 +101,9 @@ export function RsvpFlow({ event, token }: { event: EventSummary; token: string 
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(token ? payload : { ...payload, name }),
+          body: JSON.stringify(
+            token ? payload : { ...payload, name, signupToken },
+          ),
         },
       );
 
@@ -160,20 +171,21 @@ export function RsvpFlow({ event, token }: { event: EventSummary; token: string 
           </div>
         </div>
 
-        {/* Lista fechada, sem token --------------------------------- */}
-        {guestListClosed && step === 1 && (
+        {/* Sem convite e sem link de auto-cadastro ------------------ */}
+        {needsInvite && step === 1 && (
           <div className="flex flex-1 flex-col items-center justify-center px-7 text-center">
             <h1 className="mb-2.5 font-display text-[26px] font-semibold leading-[1.25]">
               Convite necessário
             </h1>
             <p className="text-[15px] leading-relaxed text-ink-soft">
-              Este evento confirma presença só por convite. Use o link que você recebeu.
+              Este evento confirma presença pelo link de convite. Peça o seu a quem
+              está organizando.
             </p>
           </div>
         )}
 
         {/* Passo 1 — identificação (só quando não veio por token) ---- */}
-        {!guestListClosed && step === 1 && (
+        {!needsInvite && step === 1 && (
           <div className="flex flex-1 animate-[fade-up_0.4s_ease_both] flex-col px-7">
             <div className="mb-5 h-24 w-24 overflow-hidden rounded-full">
               <ImageSlot shape="circle" placeholder="Foto" />

@@ -162,8 +162,11 @@ descrição.
 ### Requirement: Prazo de RSVP e lista aberta
 
 O evento MUST armazenar, como configuração editável por quem o administra, um prazo
-opcional para respostas de RSVP e um indicador de lista aberta que permite respostas
-de pessoas não cadastradas.
+opcional para respostas de RSVP. O evento MUST permitir que quem o administra
+ative um link de auto-cadastro — que habilita pessoas não cadastradas a enviar
+RSVP informando o próprio nome — e revogue esse link a qualquer momento. Enquanto
+o link de auto-cadastro não estiver ativo, apenas convidados com token de convite
+podem responder.
 
 #### Scenario: Prazo configurado
 
@@ -175,14 +178,21 @@ de pessoas não cadastradas.
 - **WHEN** um prazo de RSVP no passado é enviado
 - **THEN** a operação é recusada com erro de validação
 
-#### Scenario: Lista aberta alternada
+#### Scenario: Link de auto-cadastro ativado
 
-- **WHEN** o anfitrião habilita ou desabilita a lista aberta
-- **THEN** a configuração é persistida e passa a valer para as próximas respostas
+- **WHEN** o anfitrião ativa o link de auto-cadastro do evento
+- **THEN** o sistema passa a fornecer um link com token que habilita o RSVP de não cadastrados
+- **AND** a partir daí respostas por esse link são aceitas até o prazo
+
+#### Scenario: Link de auto-cadastro revogado
+
+- **WHEN** o anfitrião revoga o link de auto-cadastro
+- **THEN** o token anterior deixa de valer
+- **AND** novos acessos por aquele link são recusados
 
 #### Scenario: Configuração restrita a quem administra
 
-- **WHEN** alguém sem vínculo com o evento tenta alterar prazo ou lista aberta
+- **WHEN** alguém sem vínculo com o evento tenta alterar o prazo ou o link de auto-cadastro
 - **THEN** a operação é recusada por falta de autorização
 
 ### Requirement: Política de moderação e capa do evento

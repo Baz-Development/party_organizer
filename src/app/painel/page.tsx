@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/guards";
+import { getRecentActivity } from "@/lib/db/activity";
 import { listEvents } from "@/lib/db/events";
 import { getGiftsSummary } from "@/lib/db/gifts";
 import { computeGuestStats, listGuests } from "@/lib/db/guests";
@@ -36,8 +37,12 @@ export default async function PainelDoCliente() {
     );
   }
 
-  const stats = computeGuestStats(await listGuests(supabase, event.id));
-  const giftsSummary = await getGiftsSummary(supabase, event.id);
+  const [guests, giftsSummary, activity] = await Promise.all([
+    listGuests(supabase, event),
+    getGiftsSummary(supabase, event.id),
+    getRecentActivity(supabase, event.id),
+  ]);
+  const stats = computeGuestStats(guests);
 
   return (
     <PainelOverview
@@ -45,6 +50,7 @@ export default async function PainelDoCliente() {
       siteUrl={publicEnv.NEXT_PUBLIC_SITE_URL}
       guestStats={stats}
       giftsSummary={giftsSummary}
+      activity={activity}
     />
   );
 }

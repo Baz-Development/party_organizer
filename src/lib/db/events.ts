@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
 import { resolveSlugCollision, slugify } from "@/lib/slug";
-import type { EventSummary, ModuleId, ScheduleItem } from "@/lib/types";
+import type { BarItem, EventSummary, MenuItem, ModuleId, ScheduleItem } from "@/lib/types";
 import type { CreateEventInput, UpdateEventInput } from "@/lib/validation/event";
 import { CHECK_VIOLATION, DbError, SlugConflictError, UNIQUE_VIOLATION } from "./errors";
 import { toEventSummary, type EventRowWithContent } from "./mappers";
@@ -24,10 +24,14 @@ type Client = SupabaseClient<Database>;
  */
 const EVENT_SELECT = `
   id, slug, host_profile_id, kind, title, event_at, venue,
-  city, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
-  rsvp_deadline, guest_list_open, moderation_policy, cover_path,
+  city, address, postal_code, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
+  rsvp_deadline, self_signup_token, moderation_policy, cover_path,
+  secret_santa_budget, secret_santa_draw_date, secret_santa_exchange_date, secret_santa_rules,
+  bar_service, bar_signature_name, bar_signature_desc,
   event_modules ( module ),
-  schedule_items ( position, time, title, description )
+  schedule_items ( position, time, title, description ),
+  menu_items ( position, course, name, description ),
+  bar_items ( position, name, description )
 `;
 
 export interface ListEventsOptions {
@@ -156,13 +160,22 @@ export async function updateEvent(
   if (input.date !== undefined) patch.event_at = input.date;
   if (input.venue !== undefined) patch.venue = input.venue;
   if (input.city !== undefined) patch.city = input.city;
+  if (input.address !== undefined) patch.address = input.address;
+  if (input.postalCode !== undefined) patch.postal_code = input.postalCode;
   if (input.hosts !== undefined) patch.hosts = input.hosts;
   if (input.eyebrow !== undefined) patch.eyebrow = input.eyebrow;
   if (input.welcome !== undefined) patch.welcome = input.welcome;
   if (input.themeKey !== undefined) patch.theme_key = input.themeKey;
   if (input.rsvpDeadline !== undefined) patch.rsvp_deadline = input.rsvpDeadline;
-  if (input.guestListOpen !== undefined) patch.guest_list_open = input.guestListOpen;
   if (input.moderationPolicy !== undefined) patch.moderation_policy = input.moderationPolicy;
+  if (input.secretSantaBudget !== undefined) patch.secret_santa_budget = input.secretSantaBudget;
+  if (input.secretSantaDrawDate !== undefined) patch.secret_santa_draw_date = input.secretSantaDrawDate;
+  if (input.secretSantaExchangeDate !== undefined)
+    patch.secret_santa_exchange_date = input.secretSantaExchangeDate;
+  if (input.secretSantaRules !== undefined) patch.secret_santa_rules = input.secretSantaRules;
+  if (input.barService !== undefined) patch.bar_service = input.barService;
+  if (input.barSignatureName !== undefined) patch.bar_signature_name = input.barSignatureName;
+  if (input.barSignatureDesc !== undefined) patch.bar_signature_desc = input.barSignatureDesc;
 
   const { data, error } = await client
     .from("events")
@@ -191,6 +204,35 @@ export async function setEventStatus(
   const { data, error } = await client
     .from("events")
     .update({ status })
+    .eq("id", eventId)
+    .select(EVENT_SELECT)
+    .maybeSingle();
+
+  if (error) throw new DbError(error.message, "desconhecido");
+  if (!data) throw new DbError("Evento não encontrado.", "nao-encontrado");
+
+  return toEventSummary(data as unknown as EventRowWithContent);
+}
+
+/**
+ * Liga ou desliga o link de auto-cadastro do evento. Ligar gera um token novo
+ * (chamar de novo com o link já ativo rotaciona o token — invalida o anterior);
+ * desligar zera. A RLS de `events` escopa o update a quem administra o evento.
+ */
+export async function setSelfSignup(
+  client: Client,
+  eventId: string,
+  active: boolean,
+): Promise<EventSummary> {
+  const token = active
+    ? Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
+        b.toString(16).padStart(2, "0"),
+      ).join("")
+    : null;
+
+  const { data, error } = await client
+    .from("events")
+    .update({ self_signup_token: token })
     .eq("id", eventId)
     .select(EVENT_SELECT)
     .maybeSingle();
@@ -281,6 +323,69 @@ export async function replaceSchedule(
       position: index,
       time: item.time,
       title: item.title,
+      description: item.desc || null,
+    })),
+  );
+
+  if (insertError) throw new DbError(insertError.message, "desconhecido");
+
+  return items;
+}
+
+/**
+ * Reescreve o cardápio inteiro do evento. Mesma estratégia de `replaceSchedule`:
+ * a posição define a ordem e tem unique por evento, então apagar tudo e
+ * reinserir é mais simples que remanejar item a item.
+ */
+export async function replaceMenu(
+  client: Client,
+  eventId: string,
+  items: MenuItem[],
+): Promise<MenuItem[]> {
+  const { error: deleteError } = await client
+    .from("menu_items")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (deleteError) throw new DbError(deleteError.message, "desconhecido");
+
+  if (items.length === 0) return [];
+
+  const { error: insertError } = await client.from("menu_items").insert(
+    items.map((item, index) => ({
+      event_id: eventId,
+      position: index,
+      course: item.course,
+      name: item.name,
+      description: item.desc || null,
+    })),
+  );
+
+  if (insertError) throw new DbError(insertError.message, "desconhecido");
+
+  return items;
+}
+
+/** Reescreve a carta de bebidas do bar. Ver `replaceMenu`. */
+export async function replaceBar(
+  client: Client,
+  eventId: string,
+  items: BarItem[],
+): Promise<BarItem[]> {
+  const { error: deleteError } = await client
+    .from("bar_items")
+    .delete()
+    .eq("event_id", eventId);
+
+  if (deleteError) throw new DbError(deleteError.message, "desconhecido");
+
+  if (items.length === 0) return [];
+
+  const { error: insertError } = await client.from("bar_items").insert(
+    items.map((item, index) => ({
+      event_id: eventId,
+      position: index,
+      name: item.name,
       description: item.desc || null,
     })),
   );

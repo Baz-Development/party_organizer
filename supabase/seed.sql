@@ -191,6 +191,7 @@ values
   ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 'galeria'::public.module_id),
   ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 'mural'::public.module_id),
   ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 'cardapio'::public.module_id),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 'bar'::public.module_id),
   ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 'amigo-secreto'::public.module_id),
   ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'rsvp'::public.module_id),
   ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'cronograma'::public.module_id),
@@ -198,6 +199,7 @@ values
   ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'galeria'::public.module_id),
   ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'mural'::public.module_id),
   ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'cardapio'::public.module_id),
+  ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 'bar'::public.module_id),
   ('2d7e36ed-890c-5aeb-8d2f-854c34721dac'::uuid, 'rsvp'::public.module_id),
   ('2d7e36ed-890c-5aeb-8d2f-854c34721dac'::uuid, 'cronograma'::public.module_id),
   ('2d7e36ed-890c-5aeb-8d2f-854c34721dac'::uuid, 'local'::public.module_id),
@@ -226,5 +228,27 @@ values
   ('62c92377-6935-54e8-b597-1c9f4f9bbc16'::uuid, 1, '10h00', 'Keynote', 'Abertura com a diretoria'),
   ('62c92377-6935-54e8-b597-1c9f4f9bbc16'::uuid, 2, '12h30', 'Almoço', 'Área externa'),
   ('62c92377-6935-54e8-b597-1c9f4f9bbc16'::uuid, 3, '14h00', 'Painéis', 'Três trilhas simultâneas');
+
+update public.events set bar_service = 'Open bar a noite toda, com carta de vinhos selecionada.', bar_signature_name = 'Flor de Itu', bar_signature_desc = 'Gin, licor de flor de sabugueiro, limão siciliano e espuma de prosecco.' where id = '2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid;
+update public.events set bar_service = 'Bar de drinks autorais e refrigerantes à vontade.', bar_signature_name = NULL, bar_signature_desc = NULL where id = '5c0389b7-8a5e-595c-970f-f245955c270c'::uuid;
+
+insert into public.menu_items (event_id, position, course, name, description)
+values
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 0, 'Entrada', 'Carpaccio de abobrinha', 'Com lascas de parmesão e pesto de manjericão'),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 1, 'Entrada', 'Sopa de abóbora com gengibre', NULL),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 2, 'Prato principal', 'Filé ao molho de vinho tinto', 'Acompanha risoto de funghi'),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 3, 'Prato principal', 'Ravioli de burrata', 'Opção vegetariana, com manteiga de sálvia'),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 4, 'Sobremesa', 'Petit gâteau', 'Com sorvete de creme'),
+  ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 0, 'Jantar', 'Buffet italiano completo', 'Massas, risotos e carnes na chapa'),
+  ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 1, 'Sobremesa', 'Mesa de doces finos', NULL);
+
+insert into public.bar_items (event_id, position, name, description)
+values
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 0, 'Gin tônica clássico', 'Com zimbro e alecrim'),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 1, 'Aperol spritz', NULL),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 2, 'Caipirinha de cachaça artesanal', 'Limão, morango ou maracujá'),
+  ('2fc14e5f-77df-5928-a780-4a78b8bf3262'::uuid, 3, 'Mocktail de frutas vermelhas', 'Sem álcool'),
+  ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 0, 'Pink lemonade', 'Sem álcool'),
+  ('5c0389b7-8a5e-595c-970f-f245955c270c'::uuid, 1, 'Frozen de morango', NULL);
 
 commit;

@@ -27,7 +27,7 @@ export async function GET(
     return NextResponse.json({ error: "Autenticação necessária" }, { status: 401 });
   }
 
-  const guests = await exportGuests(supabase, event.id);
+  const guests = await exportGuests(supabase, event);
 
   return NextResponse.json({ data: guests });
 }

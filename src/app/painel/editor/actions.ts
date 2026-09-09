@@ -3,9 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth/guards";
-import { replaceSchedule, setEventModules, updateEvent } from "@/lib/db/events";
+import {
+  replaceBar,
+  replaceMenu,
+  replaceSchedule,
+  setEventModules,
+  updateEvent,
+} from "@/lib/db/events";
 import { DbError } from "@/lib/db/errors";
 import {
+  eventBarSchema,
+  eventMenuSchema,
   eventModulesSchema,
   eventScheduleSchema,
   updateEventSchema,
@@ -16,6 +24,8 @@ const payloadSchema = z.object({
   content: updateEventSchema,
   modules: eventModulesSchema,
   schedule: eventScheduleSchema,
+  menu: eventMenuSchema,
+  bar: eventBarSchema,
 });
 
 export type EditorPayload = z.input<typeof payloadSchema>;
@@ -26,7 +36,7 @@ export type EditorResult =
 
 /**
  * Salva o que o editor da página controla: conteúdo editorial, tema, módulos
- * habilitados e cronograma.
+ * habilitados, cronograma, cardápio e bar.
  *
  * Não confere se o usuário é dono do evento — a RLS confere. `updateEvent`
  * volta sem linha quando a política recusa, e isso vira "não encontrado".
@@ -41,12 +51,14 @@ export async function salvarEditor(input: EditorPayload): Promise<EditorResult> 
     return { ok: false, message: first?.message ?? "Dados inválidos." };
   }
 
-  const { eventId, content, modules, schedule } = parsed.data;
+  const { eventId, content, modules, schedule, menu, bar } = parsed.data;
 
   try {
     await updateEvent(supabase, eventId, content);
     await setEventModules(supabase, eventId, modules);
     await replaceSchedule(supabase, eventId, schedule);
+    await replaceMenu(supabase, eventId, menu);
+    await replaceBar(supabase, eventId, bar);
   } catch (error) {
     if (error instanceof DbError) {
       return {
@@ -63,6 +75,7 @@ export async function salvarEditor(input: EditorPayload): Promise<EditorResult> 
   // A página pública do evento e o painel mostram o que acabou de mudar.
   revalidatePath("/painel");
   revalidatePath("/painel/editor");
+  revalidatePath("/[id]/[slug]", "page");
   revalidatePath("/[id]/[slug]/rsvp", "page");
 
   return { ok: true };

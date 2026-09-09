@@ -53,6 +53,44 @@ describe("RLS", () => {
       assert.ok(data, "o anfitrião do evento deveria ver o próprio rascunho");
     });
 
+    it("anfitrião publica o próprio rascunho e o convidado passa a enxergar", async () => {
+      const { error } = await c.membroA.client
+        .from("events")
+        .update({ status: "publicado" })
+        .eq("id", c.eventos.aRascunho);
+      assert.equal(error, null, "o anfitrião deveria conseguir publicar");
+
+      try {
+        const { data } = await anonimo
+          .from("events")
+          .select("id")
+          .eq("id", c.eventos.aRascunho)
+          .maybeSingle();
+        assert.ok(data, "publicado, o link responde a quem não tem conta");
+      } finally {
+        await c.membroA.client
+          .from("events")
+          .update({ status: "rascunho" })
+          .eq("id", c.eventos.aRascunho);
+      }
+    });
+
+    it("quem não administra não publica o rascunho alheio", async () => {
+      const { error } = await c.membroB.client
+        .from("events")
+        .update({ status: "publicado" })
+        .eq("id", c.eventos.aRascunho);
+
+      const { data } = await anonimo
+        .from("events")
+        .select("id")
+        .eq("id", c.eventos.aRascunho)
+        .maybeSingle();
+      assert.equal(data, null, "a RLS não deixa B publicar evento de A");
+      // O update não acusa erro — só não casa nenhuma linha.
+      assert.ok(error === null || error);
+    });
+
     it("cronograma de rascunho não vaza junto", async () => {
       const { data } = await anonimo
         .from("schedule_items")
@@ -60,6 +98,59 @@ describe("RLS", () => {
         .eq("event_id", c.eventos.aRascunho);
 
       assert.deepEqual(data, []);
+    });
+
+    it("cardápio e bar de rascunho não vazam junto", async () => {
+      const { data: menu } = await anonimo
+        .from("menu_items")
+        .select("id")
+        .eq("event_id", c.eventos.aRascunho);
+      assert.deepEqual(menu, []);
+
+      const { data: bar } = await anonimo
+        .from("bar_items")
+        .select("id")
+        .eq("event_id", c.eventos.aRascunho);
+      assert.deepEqual(bar, []);
+    });
+  });
+
+  describe("cardápio e bar — curadoria restrita", () => {
+    it("anfitrião A não insere prato no evento de B", async () => {
+      const { error } = await c.membroA.client.from("menu_items").insert({
+        event_id: c.eventos.bRascunho,
+        position: 0,
+        course: "Entrada",
+        name: "Invasor",
+      });
+      assert.ok(error, "o `with check` de menu_items_insert deveria recusar");
+    });
+
+    it("anon não insere bebida em evento publicado", async () => {
+      const { error } = await anonimo.from("bar_items").insert({
+        event_id: c.eventos.aPublicado,
+        position: 0,
+        name: "Sem convite",
+      });
+      assert.ok(error, "anon não tem grant de insert em bar_items");
+    });
+
+    it("anfitrião gerencia o cardápio do próprio evento", async () => {
+      const { data, error } = await c.membroA.client
+        .from("menu_items")
+        .insert({
+          event_id: c.eventos.aRascunho,
+          position: 0,
+          course: "Sobremesa",
+          name: "Petit gâteau",
+        })
+        .select("id")
+        .single();
+
+      assert.equal(error, null);
+      assert.ok(data?.id);
+
+      await admin.from("menu_items").delete().eq("id", data.id);
     });
   });
 

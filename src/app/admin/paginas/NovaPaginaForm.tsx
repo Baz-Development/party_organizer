@@ -68,7 +68,8 @@ export function NovaPaginaForm({ clientes }: { clientes: { id: string; label: st
       <div className="rounded-2xl bg-paper p-8 text-center shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
         <h2 className="mb-2 font-display text-[22px] font-semibold">Página criada em rascunho</h2>
         <p className="mb-6 text-[14.5px] text-ink-soft">
-          O cliente anfitrião já vê o evento no painel dele.
+          O cliente anfitrião já vê o evento no painel dele e recebe um e-mail
+          de acesso.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
