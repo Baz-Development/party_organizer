@@ -67,14 +67,14 @@ Settings → Environment Variables):
 
 ## 4. O `resendEmailProvider` (já implementado)
 
-`src/lib/email/resendEmailProvider.ts` já existe. Fala direto com a API REST
-do Resend (`POST https://api.resend.com/emails`) por `fetch` — sem SDK nem
-dependência nova, mesmo padrão do `smtpEmailProvider`. Classificação de erro:
+`src/lib/email/resendEmailProvider.ts` já existe e usa o SDK oficial
+`resend`, **na mesma implementação da `camu-web-landing-page`**
+(`src/lib/notify/email.ts`): `new Resend(apiKey)` +
+`resend.emails.send(...)`, e qualquer `error` do provedor vira exceção. Sem
+classificação permanente/temporária — `processQueue` reagenda com backoff
+até `MAX_ATTEMPTS` (`policy.ts`) e então marca `falha`.
 
-- 4xx de validação (endereço inválido, remetente fora do domínio verificado)
-  → `permanentFailure`: a fila não reintenta e suprime o endereço.
-- 429, 5xx e erro de rede → exceção: a fila trata como falha temporária e
-  reagenda com backoff.
+Opcional: `EMAIL_REPLY_TO` define o `reply-to` (igual à landing page).
 
 `src/lib/email/index.ts` já seleciona o provedor: SMTP se `EMAIL_SMTP_HOST`,
 senão Resend se `EMAIL_PROVIDER_API_KEY` começa com `re_`, senão o mock.

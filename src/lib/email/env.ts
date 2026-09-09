@@ -18,6 +18,9 @@ const schema = z.object({
   // Reservada para quando um provedor real substituir `mockEmailProvider.ts`
   // — não lida pelo mock, mesmo padrão de `PAYMENT_PROVIDER_SECRET_KEY`.
   EMAIL_PROVIDER_API_KEY: z.string().min(1, "não pode ser vazia"),
+  // Opcional — endereço de `reply-to` do Resend, igual `EMAIL_REPLY_TO` da
+  // `camu-web-landing-page`. Sem valor, o e-mail sai sem `reply-to`.
+  EMAIL_REPLY_TO: z.email("precisa ser um e-mail válido").optional(),
   // Sem valor: mensagens fora de produção são descartadas em vez de
   // enviadas (design.md, decisão "mockEmailProvider e redirecionamento por
   // ambiente").
@@ -37,6 +40,7 @@ function parseEmailEnv(): z.infer<typeof schema> {
     EMAIL_FROM_DOMAIN: process.env.EMAIL_FROM_DOMAIN,
     EMAIL_QUEUE_CRON_SECRET: process.env.EMAIL_QUEUE_CRON_SECRET,
     EMAIL_PROVIDER_API_KEY: process.env.EMAIL_PROVIDER_API_KEY,
+    EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO || undefined,
     EMAIL_TEST_REDIRECT_ADDRESS: process.env.EMAIL_TEST_REDIRECT_ADDRESS || undefined,
     EMAIL_SMTP_HOST: process.env.EMAIL_SMTP_HOST || undefined,
     EMAIL_SMTP_PORT: process.env.EMAIL_SMTP_PORT || undefined,
