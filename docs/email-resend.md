@@ -65,74 +65,20 @@ Settings → Environment Variables):
 > Em produção, `APP_ENV`/`isProduction` precisa refletir que é produção, senão
 > `resolveRecipient` nunca devolve o endereço real.
 
-## 4. Implementar o `resendEmailProvider`
+## 4. O `resendEmailProvider` (já implementado)
 
-Instale a dependência:
+`src/lib/email/resendEmailProvider.ts` já existe. Fala direto com a API REST
+do Resend (`POST https://api.resend.com/emails`) por `fetch` — sem SDK nem
+dependência nova, mesmo padrão do `smtpEmailProvider`. Classificação de erro:
 
-```bash
-npm install resend
-```
+- 4xx de validação (endereço inválido, remetente fora do domínio verificado)
+  → `permanentFailure`: a fila não reintenta e suprime o endereço.
+- 429, 5xx e erro de rede → exceção: a fila trata como falha temporária e
+  reagenda com backoff.
 
-Crie `src/lib/email/resendEmailProvider.ts`:
-
-```ts
-import "server-only";
-
-import { Resend } from "resend";
-import { emailEnv } from "./env";
-import type { EmailProvider } from "./provider";
-
-/**
- * Provedor de e-mail transacional via Resend.
- *
- * Erro 4xx do Resend (endereço inválido, domínio não verificado) é
- * `permanentFailure` — a fila não reintenta e suprime o endereço. Erro 5xx ou
- * de rede sobe como exceção: a fila trata como falha temporária e reagenda.
- */
-const resend = new Resend(emailEnv.EMAIL_PROVIDER_API_KEY);
-
-export const resendEmailProvider: EmailProvider = {
-  async send(input) {
-    const { data, error } = await resend.emails.send({
-      from: emailEnv.EMAIL_FROM_ADDRESS,
-      to: input.to,
-      subject: input.subject,
-      html: input.html,
-      text: input.text,
-    });
-
-    if (error) {
-      // `name` do SDK: "validation_error", "invalid_parameter", etc. são
-      // permanentes; "rate_limit_exceeded" e "application_error" são
-      // temporários.
-      const temporary =
-        error.name === "rate_limit_exceeded" || error.name === "application_error";
-      if (temporary) {
-        throw new Error(`resend_temporario: ${error.message}`);
-      }
-      return { permanentFailure: true, reason: `${error.name}: ${error.message}` };
-    }
-
-    return { providerMessageId: data?.id ?? "resend_sem_id" };
-  },
-};
-```
-
-Ligue em `src/lib/email/index.ts` — troque a escolha do provedor:
-
-```ts
-import { emailEnv } from "./env";
-import { mockEmailProvider } from "./mockEmailProvider";
-import { resendEmailProvider } from "./resendEmailProvider";
-import { smtpEmailProvider } from "./smtpEmailProvider";
-import type { EmailProvider } from "./provider";
-
-export const emailProvider: EmailProvider = emailEnv.EMAIL_SMTP_HOST
-  ? smtpEmailProvider          // dev: Mailpit
-  : emailEnv.EMAIL_PROVIDER_API_KEY.startsWith("re_")
-    ? resendEmailProvider      // produção: Resend
-    : mockEmailProvider;       // fallback
-```
+`src/lib/email/index.ts` já seleciona o provedor: SMTP se `EMAIL_SMTP_HOST`,
+senão Resend se `EMAIL_PROVIDER_API_KEY` começa com `re_`, senão o mock.
+**Não é preciso alterar código** — só configurar as variáveis de ambiente.
 
 ## 5. Agendamento da fila
 
