@@ -124,7 +124,7 @@ export function RsvpFlow({
   if (loadingInvite) {
     return (
       <div
-        style={themeVars(event.themeKey)}
+        style={themeVars(event)}
         className="flex min-h-screen items-center justify-center bg-paper-3"
       >
         <p className="text-ink-soft">Carregando...</p>
@@ -134,7 +134,7 @@ export function RsvpFlow({
 
   return (
     <div
-      style={themeVars(event.themeKey)}
+      style={themeVars(event)}
       className="flex min-h-screen justify-center bg-paper-3"
     >
       <div className="flex min-h-screen w-full max-w-[430px] flex-col bg-paper shadow-[0_0_60px_rgba(0,0,0,0.08)]">

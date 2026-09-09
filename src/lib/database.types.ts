@@ -153,7 +153,10 @@ export type Database = {
       }
       events: {
         Row: {
+          accent_color: string | null
+          accent_text_color: string | null
           address: string | null
+          background_color: string | null
           bar_service: string | null
           bar_signature_desc: string | null
           bar_signature_name: string | null
@@ -183,7 +186,10 @@ export type Database = {
           welcome: string | null
         }
         Insert: {
+          accent_color?: string | null
+          accent_text_color?: string | null
           address?: string | null
+          background_color?: string | null
           bar_service?: string | null
           bar_signature_desc?: string | null
           bar_signature_name?: string | null
@@ -213,7 +219,10 @@ export type Database = {
           welcome?: string | null
         }
         Update: {
+          accent_color?: string | null
+          accent_text_color?: string | null
           address?: string | null
+          background_color?: string | null
           bar_service?: string | null
           bar_signature_desc?: string | null
           bar_signature_name?: string | null

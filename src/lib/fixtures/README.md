@@ -12,7 +12,7 @@ O cabeçalho de cada arquivo nomeia o change que o remove.
 | `media.ts` | `add-media-backend` |
 | `menu.ts` | removido — cardápio e bar viraram conteúdo do evento (`menu_items`, `bar_items`, `bar_*`) |
 | `secret-santa.ts` | removido — configuração virou coluna do evento (`secret_santa_*`) |
-| `painel.ts` | parcial — só resta `PLATFORM_FINANCE` (MRR/ticket médio, sem billing real); o resto (feed de atividade, série de eventos por mês, convidados no mês) já vem do banco |
+| `painel.ts` | removido — a receita do mês (não é MRR, plataforma não tem assinatura) e o ticket médio agora vêm de `payments` via `getPlatformRevenue` (`src/lib/db/platform.ts`) |
 
 O que **não** está aqui já vem do banco: eventos, perfis, módulos habilitados,
 cronograma, cardápio, bar, feed de atividade e amigo secreto.

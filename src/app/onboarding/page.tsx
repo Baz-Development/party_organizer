@@ -20,7 +20,7 @@ export default async function OnboardingPage() {
   if (events.length > 0) redirect("/painel");
 
   return (
-    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+    <div style={themeVars({ themeKey: "dourado" })} className="min-h-screen bg-paper-3">
       <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
         <div className="mb-6 text-[13px] uppercase tracking-[2px] text-accent">Villa Glam</div>
         <h1 className="mb-4 font-display text-[clamp(24px,4vw,32px)] font-semibold">

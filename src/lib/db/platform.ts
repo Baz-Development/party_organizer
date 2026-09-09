@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import { brl } from "@/lib/format";
 import { DbError } from "./errors";
 
 type Client = SupabaseClient<Database>;
@@ -56,4 +57,59 @@ export async function getGuestsThisMonth(client: Client): Promise<number> {
 
   if (error) throw new DbError(error.message, "desconhecido");
   return count ?? 0;
+}
+
+export type PlatformRevenue = {
+  receitaMes: string;
+  crescimento: string;
+  ticketMedio: string;
+};
+
+/**
+ * Receita real da plataforma: soma de `payments.amount_cents` com
+ * `status = 'pago'`, confirmados neste mês (via `confirmed_at`). Não é MRR —
+ * a plataforma não cobra assinatura do cliente anfitrião, só o convidado paga
+ * (por um presente) — mas é dinheiro real, diferente da fixture que isto
+ * substitui. "Ticket médio" é a média por pagamento confirmado no mês, e
+ * "crescimento" compara com o total confirmado no mês anterior.
+ */
+export async function getPlatformRevenue(client: Client): Promise<PlatformRevenue> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
+  const { data, error } = await client
+    .from("payments")
+    .select("amount_cents, confirmed_at")
+    .eq("status", "pago")
+    .gte("confirmed_at", prevMonthStart);
+
+  if (error) throw new DbError(error.message, "desconhecido");
+
+  let currentCents = 0;
+  let currentCount = 0;
+  let prevCents = 0;
+
+  for (const row of data ?? []) {
+    if (!row.confirmed_at) continue;
+    if (row.confirmed_at >= monthStart) {
+      currentCents += row.amount_cents;
+      currentCount += 1;
+    } else {
+      prevCents += row.amount_cents;
+    }
+  }
+
+  const crescimento =
+    prevCents > 0
+      ? `${currentCents >= prevCents ? "+" : ""}${Math.round(((currentCents - prevCents) / prevCents) * 100)}%`
+      : currentCents > 0
+        ? "+100%"
+        : "0%";
+
+  return {
+    receitaMes: brl(currentCents / 100),
+    crescimento,
+    ticketMedio: brl(currentCount > 0 ? currentCents / currentCount / 100 : 0),
+  };
 }

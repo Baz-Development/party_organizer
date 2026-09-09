@@ -3,7 +3,7 @@
 import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Badge } from "@/components/ui";
-import { PLATFORM_FINANCE } from "@/lib/fixtures/painel";
+import type { PlatformRevenue } from "@/lib/db/platform";
 import { ADMIN_NAV } from "./nav";
 import { shortDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
@@ -19,11 +19,13 @@ export function AdminPanel({
   profiles,
   eventsPerMonth,
   guestsThisMonth,
+  platformRevenue,
 }: {
   events: EventSummary[];
   profiles: Profile[];
   eventsPerMonth: { label: string; value: number }[];
   guestsThisMonth: number;
+  platformRevenue: PlatformRevenue;
 }) {
   const maxSeries = Math.max(1, ...eventsPerMonth.map((s) => s.value));
 
@@ -32,11 +34,10 @@ export function AdminPanel({
   const clientes = profiles.filter((p) => p.role === "cliente").length;
 
   /**
-   * As três primeiras métricas são contadas do banco. "MRR" segue de fixture
-   * — a plataforma não cobra assinatura do cliente anfitrião, só o convidado
-   * paga (por um presente), então não existe receita recorrente real para
-   * medir — e por isso vem marcada como estimada, em vez de se passar por
-   * número real.
+   * Todas as quatro métricas vêm do banco. A quarta não é "MRR" — a
+   * plataforma não cobra assinatura do cliente anfitrião, só o convidado
+   * paga (por um presente) — é a soma real de `payments` confirmados
+   * (`status = 'pago'`) no mês, via `getPlatformRevenue`.
    */
   const metrics = [
     {
@@ -58,15 +59,15 @@ export function AdminPanel({
       real: true,
     },
     {
-      label: "MRR",
-      value: PLATFORM_FINANCE.receitaMes,
-      hint: `${PLATFORM_FINANCE.crescimento} vs. mês passado`,
-      real: false,
+      label: "Receita no mês",
+      value: platformRevenue.receitaMes,
+      hint: `${platformRevenue.crescimento} vs. mês passado · ticket médio ${platformRevenue.ticketMedio}`,
+      real: true,
     },
   ];
 
   return (
-    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+    <div style={themeVars({ themeKey: "dourado" })} className="min-h-screen bg-paper-3">
       <PanelNav
         brand="Admin"
         items={ADMIN_NAV}

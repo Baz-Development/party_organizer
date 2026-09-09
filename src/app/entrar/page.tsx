@@ -25,7 +25,7 @@ export default async function EntrarPage({
 
   return (
     <div
-      style={themeVars("dourado")}
+      style={themeVars({ themeKey: "dourado" })}
       className="flex min-h-screen items-center justify-center bg-paper-3 px-6 py-14"
     >
       <div className="w-full max-w-[440px]">

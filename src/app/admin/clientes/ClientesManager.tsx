@@ -12,6 +12,11 @@ import { shortDate } from "@/lib/format";
  * de acesso é enviado quando a primeira página do cliente é criada. A conta
  * nasce "aguardando primeiro acesso" e passa a "ativa" quando ela entra pela
  * primeira vez.
+ *
+ * A coluna "Acesso" reenvia manualmente o e-mail de acesso ao painel (`POST
+ * /api/admin/clientes/[id]/acesso`), para quando o disparo automático da
+ * criação da página falhou ou o cliente perdeu a mensagem. Fica desabilitada
+ * enquanto a conta não tem nenhuma página.
  */
 export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
   const router = useRouter();
@@ -20,6 +25,43 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [accessSendingId, setAccessSendingId] = useState<string | null>(null);
+  const [accessFeedback, setAccessFeedback] = useState<
+    Record<string, { tone: "ok" | "erro"; message: string }>
+  >({});
+
+  const sendAccessEmail = (id: string) => {
+    setAccessSendingId(id);
+    setAccessFeedback((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/admin/clientes/${id}/acesso`, { method: "POST" });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setAccessFeedback((prev) => ({
+            ...prev,
+            [id]: { tone: "erro", message: body.error ?? "Não foi possível enviar o e-mail." },
+          }));
+          return;
+        }
+        setAccessFeedback((prev) => ({
+          ...prev,
+          [id]: {
+            tone: "ok",
+            message: body.recipientEmail
+              ? `E-mail de acesso enfileirado para ${body.recipientEmail}.`
+              : "E-mail de acesso enfileirado.",
+          },
+        }));
+      } finally {
+        setAccessSendingId(null);
+      }
+    });
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +127,7 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
           <table style={{ minWidth: 640 }} className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-line">
-                {["Cliente", "E-mail", "Situação", "Eventos", "Cadastro"].map((h) => (
+                {["Cliente", "E-mail", "Situação", "Eventos", "Cadastro", "Acesso"].map((h) => (
                   <th
                     key={h}
                     className="px-6 py-4 text-[12px] font-semibold uppercase tracking-wider text-ink-faint"
@@ -109,11 +151,44 @@ export function ClientesManager({ clientes }: { clientes: ClientAccount[] }) {
                   <td className="px-6 py-4 text-[14.5px] text-ink-soft">
                     {c.createdAt ? shortDate(c.createdAt) : "—"}
                   </td>
+                  <td className="px-6 py-4">
+                    {c.eventCount === 0 ? (
+                      <span
+                        className="text-[13px] text-ink-faint"
+                        title="Cadastre uma página para este cliente primeiro."
+                      >
+                        sem página
+                      </span>
+                    ) : (
+                      <div className="grid gap-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendAccessEmail(c.id)}
+                          disabled={pending && accessSendingId === c.id}
+                        >
+                          {pending && accessSendingId === c.id
+                            ? "Enviando…"
+                            : "Enviar e-mail de acesso"}
+                        </Button>
+                        {accessFeedback[c.id] && (
+                          <p
+                            className={`text-[13px] ${
+                              accessFeedback[c.id].tone === "ok" ? "text-ok" : "text-danger"
+                            }`}
+                          >
+                            {accessFeedback[c.id].message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
               {clientes.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-[15px] text-ink-faint">
+                  <td colSpan={6} className="px-6 py-12 text-center text-[15px] text-ink-faint">
                     Nenhuma conta de cliente cadastrada.
                   </td>
                 </tr>

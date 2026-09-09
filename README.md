@@ -123,13 +123,18 @@ abra o link mágico na caixa de e-mail local (`http://127.0.0.1:55424`).
 
 A criação de evento **não** é self-service. A Equipe Villa Glam (`admin`):
 
-1. cadastra a conta do cliente em `/admin/clientes` (nome + e-mail) — isso
-   dispara um convite por e-mail e o perfil nasce já provisionado;
+1. cadastra a conta do cliente em `/admin/clientes` (nome + e-mail) — o perfil
+   nasce já provisionado, sem e-mail nenhum ainda;
 2. cria a página do evento em `/admin/paginas`, escolhendo a conta anfitriã e o
    tipo de evento (casamento, debutante, corporativo, aniversário, formatura,
-   confraternização ou outros);
+   confraternização ou outros) — só agora sai o e-mail de acesso ao painel,
+   com o endereço da página e o e-mail de login;
 3. o cliente abre o link de acesso, cai em `/painel` e passa a editar o
    conteúdo, o cronograma, a capa e a moderação da galeria.
+
+Se esse e-mail falhar ou o cliente perdê-lo, o admin reenvia pela coluna
+**Acesso** em `/admin/clientes`. O envio real depende de um provedor
+configurado — ver [`docs/email-resend.md`](docs/email-resend.md).
 
 Um e-mail que autentica sem ter sido provisionado e sem ser anfitrião de nenhum
 evento cai em `/sem-acesso` — a sessão existe, mas nenhum painel se abre.

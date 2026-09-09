@@ -68,6 +68,17 @@ const barItem = z.object({
 
 const optionalText = z.string().trim().max(2000).optional();
 
+/**
+ * Cor hex `#rrggbb`. String vazia limpa o campo (volta ao preset do tema ou
+ * ao fundo padrão); ausência não altera.
+ */
+const optionalHexColor = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || /^#[0-9a-f]{6}$/i.test(value), "Cor inválida.")
+  .transform((value) => (value === "" ? null : value.toLowerCase()))
+  .optional();
+
 export const createEventSchema = z.object({
   kind: z.enum(EVENT_KINDS, { message: "Tipo de evento desconhecido." }),
   title: z.string().trim().min(1, "Informe o título do evento.").max(120),
@@ -127,6 +138,9 @@ export const updateEventSchema = z.object({
   eyebrow: optionalText,
   welcome: optionalText,
   themeKey: z.enum(THEME_KEYS, { message: "Tema de cor não suportado." }).optional(),
+  accentColor: optionalHexColor,
+  accentTextColor: optionalHexColor,
+  backgroundColor: optionalHexColor,
   rsvpDeadline,
   moderationPolicy: z.enum(MODERATION_POLICIES, {
     message: "Política de moderação desconhecida.",

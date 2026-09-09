@@ -24,7 +24,8 @@ type Client = SupabaseClient<Database>;
  */
 const EVENT_SELECT = `
   id, slug, host_profile_id, kind, title, event_at, venue,
-  city, address, postal_code, hosts, eyebrow, welcome, theme_key, status, created_at, updated_at,
+  city, address, postal_code, hosts, eyebrow, welcome, theme_key,
+  accent_color, accent_text_color, background_color, status, created_at, updated_at,
   rsvp_deadline, self_signup_token, moderation_policy, cover_path,
   secret_santa_budget, secret_santa_draw_date, secret_santa_exchange_date, secret_santa_rules,
   bar_service, bar_signature_name, bar_signature_desc,
@@ -166,6 +167,9 @@ export async function updateEvent(
   if (input.eyebrow !== undefined) patch.eyebrow = input.eyebrow;
   if (input.welcome !== undefined) patch.welcome = input.welcome;
   if (input.themeKey !== undefined) patch.theme_key = input.themeKey;
+  if (input.accentColor !== undefined) patch.accent_color = input.accentColor;
+  if (input.accentTextColor !== undefined) patch.accent_text_color = input.accentTextColor;
+  if (input.backgroundColor !== undefined) patch.background_color = input.backgroundColor;
   if (input.rsvpDeadline !== undefined) patch.rsvp_deadline = input.rsvpDeadline;
   if (input.moderationPolicy !== undefined) patch.moderation_policy = input.moderationPolicy;
   if (input.secretSantaBudget !== undefined) patch.secret_santa_budget = input.secretSantaBudget;

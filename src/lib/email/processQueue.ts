@@ -84,8 +84,14 @@ async function processOne(
       : "";
 
   let link = "";
+  let renderData: Record<string, unknown> = data;
   if (message.template === "acesso_painel") {
     link = `${publicEnv.NEXT_PUBLIC_SITE_URL}/painel`;
+    renderData = {
+      ...data,
+      pageUrl: eventPath ? `${publicEnv.NEXT_PUBLIC_SITE_URL}${eventPath}` : undefined,
+      loginUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/entrar`,
+    };
   } else if (RSVP_LINK_TEMPLATES.has(message.template) || message.template === "revelacao_amigo_secreto") {
     const guestId = typeof data.guestId === "string" ? data.guestId : undefined;
     const token = guestId ? await resolveInviteToken(admin, guestId) : null;
@@ -106,7 +112,7 @@ async function processOne(
         : `${publicEnv.NEXT_PUBLIC_SITE_URL}${eventPath}/rsvp?convite=${token}`;
   }
 
-  const render = emailTemplates[message.template](data, link, unsubscribeLink);
+  const render = emailTemplates[message.template](renderData, link, unsubscribeLink);
 
   const recipient = resolveRecipient(message.recipient_email);
   if (!recipient) {

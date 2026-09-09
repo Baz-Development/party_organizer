@@ -4,7 +4,8 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { EventPage } from "@/app/[id]/[slug]/EventPage";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, Textarea, Toggle } from "@/components/ui";
-import { THEME_LIST, THEMES } from "@/lib/themes";
+import { contrastText } from "@/lib/color";
+import { BACKGROUND_PRESETS, THEME_LIST, themeVars } from "@/lib/themes";
 import type {
   BarItem,
   EventSummary,
@@ -65,8 +66,17 @@ const CURSO_SUGESTOES = [
   "Bebida",
 ] as const;
 
+/**
+ * Blocos sugeridos no dropdown do cronograma. O anfitrião pode escolher um
+ * destes ou digitar um novo (o campo é um combobox: aceita valor livre).
+ */
+const CRONOGRAMA_SUGESTOES = ["Cerimônia", "Recepção", "Jantar", "Festa"] as const;
+
 export function EditorForm({ event }: { event: EventSummary }) {
   const [themeKey, setThemeKey] = useState<ThemeKey>(event.themeKey);
+  const [accentColor, setAccentColor] = useState(event.accentColor ?? "");
+  const [accentTextColor, setAccentTextColor] = useState(event.accentTextColor ?? "");
+  const [backgroundColor, setBackgroundColor] = useState(event.backgroundColor ?? "");
   const [hosts, setHosts] = useState(event.hosts);
   const [eyebrow, setEyebrow] = useState(event.eyebrow);
   const [welcome, setWelcome] = useState(event.welcome);
@@ -92,6 +102,20 @@ export function EditorForm({ event }: { event: EventSummary }) {
     }
     return out;
   }, [menu]);
+  /** Sugestões + blocos já usados neste cronograma, sem repetição (case-insensitive). */
+  const tituloOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of [...CRONOGRAMA_SUGESTOES, ...schedule.map((s) => s.title)]) {
+      const value = raw.trim();
+      if (!value) continue;
+      const key = value.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(value);
+    }
+    return out;
+  }, [schedule]);
   const [bar, setBar] = useState<BarItem[]>(event.bar.items);
   const [barService, setBarService] = useState(event.bar.service ?? "");
   const [barSignatureName, setBarSignatureName] = useState(event.bar.signatureName ?? "");
@@ -193,8 +217,6 @@ export function EditorForm({ event }: { event: EventSummary }) {
     }
   }
 
-  const theme = THEMES[themeKey];
-
   /**
    * Evento sintético que reflete o estado atual do formulário, para alimentar
    * a mesma <EventPage> que o convidado vê. Assim a pré-visualização mostra
@@ -212,6 +234,9 @@ export function EditorForm({ event }: { event: EventSummary }) {
       address: address || undefined,
       postalCode: postalCode || undefined,
       themeKey,
+      accentColor: accentColor || undefined,
+      accentTextColor: accentTextColor || undefined,
+      backgroundColor: backgroundColor || undefined,
       moderationPolicy,
       coverUrl: coverUrl || undefined,
       modules: [
@@ -243,6 +268,9 @@ export function EditorForm({ event }: { event: EventSummary }) {
       address,
       postalCode,
       themeKey,
+      accentColor,
+      accentTextColor,
+      backgroundColor,
       moderationPolicy,
       coverUrl,
       modules,
@@ -273,6 +301,9 @@ export function EditorForm({ event }: { event: EventSummary }) {
           address,
           postalCode,
           themeKey,
+          accentColor,
+          accentTextColor,
+          backgroundColor,
           rsvpDeadline,
           moderationPolicy,
           secretSantaBudget,
@@ -315,13 +346,7 @@ export function EditorForm({ event }: { event: EventSummary }) {
   return (
     <div
       className="flex min-h-screen flex-col lg:flex-row"
-      style={
-        {
-          "--accent": theme.accent,
-          "--accent-strong": theme.accentStrong,
-          "--accent-soft": theme.accentSoft,
-        } as React.CSSProperties
-      }
+      style={themeVars(previewEvent)}
     >
       {/* Painel de controles ------------------------------------------ */}
       <aside className="w-full shrink-0 border-b border-line bg-paper px-7 py-8 lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:w-[380px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
@@ -372,20 +397,128 @@ export function EditorForm({ event }: { event: EventSummary }) {
 
         {/* Cor */}
         <Group title="Cor de destaque">
-          <div className="flex gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             {THEME_LIST.map((sw) => (
               <button
                 key={sw.key}
-                onClick={() => setThemeKey(sw.key)}
+                onClick={() => {
+                  setThemeKey(sw.key);
+                  setAccentColor("");
+                  setAccentTextColor("");
+                }}
                 aria-label={sw.label}
                 title={sw.label}
                 style={{ background: sw.accent }}
                 className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
-                  themeKey === sw.key ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""
+                  !accentColor && themeKey === sw.key
+                    ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
+                    : ""
                 }`}
               />
             ))}
+
+            <label
+              title="Cor personalizada"
+              aria-label="Cor personalizada"
+              style={{
+                background: accentColor || "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
+              }}
+              className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
+                accentColor ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""
+              }`}
+            >
+              {!accentColor && <span className="text-[15px] text-white drop-shadow">+</span>}
+              <input
+                type="color"
+                value={accentColor || "#d4a72c"}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setAccentColor(value);
+                  setAccentTextColor(contrastText(value));
+                }}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
           </div>
+
+          {accentColor && (
+            <div className="mt-3 flex items-center gap-2.5">
+              <span className="text-[12.5px] text-ink-faint">Texto dos botões:</span>
+              {(
+                [
+                  { label: "Claro", value: "#f5f3ee" },
+                  { label: "Escuro", value: "#080808" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setAccentTextColor(opt.value)}
+                  className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[12.5px] font-semibold ${
+                    (accentTextColor || contrastText(accentColor)) === opt.value
+                      ? "border-ink bg-paper-2"
+                      : "border-[rgba(42,39,36,0.15)] bg-white text-ink-soft"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </Group>
+
+        {/* Fundo */}
+        <Group title="Cor de fundo da tela">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {BACKGROUND_PRESETS.map((bg) => (
+              <button
+                key={bg.value}
+                onClick={() => setBackgroundColor(bg.value === BACKGROUND_PRESETS[0].value ? "" : bg.value)}
+                aria-label={bg.label}
+                title={bg.label}
+                style={{ background: bg.value }}
+                className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.15)] ${
+                  (backgroundColor || BACKGROUND_PRESETS[0].value) === bg.value
+                    ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
+                    : ""
+                }`}
+              />
+            ))}
+
+            <label
+              title="Cor de fundo personalizada"
+              aria-label="Cor de fundo personalizada"
+              style={{
+                background:
+                  backgroundColor &&
+                  !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
+                    ? backgroundColor
+                    : "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
+              }}
+              className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
+                backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
+                  ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
+                  : ""
+              }`}
+            >
+              {!(backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)) && (
+                <span className="text-[15px] text-ink drop-shadow">+</span>
+              )}
+              <input
+                type="color"
+                value={
+                  backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
+                    ? backgroundColor
+                    : "#f0eee7"
+                }
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+          </div>
+          <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+            Só a área atrás do cartão de conteúdo muda — prefira tons claros, já que os textos
+            do site são sempre escuros.
+          </p>
         </Group>
 
         {/* Textos */}
@@ -456,26 +589,32 @@ export function EditorForm({ event }: { event: EventSummary }) {
 
         {/* Cronograma */}
         <Group title="Cronograma">
+          <datalist id="cronograma-titulos">
+            {tituloOptions.map((titulo) => (
+              <option key={titulo} value={titulo} />
+            ))}
+          </datalist>
           <div className="flex flex-col gap-3">
             {schedule.map((item, index) => (
               <div
                 key={index}
                 className="rounded-[10px] border border-[rgba(42,39,36,0.15)] bg-white p-3"
               >
-                <div className="mb-2 flex gap-2">
+                <div className="mb-2 flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={item.title}
+                    onChange={(e) => patchItem(index, { title: e.target.value })}
+                    list="cronograma-titulos"
+                    placeholder="Cerimônia"
+                    aria-label="Bloco"
+                    className="px-3 py-2 text-sm sm:w-36 sm:shrink-0"
+                  />
                   <Input
                     value={item.time}
                     onChange={(e) => patchItem(index, { time: e.target.value })}
                     placeholder="16h00"
                     aria-label="Horário"
-                    className="w-24 px-3 py-2 text-sm"
-                  />
-                  <Input
-                    value={item.title}
-                    onChange={(e) => patchItem(index, { title: e.target.value })}
-                    placeholder="Cerimônia"
-                    aria-label="Título"
-                    className="flex-1 px-3 py-2 text-sm"
+                    className="min-w-0 flex-1 px-3 py-2 text-sm"
                   />
                 </div>
                 <Input
@@ -507,7 +646,8 @@ export function EditorForm({ event }: { event: EventSummary }) {
             </Button>
           </div>
           <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
-            A ordem da lista é a ordem que o convidado vê.
+            Escolha um bloco da lista ou digite um novo. Os itens aparecem
+            agrupados pelo bloco, na ordem desta lista.
           </p>
         </Group>
 

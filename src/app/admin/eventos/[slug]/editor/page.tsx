@@ -27,7 +27,7 @@ export default async function AdminEditorPage({
   if (!event) notFound();
 
   return (
-    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+    <div style={themeVars({ themeKey: "dourado" })} className="min-h-screen bg-paper-3">
       <PanelNav
         brand="Admin"
         items={ADMIN_NAV}

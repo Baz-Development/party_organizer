@@ -26,10 +26,14 @@ export interface Theme {
   accent: string;
   accentStrong: string;
   accentSoft: string;
+  /** Cor do texto/ícone sobre um fundo `accent` — clara em temas escuros, escura em temas claros. */
+  onAccent: string;
 }
 
+/** Um item do cronograma, agrupado na página pelo bloco (`title`). */
 export interface ScheduleItem {
   time: string;
+  /** Bloco do dia: "Cerimônia", "Recepção", "Jantar"... */
   title: string;
   desc: string;
 }
@@ -67,6 +71,16 @@ export interface EventSummary {
   eyebrow: string;
   welcome: string;
   themeKey: ThemeKey;
+  /**
+   * Cor de destaque personalizada (hex `#rrggbb`), fora dos 4 temas prontos.
+   * Presente = sobrescreve o `accent` do tema; ausente = usa o preset de
+   * `themeKey`.
+   */
+  accentColor?: string;
+  /** Cor do texto sobre `accentColor`. Só faz sentido junto de `accentColor`. */
+  accentTextColor?: string;
+  /** Cor de fundo da tela (atrás do cartão de conteúdo), hex `#rrggbb`. Ausente = fundo padrão. */
+  backgroundColor?: string;
   modules: ModuleId[];
   schedule: ScheduleItem[];
   /** Pratos do cardápio, na ordem definida pelo anfitrião. */

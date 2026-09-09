@@ -28,7 +28,7 @@ export default async function PainelLayout({
 
   return (
     <div
-      style={themeVars(event?.themeKey ?? "dourado")}
+      style={themeVars(event ?? { themeKey: "dourado" })}
       className="min-h-screen bg-paper-3"
     >
       <PanelNav

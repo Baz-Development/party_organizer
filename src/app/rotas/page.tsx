@@ -72,7 +72,7 @@ export default async function RotasPage() {
   const API_ROUTES = buildApiRoutes(event.slug);
 
   return (
-    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+    <div style={themeVars({ themeKey: "dourado" })} className="min-h-screen bg-paper-3">
       <div className="mx-auto max-w-[1000px] px-6 py-14 pb-20">
         <div className="mb-10">
           <div className="mb-1.5 text-[13px] uppercase tracking-[2px] text-accent">Protótipo</div>

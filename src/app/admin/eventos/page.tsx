@@ -18,7 +18,7 @@ export default async function AdminEventosPage() {
   ]);
 
   return (
-    <div style={themeVars("dourado")} className="min-h-screen bg-paper-3">
+    <div style={themeVars({ themeKey: "dourado" })} className="min-h-screen bg-paper-3">
       <PanelNav brand="Admin" items={ADMIN_NAV} right={<SairButton />} />
       <div className="mx-auto max-w-[1160px] px-6 py-10 pb-16">
         <div className="mb-8">

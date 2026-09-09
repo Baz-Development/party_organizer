@@ -20,7 +20,7 @@ export function GuestShell({
   width?: number;
 }) {
   return (
-    <div style={themeVars(event.themeKey)} className="flex min-h-screen justify-center bg-paper-3">
+    <div style={themeVars(event)} className="flex min-h-screen justify-center bg-paper-3">
       <div
         style={{ maxWidth: width }}
         className="flex min-h-screen w-full flex-col bg-paper shadow-[0_0_60px_rgba(0,0,0,0.08)]"

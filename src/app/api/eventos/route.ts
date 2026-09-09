@@ -66,7 +66,12 @@ export async function POST(req: Request) {
         eventId: event.id,
         recipientEmail: hostEmail,
         template: "acesso_painel",
-        data: { eventTitle: event.title },
+        data: {
+          eventTitle: event.title,
+          eventSlug: event.slug,
+          eventId: event.id,
+          loginEmail: hostEmail,
+        },
       });
       after(() => processEmailQueue(admin));
     }

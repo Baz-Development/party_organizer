@@ -8,7 +8,7 @@ import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
 import { brl, longDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
-import type { EventSummary, Gift, MenuItem, ModuleId } from "@/lib/types";
+import type { EventSummary, Gift, MenuItem, ModuleId, ScheduleItem } from "@/lib/types";
 
 const MODULE_LABELS: Partial<Record<ModuleId, string>> = {
   cronograma: "Cronograma",
@@ -38,6 +38,14 @@ export function EventPage({ event }: { event: EventSummary }) {
     else menuCourses.push({ course: item.course, items: [item] });
   }
 
+  // Cronograma agrupado por bloco (título), preservando a ordem cadastrada.
+  const scheduleBlocks: { title: string; items: ScheduleItem[] }[] = [];
+  for (const item of event.schedule) {
+    const bucket = scheduleBlocks.find((b) => b.title === item.title);
+    if (bucket) bucket.items.push(item);
+    else scheduleBlocks.push({ title: item.title, items: [item] });
+  }
+
   // Consulta do mapa: o endereço completo é o melhor alvo; sem ele, cai para
   // "local, cidade". Serve tanto o mapa embutido quanto o link "ver rota".
   const mapsQuery = [event.address, event.venue, event.city]
@@ -62,7 +70,7 @@ export function EventPage({ event }: { event: EventSummary }) {
   }, [event.slug]);
 
   return (
-    <div style={themeVars(event.themeKey)} className="min-h-screen bg-paper-3">
+    <div style={themeVars(event)} className="min-h-screen bg-paper-3">
       <div className="mx-auto min-h-screen max-w-[1180px] bg-paper shadow-[0_0_80px_rgba(0,0,0,0.06)]">
         {/* Capa ------------------------------------------------------ */}
         <header className="relative h-[min(88vh,760px)] min-h-[560px] w-full">
@@ -132,12 +140,20 @@ export function EventPage({ event }: { event: EventSummary }) {
             <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">
               Cronograma do dia
             </h2>
-            <div className="mx-auto grid max-w-[960px] gap-7 text-left sm:grid-cols-2 lg:grid-cols-4">
-              {event.schedule.map((ev) => (
-                <div key={ev.time} className="border-t-2 border-accent pt-4">
-                  <div className="mb-2 text-sm font-semibold text-accent">{ev.time}</div>
-                  <div className="mb-1.5 font-display text-[20px] font-semibold">{ev.title}</div>
-                  <div className="text-[15px] text-ink-soft">{ev.desc}</div>
+            <div className="mx-auto flex max-w-[960px] flex-col gap-10 text-left">
+              {scheduleBlocks.map((block) => (
+                <div key={block.title}>
+                  <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
+                    {block.title}
+                  </div>
+                  <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+                    {block.items.map((ev, i) => (
+                      <div key={`${ev.time}-${i}`}>
+                        <div className="mb-1.5 text-sm font-semibold text-accent">{ev.time}</div>
+                        <div className="text-[15px] text-ink-soft">{ev.desc}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>

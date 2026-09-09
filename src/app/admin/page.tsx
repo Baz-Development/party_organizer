@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
 import { toProfile } from "@/lib/db/mappers";
-import { getEventsPerMonth, getGuestsThisMonth } from "@/lib/db/platform";
+import { getEventsPerMonth, getGuestsThisMonth, getPlatformRevenue } from "@/lib/db/platform";
 import { AdminPanel } from "./AdminPanel";
 
 export const metadata = { title: "Admin — Convite" };
@@ -11,7 +11,7 @@ export default async function Page() {
 
   // Admin enxerga a plataforma inteira — não por filtro aqui, mas porque as
   // políticas de RLS abrem tudo para `is_platform_admin()`.
-  const [events, profiles, eventsPerMonth, guestsThisMonth] = await Promise.all([
+  const [events, profiles, eventsPerMonth, guestsThisMonth, platformRevenue] = await Promise.all([
     listEvents(supabase),
     supabase
       .from("profiles")
@@ -20,6 +20,7 @@ export default async function Page() {
       .limit(10),
     getEventsPerMonth(supabase),
     getGuestsThisMonth(supabase),
+    getPlatformRevenue(supabase),
   ]);
 
   return (
@@ -28,6 +29,7 @@ export default async function Page() {
       profiles={(profiles.data ?? []).map(toProfile)}
       eventsPerMonth={eventsPerMonth}
       guestsThisMonth={guestsThisMonth}
+      platformRevenue={platformRevenue}
     />
   );
 }
