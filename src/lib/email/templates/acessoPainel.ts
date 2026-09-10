@@ -24,7 +24,8 @@ export function renderAcessoPainel(data: AcessoPainelData, link: string, unsubsc
   const subject = `Acesse o painel de ${data.eventTitle}`;
 
   const pageLineHtml = data.pageUrl
-    ? `<p>A página do evento está no ar: <a href="${data.pageUrl}">${data.pageUrl}</a></p>`
+    ? `<p>A página do evento já está criada: <a href="${data.pageUrl}">${data.pageUrl}</a>. ` +
+      `Ela só fica no ar depois que você aprovar, clicando no botão <strong>Publicar</strong> no painel.</p>`
     : "";
   const loginLineHtml = data.loginEmail
     ? `<p>Entre com o e-mail <strong>${data.loginEmail}</strong>${
@@ -40,7 +41,10 @@ export function renderAcessoPainel(data: AcessoPainelData, link: string, unsubsc
     loginLineHtml +
     `<p>Painel: <a href="${link}">${link}</a></p>`;
 
-  const pageLineText = data.pageUrl ? `\nPágina do evento: ${data.pageUrl}` : "";
+  const pageLineText = data.pageUrl
+    ? `\nPágina do evento (já criada): ${data.pageUrl}` +
+      `\nEla só fica no ar depois que você aprovar, clicando no botão "Publicar" no painel.`
+    : "";
   const loginLineText = data.loginEmail
     ? `\nEntre com o e-mail ${data.loginEmail}${
         data.loginUrl ? `, pedindo o link de acesso em ${data.loginUrl}` : ""

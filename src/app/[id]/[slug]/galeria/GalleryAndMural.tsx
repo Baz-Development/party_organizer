@@ -29,6 +29,10 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
   const [formError, setFormError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  // Assinatura da foto pedida por pop-up (não pelo `window.prompt`): guardamos o
+  // caminho já enviado ao storage enquanto o convidado digita o nome.
+  const [pendingPhotoPath, setPendingPhotoPath] = useState<string | null>(null);
+  const [signatureName, setSignatureName] = useState("");
   const noteFileInput = useRef<HTMLInputElement>(null);
   const [notePhoto, setNotePhoto] = useState<{ path: string; previewUrl: string } | null>(null);
   const [notePhotoUploading, setNotePhotoUploading] = useState(false);
@@ -163,24 +167,26 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
       return;
     }
 
-    let authorName = window.localStorage.getItem("convite:autor")?.trim() || author.trim();
-    if (!authorName) {
-      authorName = window.prompt("Como devemos assinar sua foto?")?.trim() ?? "";
-    }
-    if (!authorName) {
-      setUploading(false);
-      setFormError("Informe seu nome antes de enviar a foto.");
+    const savedAuthor = window.localStorage.getItem("convite:autor")?.trim() || author.trim();
+    if (savedAuthor) {
+      await finalizePhoto(uploadReq.data.path, savedAuthor);
       return;
     }
+
+    // Sem assinatura conhecida: abre o pop-up para o convidado digitar o nome.
+    setUploading(false);
+    setSignatureName("");
+    setPendingPhotoPath(uploadReq.data.path);
+  }
+
+  async function finalizePhoto(storagePath: string, authorName: string) {
+    setUploading(true);
+    setFormError(null);
 
     const confirmRes = await fetchJson<Photo>(`/api/eventos/${event.slug}/galeria`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        visitorId,
-        storagePath: uploadReq.data.path,
-        author: authorName,
-      }),
+      body: JSON.stringify({ visitorId, storagePath, author: authorName }),
     });
 
     setUploading(false);
@@ -190,6 +196,7 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
     }
 
     window.localStorage.setItem("convite:autor", authorName);
+    setPendingPhotoPath(null);
     loadPhotos();
   }
 
@@ -343,6 +350,43 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
           )}
         </div>
       )}
+
+      {/* Assinatura da foto ---------------------------------------------- */}
+      <Sheet
+        open={pendingPhotoPath !== null}
+        onClose={() => {
+          setPendingPhotoPath(null);
+          setFormError("Foto não enviada — informe seu nome para assinar.");
+        }}
+        maxWidth={400}
+      >
+        <div className="mb-1.5 font-display text-[22px] font-semibold">Como devemos assinar sua foto?</div>
+        <p className="mb-4 text-sm text-ink-soft">Seu nome aparece junto da foto na galeria.</p>
+        <Field label="Seu nome">
+          <Input
+            value={signatureName}
+            onChange={(e) => setSignatureName(e.target.value)}
+            placeholder="Como devemos te chamar?"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && signatureName.trim() && pendingPhotoPath) {
+                void finalizePhoto(pendingPhotoPath, signatureName.trim());
+              }
+            }}
+          />
+        </Field>
+        <Button
+          full
+          size="lg"
+          className="mt-5"
+          disabled={signatureName.trim().length === 0 || uploading}
+          onClick={() => {
+            if (pendingPhotoPath) void finalizePhoto(pendingPhotoPath, signatureName.trim());
+          }}
+        >
+          {uploading ? "Enviando..." : "Enviar foto"}
+        </Button>
+      </Sheet>
 
       {/* Composer ----------------------------------------------------- */}
       <Sheet open={composeOpen} onClose={() => setComposeOpen(false)} maxWidth={430}>
