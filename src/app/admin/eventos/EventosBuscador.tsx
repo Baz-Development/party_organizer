@@ -108,10 +108,10 @@ function ListaEventos({
   return (
     <div className="overflow-hidden rounded-2xl bg-paper shadow-[0_8px_28px_rgba(0,0,0,0.04)]">
       <div className="overflow-x-auto">
-        <table style={{ minWidth: 760 }} className="w-full border-collapse text-left">
+        <table style={{ minWidth: 860 }} className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-line">
-              {["Evento", "Cliente anfitrião", "Data", "Cidade", "Estado", "Página"].map((h) => (
+              {["Evento", "Cliente anfitrião", "Data", "Cidade", "Estado", "Link", "Página"].map((h) => (
                 <th
                   key={h}
                   className="px-6 py-4 text-[12px] font-semibold uppercase tracking-wider text-ink-faint"
@@ -141,6 +141,16 @@ function ListaEventos({
                 </td>
                 <td className="px-6 py-4">
                   <Link
+                    href={eventUrl(e)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-1.5 text-[13px] font-semibold text-ink no-underline transition hover:bg-paper-2"
+                  >
+                    Abrir ↗
+                  </Link>
+                </td>
+                <td className="px-6 py-4">
+                  <Link
                     href={`/admin/eventos/${e.slug}/editor`}
                     className="text-[14px] font-semibold text-accent no-underline hover:underline"
                   >
@@ -151,7 +161,7 @@ function ListaEventos({
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-[15px] text-ink-faint">
+                <td colSpan={7}className="px-6 py-12 text-center text-[15px] text-ink-faint">
                   Nenhum evento encontrado.
                 </td>
               </tr>

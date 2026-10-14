@@ -5,6 +5,7 @@ import { EventPage } from "@/app/[id]/[slug]/EventPage";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Input, Textarea, Toggle } from "@/components/ui";
 import { contrastText } from "@/lib/color";
+import { eventUrl } from "@/lib/event-url";
 import { BACKGROUND_PRESETS, THEME_LIST, themeVars } from "@/lib/themes";
 import type {
   BarItem,
@@ -358,6 +359,14 @@ export function EditorForm({ event }: { event: EventSummary }) {
           Poucos ajustes, sempre com um resultado elegante. Tudo que você muda aparece na
           pré-visualização ao lado.
         </p>
+        <a
+          href={eventUrl(event)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-8 -mt-4 inline-flex items-center gap-1.5 rounded-lg border border-line-strong px-3.5 py-2 text-[13.5px] font-semibold text-ink no-underline transition hover:bg-paper-2"
+        >
+          Abrir página do evento ↗
+        </a>
 
         {/* Capa */}
         <Group title="Foto de capa">

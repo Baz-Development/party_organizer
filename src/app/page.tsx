@@ -1,5 +1,6 @@
 import { getShowcaseEvent } from "@/lib/db/featured";
 import { PARTNERS } from "@/lib/partners";
+import { proofCount } from "@/lib/proof-count";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Landing } from "./Landing";
 
@@ -11,5 +12,17 @@ export default async function Page() {
   const supabase = await createSupabaseServerClient();
   const demoEvent = await getShowcaseEvent(supabase);
 
-  return <Landing demoEvent={demoEvent} partners={PARTNERS} />;
+  // Filtro explícito: logado, a RLS também devolve os rascunhos do anfitrião.
+  const { count } = await supabase
+    .from("events")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "publicado");
+
+  return (
+    <Landing
+      demoEvent={demoEvent}
+      partners={PARTNERS}
+      partyCount={proofCount(count ?? 0)}
+    />
+  );
 }

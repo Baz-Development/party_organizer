@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { PanelNav } from "@/components/PanelNav";
 import { SairButton } from "@/components/SairButton";
 import { Badge } from "@/components/ui";
 import type { PlatformRevenue } from "@/lib/db/platform";
 import { ADMIN_NAV } from "./nav";
+import { eventUrl } from "@/lib/event-url";
 import { shortDate } from "@/lib/format";
 import { themeVars } from "@/lib/themes";
 import type { EventSummary, Profile } from "@/lib/types";
@@ -124,7 +126,7 @@ export function AdminPanel({
 
         {/* Eventos ----------------------------------------------------- */}
         <SectionHeader title="Eventos" />
-        <TableCard headers={["Evento", "Anfitrião", "Cidade", "Estado"]} minWidth={640}>
+        <TableCard headers={["Evento", "Anfitrião", "Cidade", "Estado", "Link"]} minWidth={720}>
           {events.map((e) => (
             <tr key={e.id} className="border-b border-[rgba(42,39,36,0.06)]">
               <td className="px-6 py-4 text-[15px] font-medium">{e.title}</td>
@@ -133,11 +135,21 @@ export function AdminPanel({
               <td className="px-6 py-4">
                 <Badge tone={e.status === "publicado" ? "accent" : "neutral"}>{e.status}</Badge>
               </td>
+              <td className="px-6 py-4">
+                <Link
+                  href={eventUrl(e)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-1.5 text-[13px] font-semibold text-ink no-underline transition hover:bg-paper-2"
+                >
+                  Abrir ↗
+                </Link>
+              </td>
             </tr>
           ))}
           {events.length === 0 && (
             <tr>
-              <td colSpan={4} className="px-6 py-12 text-center text-[15px] text-ink-faint">
+              <td colSpan={5}className="px-6 py-12 text-center text-[15px] text-ink-faint">
                 Nenhum evento cadastrado.
               </td>
             </tr>
