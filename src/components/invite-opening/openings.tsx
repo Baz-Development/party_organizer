@@ -218,7 +218,7 @@ const MAX_CANDLES = 12;
 function Candles({ onOpen, age }: OpeningProps) {
   const count = Math.min(age ?? 5, MAX_CANDLES);
   const [out, setOut] = useState<boolean[]>(() => Array(count).fill(false));
-  const [micState, setMicState] = useState<"idle" | "listening">("idle");
+  const [micState, setMicState] = useState<"idle" | "listening" | "denied" | "unavailable">("idle");
   const trigger = useTrigger(onOpen, 900);
   const wrapRef = useRef<HTMLDivElement>(null);
   const stopMic = useRef<(() => void) | null>(null);
@@ -261,9 +261,23 @@ function Candles({ onOpen, age }: OpeningProps) {
 
   // Opcional: só pede o microfone se o convidado escolher soprar.
   async function listen() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      // http fora de localhost (ex.: IP da rede no celular) não expõe o microfone.
+      setMicState("unavailable");
+      return;
+    }
+    // iOS Safari só libera o áudio se o contexto nascer dentro do toque.
+    const AudioCtx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    void ctx.resume();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const ctx = new AudioContext();
+      // Sem filtros: supressão de ruído/AGC do celular engolem o sopro.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+      await ctx.resume();
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
       ctx.createMediaStreamSource(stream).connect(analyser);
@@ -279,10 +293,11 @@ function Candles({ onOpen, age }: OpeningProps) {
       setMicState("listening");
       const loop = () => {
         analyser.getByteTimeDomainData(data);
-        let peak = 0;
-        for (const v of data) peak = Math.max(peak, Math.abs(v - 128));
-        loud = peak > 60 ? loud + 1 : 0;
-        if (loud > 4) {
+        let sum = 0;
+        for (const v of data) sum += (v - 128) * (v - 128);
+        const rms = Math.sqrt(sum / data.length);
+        loud = rms > 18 ? loud + 1 : 0;
+        if (loud > 6) {
           stop();
           blowAll();
           return;
@@ -291,7 +306,8 @@ function Candles({ onOpen, age }: OpeningProps) {
       };
       loop();
     } catch {
-      setMicState("idle"); // negou ou sem microfone: o deslize continua valendo
+      void ctx.close();
+      setMicState("denied"); // negou ou sem microfone: o deslize continua valendo
     }
   }
 
@@ -332,7 +348,7 @@ function Candles({ onOpen, age }: OpeningProps) {
         <div className="h-[56px] w-full" style={{ background: "#f6d7c3" }} />
         <div className="h-[8px] w-[110%] rounded-full bg-black/10" />
       </div>
-      {micState === "idle" && (
+      {(micState === "idle" || micState === "denied") && (
         <button
           type="button"
           onClick={listen}
@@ -340,6 +356,17 @@ function Candles({ onOpen, age }: OpeningProps) {
         >
           Soprar no microfone
         </button>
+      )}
+      {micState === "listening" && <p className="mt-5 text-[12px] opacity-70">Ouvindo… sopre perto do microfone</p>}
+      {micState === "denied" && (
+        <p className="mt-2 max-w-[260px] text-center text-[12px] opacity-70">
+          Microfone bloqueado. Libere nas permissões do navegador ou deslize o dedo sobre as velas.
+        </p>
+      )}
+      {micState === "unavailable" && (
+        <p className="mt-2 max-w-[260px] text-center text-[12px] opacity-70">
+          Microfone indisponível neste navegador. Deslize o dedo sobre as velas.
+        </p>
       )}
       <button
         type="button"
