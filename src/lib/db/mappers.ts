@@ -216,7 +216,7 @@ export const centsToReais = (cents: number): number => Math.round(cents) / 100;
  * ("Requirement: Visibilidade do estado do presente") vive na consulta que monta
  * esse argumento, não aqui.
  */
-export function toGift(row: GiftRow, reservedBy?: string): Gift {
+export function toGift(row: GiftRow, reservedBy?: string, imageUrl?: string): Gift {
   return {
     id: row.id,
     name: row.name,
@@ -230,6 +230,8 @@ export function toGift(row: GiftRow, reservedBy?: string): Gift {
     reservedBy,
     store: row.store ?? undefined,
     note: row.note ?? undefined,
+    imageUrl: imageUrl || undefined,
+    imagePath: row.image_path ?? undefined,
   };
 }
 

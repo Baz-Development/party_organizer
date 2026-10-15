@@ -127,7 +127,12 @@ export function GiftList({ event }: { event: EventSummary }) {
                     className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white"
                   >
                     <div className="relative aspect-[4/3] w-full">
-                      <ImageSlot placeholder={g.name} compact />
+                      {g.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- URL assinada de curta duração.
+                        <img src={g.imageUrl} alt={g.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <ImageSlot placeholder={g.name} compact />
+                      )}
                       {taken && !g.quota && (
                         <div className="pointer-events-none absolute right-2 top-2 rounded-full bg-[rgba(42,39,36,0.55)] px-2.5 py-1 text-[11px] tracking-wide text-paper">
                           {g.status === "comprado" ? "Já presenteado" : "Reservado"}
@@ -214,7 +219,12 @@ export function GiftList({ event }: { event: EventSummary }) {
 
         <div className="mb-6 flex items-center gap-3.5 rounded-2xl bg-paper-2 p-3.5">
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[10px]">
-            <ImageSlot placeholder="Item" compact />
+            {selected?.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- URL assinada de curta duração.
+              <img src={selected.imageUrl} alt={selected.name} className="h-full w-full object-cover" />
+            ) : (
+              <ImageSlot placeholder="Item" compact />
+            )}
           </div>
           <div>
             <div className="text-[15px] font-semibold leading-tight">{selected?.name}</div>

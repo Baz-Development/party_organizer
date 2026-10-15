@@ -47,6 +47,11 @@ export async function POST(
     );
   }
 
+  // O arquivo precisa ter sido emitido para este evento (primeiro segmento = event_id).
+  if (parsed.data.imagePath && !parsed.data.imagePath.startsWith(`${event.id}/`)) {
+    return NextResponse.json({ error: "Arquivo inválido." }, { status: 400 });
+  }
+
   try {
     const gift = await createGift(supabase, event.id, parsed.data);
     return NextResponse.json({ data: gift }, { status: 201 });

@@ -21,7 +21,9 @@ type GiftRowWithReservations = GiftRow & {
   gift_reservations: { buyer_name: string; status: string; created_at: string }[];
 };
 
-const GIFT_SELECT = "*, gift_reservations(buyer_name, status, created_at)";
+const IMAGE_URL_TTL_SECONDS = 3600;
+
+const GIFT_SELECT ="*, gift_reservations(buyer_name, status, created_at)";
 
 function pickReservedBy(reservations: GiftRowWithReservations["gift_reservations"]): string | undefined {
   const relevant = reservations
@@ -39,8 +41,19 @@ export async function listGifts(client: Client, eventId: string): Promise<Gift[]
 
   if (error) throw new DbError(error.message, "desconhecido");
 
-  return (data as unknown as GiftRowWithReservations[]).map((row) =>
-    toGift(row, pickReservedBy(row.gift_reservations)),
+  const rows = data as unknown as GiftRowWithReservations[];
+
+  return Promise.all(
+    rows.map(async (row) => {
+      let imageUrl: string | undefined;
+      if (row.image_path) {
+        const { data: signed } = await client.storage
+          .from("event-media")
+          .createSignedUrl(row.image_path, IMAGE_URL_TTL_SECONDS);
+        imageUrl = signed?.signedUrl;
+      }
+      return toGift(row, pickReservedBy(row.gift_reservations), imageUrl);
+    }),
   );
 }
 
@@ -85,6 +98,7 @@ export interface CreateGiftInput {
   store?: string;
   note?: string;
   quotaTarget?: number;
+  imagePath?: string;
 }
 
 export async function createGift(client: Client, eventId: string, input: CreateGiftInput): Promise<Gift> {
@@ -98,6 +112,7 @@ export async function createGift(client: Client, eventId: string, input: CreateG
       store: input.store ?? null,
       note: input.note ?? null,
       quota_target_cents: input.quotaTarget ?? null,
+      image_path: input.imagePath ?? null,
     })
     .select("*")
     .single();
@@ -113,6 +128,8 @@ export interface UpdateGiftInput {
   price?: number;
   store?: string;
   note?: string;
+  /** `null` remove a foto. */
+  imagePath?: string | null;
 }
 
 export async function updateGift(client: Client, giftId: string, input: UpdateGiftInput): Promise<Gift> {
@@ -122,6 +139,7 @@ export async function updateGift(client: Client, giftId: string, input: UpdateGi
   if (input.price !== undefined) patch.price_cents = input.price;
   if (input.store !== undefined) patch.store = input.store;
   if (input.note !== undefined) patch.note = input.note;
+  if (input.imagePath !== undefined) patch.image_path = input.imagePath;
 
   const { data, error } = await client.from("gifts").update(patch).eq("id", giftId).select("*").maybeSingle();
 

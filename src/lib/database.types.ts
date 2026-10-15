@@ -332,6 +332,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          image_path: string | null
           name: string
           note: string | null
           price_cents: number
@@ -347,6 +348,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          image_path?: string | null
           name: string
           note?: string | null
           price_cents: number
@@ -362,6 +364,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          image_path?: string | null
           name?: string
           note?: string | null
           price_cents?: number

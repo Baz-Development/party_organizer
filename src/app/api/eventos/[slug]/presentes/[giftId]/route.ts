@@ -31,6 +31,10 @@ export async function PATCH(
     );
   }
 
+  if (parsed.data.imagePath && !parsed.data.imagePath.startsWith(`${event.id}/`)) {
+    return NextResponse.json({ error: "Arquivo inválido." }, { status: 400 });
+  }
+
   try {
     const gift = await updateGift(supabase, giftId, parsed.data);
     return NextResponse.json({ data: gift });

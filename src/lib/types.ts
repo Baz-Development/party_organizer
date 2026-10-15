@@ -174,6 +174,10 @@ export interface Gift {
   reservedBy?: string;
   store?: string;
   note?: string;
+  /** URL assinada, de curta duração — resolvida na listagem. */
+  imageUrl?: string;
+  /** Path no Storage; só o painel precisa dele (para manter ou trocar a foto). */
+  imagePath?: string;
 }
 
 export type ModerationPolicy = "previa" | "imediata";

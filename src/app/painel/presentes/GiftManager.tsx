@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ImageSlot } from "@/components/ImageSlot";
 import { Badge, Button, Field, Input, Sheet, Toggle } from "@/components/ui";
 import { brl } from "@/lib/format";
 import type { Gift, GiftStatus } from "@/lib/types";
@@ -18,6 +19,103 @@ const STATUS_TONE: Record<GiftStatus, "neutral" | "warn" | "ok"> = {
 };
 
 type EventLite = { slug: string; title: string };
+
+/**
+ * Envia a foto direto ao Storage por URL assinada (mesmo fluxo da capa) e
+ * devolve o path para ser gravado junto do presente. Lança com a mensagem a exibir.
+ */
+async function uploadGiftImage(eventSlug: string, file: File): Promise<string> {
+  const uploadRes = await fetch(`/api/eventos/${eventSlug}/capa/upload`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType: file.type }),
+  });
+  const uploadBody = await uploadRes.json().catch(() => null);
+  if (!uploadRes.ok) {
+    throw new Error(uploadBody?.error ?? "Não foi possível preparar o envio.");
+  }
+
+  const { path, signedUrl } = uploadBody.data as { path: string; signedUrl: string };
+  const putRes = await fetch(signedUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!putRes.ok) throw new Error("Não foi possível enviar o arquivo.");
+
+  return path;
+}
+
+/** Seletor de foto do presente: prévia + escolher/remover. */
+function GiftImagePicker({
+  eventSlug,
+  previewUrl,
+  onChange,
+}: {
+  eventSlug: string;
+  previewUrl: string | null;
+  /** `path` novo, ou `null` ao remover; `preview` é a URL local para exibir já. */
+  onChange: (path: string | null, preview: string | null) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function pick(file: File) {
+    setUploading(true);
+    setError(null);
+    try {
+      const path = await uploadGiftImage(eventSlug, file);
+      onChange(path, URL.createObjectURL(file));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível enviar a foto.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-paper-2 p-3">
+      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+        {previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- prévia local/URL assinada de curta duração.
+          <img src={previewUrl} alt="Foto do presente" className="h-full w-full object-cover" />
+        ) : (
+          <ImageSlot placeholder="Foto" compact />
+        )}
+      </div>
+      <div className="flex-1">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => input.current?.click()}
+          >
+            {uploading ? "Enviando..." : previewUrl ? "Trocar foto" : "Enviar foto"}
+          </Button>
+          {previewUrl && !uploading && (
+            <Button size="sm" variant="ghost" onClick={() => onChange(null, null)}>
+              Remover
+            </Button>
+          )}
+        </div>
+        <input
+          ref={input}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void pick(file);
+          }}
+        />
+        {error && <p className="mt-1.5 text-[12px] text-danger">{error}</p>}
+      </div>
+    </div>
+  );
+}
 
 export function GiftManager({ event }: { event: EventLite }) {
   const [gifts, setGifts] = useState<Gift[] | null>(null);
@@ -116,6 +214,14 @@ export function GiftManager({ event }: { event: EventLite }) {
                 key={g.id}
                 className="flex flex-wrap items-center gap-4 rounded-2xl bg-paper p-5 shadow-[0_8px_28px_rgba(0,0,0,0.04)]"
               >
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+                  {g.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL assinada de curta duração.
+                    <img src={g.imageUrl} alt={g.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageSlot placeholder="Sem foto" compact />
+                  )}
+                </div>
                 <div className="min-w-[200px] flex-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[16px] font-semibold">{g.name}</span>
@@ -224,10 +330,14 @@ function AddGiftSheet({
   const [note, setNote] = useState("");
   const [isQuota, setIsQuota] = useState(false);
   const [quotaTarget, setQuotaTarget] = useState("");
+  const [imagePath, setImagePath] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   function reset() {
+    setImagePath(null);
+    setImagePreview(null);
     setName("");
     setCategory("");
     setPrice("");
@@ -256,6 +366,7 @@ function AddGiftSheet({
         store: store.trim() || undefined,
         note: note.trim() || undefined,
         quotaTarget: isQuota ? Number(quotaTarget) : undefined,
+        imagePath: imagePath ?? undefined,
       }),
     });
     const body = await res.json().catch(() => null);
@@ -284,6 +395,14 @@ function AddGiftSheet({
           Adicionar presente
         </div>
         <div className="flex flex-col gap-3.5">
+          <GiftImagePicker
+            eventSlug={eventSlug}
+            previewUrl={imagePreview}
+            onChange={(path, preview) => {
+              setImagePath(path);
+              setImagePreview(preview);
+            }}
+          />
           <Field label="Nome">
             <Input
               value={name}
@@ -383,6 +502,9 @@ function EditGiftSheet({
   const [price, setPrice] = useState(String(gift.price));
   const [store, setStore] = useState(gift.store ?? "");
   const [note, setNote] = useState(gift.note ?? "");
+  // `undefined` = não mexeu na foto; string = nova; null = remover.
+  const [imagePath, setImagePath] = useState<string | null | undefined>(undefined);
+  const [imagePreview, setImagePreview] = useState<string | null>(gift.imageUrl ?? null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -398,6 +520,7 @@ function EditGiftSheet({
         price: Number(price),
         store: store.trim(),
         note: note.trim(),
+        imagePath,
       }),
     });
     const body = await res.json().catch(() => null);
@@ -422,6 +545,14 @@ function EditGiftSheet({
           Editar presente
         </div>
         <div className="flex flex-col gap-3.5">
+          <GiftImagePicker
+            eventSlug={eventSlug}
+            previewUrl={imagePreview}
+            onChange={(path, preview) => {
+              setImagePath(path);
+              setImagePreview(preview);
+            }}
+          />
           <Field label="Nome">
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </Field>

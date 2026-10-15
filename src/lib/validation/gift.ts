@@ -23,6 +23,7 @@ export const createGiftSchema = z.object({
     .positive("A meta da cota precisa ser maior que zero.")
     .transform(reaisToCents)
     .optional(),
+  imagePath: z.string().trim().min(1).max(300).optional(),
 });
 
 export const updateGiftSchema = z.object({
@@ -31,6 +32,7 @@ export const updateGiftSchema = z.object({
   price: z.number().positive("O preço precisa ser maior que zero.").transform(reaisToCents).optional(),
   store: optionalText,
   note: optionalText,
+  imagePath: z.string().trim().min(1).max(300).nullable().optional(),
 });
 
 export const startGiftCheckoutSchema = z.object({
