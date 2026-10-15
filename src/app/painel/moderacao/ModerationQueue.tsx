@@ -23,7 +23,8 @@ async function patchJson(url: string, body: unknown) {
  * devolveu.
  */
 export function ModerationQueue({ event }: { event: EventSummary }) {
-  const [tab, setTab] = useState<Tab>("galeria");
+  const tabs = (["galeria", "mural"] as const).filter((t) => event.modules.includes(t));
+  const [tab, setTab] = useState<Tab>(tabs[0] ?? "galeria");
   const [status, setStatus] = useState<"pendente" | "aprovada" | "oculta">("pendente");
 
   // O mural não tem estado "pendente" — só "aprovada"/"oculta".
@@ -79,12 +80,13 @@ export function ModerationQueue({ event }: { event: EventSummary }) {
     <main className="mx-auto max-w-[900px] px-6 py-10">
       <h1 className="mb-1 font-display text-[26px] font-semibold">Moderação</h1>
       <p className="mb-6 text-sm text-ink-soft">
-        Galeria: {event.moderationPolicy === "previa" ? "aprovação prévia" : "publicação imediata"}.
-        {" "}Mural: publicação imediata, sem fila — só ocultar ou remover.
+        {tabs.includes("galeria") &&
+          `Galeria: ${event.moderationPolicy === "previa" ? "aprovação prévia" : "publicação imediata"}. `}
+        {tabs.includes("mural") && "Mural: publicação imediata, sem fila — só ocultar ou remover."}
       </p>
 
       <div className="mb-5 flex gap-2 rounded-full bg-paper-2 p-1 w-fit">
-        {(["galeria", "mural"] as const).map((t) => (
+        {tabs.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}

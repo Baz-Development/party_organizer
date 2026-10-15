@@ -5,14 +5,8 @@ import { requireSession } from "@/lib/auth/guards";
 import { listEvents } from "@/lib/db/events";
 import { eventUrl } from "@/lib/event-url";
 import { themeVars } from "@/lib/themes";
+import type { ModuleId } from "@/lib/types";
 
-const ITEMS = [
-  { href: "/painel", label: "Visão geral" },
-  { href: "/painel/convidados", label: "Convidados" },
-  { href: "/painel/presentes", label: "Presentes" },
-  { href: "/painel/editor", label: "Editor da página" },
-  { href: "/painel/moderacao", label: "Moderação" },
-];
 
 export default async function PainelLayout({
   children,
@@ -26,6 +20,19 @@ export default async function PainelLayout({
   const events = await listEvents(supabase, { hostProfileId: user.id });
   const event = events[0];
 
+  // O menu segue os módulos do evento; sem evento, mostra tudo (o painel de
+  // quem ainda não criou nada).
+  const has = (m: ModuleId) => !event || event.modules.includes(m);
+  const items = [
+    { href: "/painel", label: "Visão geral" },
+    { href: "/painel/convidados", label: "Convidados" },
+    ...(has("presentes") ? [{ href: "/painel/presentes", label: "Presentes" }] : []),
+    { href: "/painel/editor", label: "Editor da página" },
+    ...(has("galeria") || has("mural")
+      ? [{ href: "/painel/moderacao", label: "Moderação" }]
+      : []),
+  ];
+
   return (
     <div
       style={themeVars(event ?? { themeKey: "dourado" })}
@@ -33,7 +40,7 @@ export default async function PainelLayout({
     >
       <PanelNav
         brand="Painel"
-        items={ITEMS}
+        items={items}
         right={
           <div className="flex items-center gap-2">
             {event && (

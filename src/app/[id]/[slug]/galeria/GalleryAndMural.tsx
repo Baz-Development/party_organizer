@@ -16,7 +16,10 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<{ ok: bool
 }
 
 export function GalleryAndMural({ event }: { event: EventSummary }) {
-  const [tab, setTab] = useState<"galeria" | "mural">("galeria");
+  // Só as abas dos módulos que o evento tem: quem criou o evento sem mural não
+  // vê a aba do mural (e vice-versa).
+  const tabs = (["galeria", "mural"] as const).filter((t) => event.modules.includes(t));
+  const [tab, setTab] = useState<"galeria" | "mural">(tabs[0] ?? "galeria");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [notes, setNotes] = useState<MuralMessage[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(true);
@@ -226,7 +229,7 @@ export function GalleryAndMural({ event }: { event: EventSummary }) {
     <GuestShell event={event}>
       <div className="px-6 pt-4">
         <div className="mb-6 flex gap-2 rounded-full bg-paper-2 p-1">
-          {(["galeria", "mural"] as const).map((t) => (
+          {tabs.map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}

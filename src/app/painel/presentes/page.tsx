@@ -12,7 +12,7 @@ export default async function Page() {
   const event = events[0];
 
   // Sem evento não há catálogo de presentes para gerenciar.
-  if (!event) redirect("/painel");
+  if (!event || !event.modules.includes("presentes")) redirect("/painel");
 
   return <GiftManager event={event} />;
 }

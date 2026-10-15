@@ -11,7 +11,9 @@ export default async function Page() {
   const events = await listEvents(supabase, { hostProfileId: user.id });
   const event = events[0];
 
-  if (!event) redirect("/painel");
+  if (!event || (!event.modules.includes("galeria") && !event.modules.includes("mural"))) {
+    redirect("/painel");
+  }
 
   return <ModerationQueue event={event} />;
 }

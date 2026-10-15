@@ -60,6 +60,11 @@ export function PainelOverview({
   const [copied, setCopied] = useState(false);
   const publicUrl = `${siteUrl.replace(/^https?:\/\//, "")}${eventUrl(event)}`;
 
+  const hasGallery = event.modules.includes("galeria");
+  const hasMural = event.modules.includes("mural");
+
+  // Os atalhos seguem os módulos do evento: sem presentes, galeria ou mural,
+  // o atalho some em vez de levar a uma página inexistente.
   const shortcuts = [
     {
       title: "Convidados",
@@ -71,16 +76,30 @@ export function PainelOverview({
       desc: "Personalize fotos, textos e cor de destaque do seu convite.",
       href: "/painel/editor",
     },
-    {
-      title: "Presentes",
-      desc: "Cadastre a lista de presentes e acompanhe as contribuições recebidas.",
-      href: "/painel/presentes",
-    },
-    {
-      title: "Galeria e mural",
-      desc: "Aprove fotos e recados enviados pelos convidados.",
-      href: eventUrl(event, "/galeria"),
-    },
+    ...(event.modules.includes("presentes")
+      ? [
+          {
+            title: "Presentes",
+            desc: "Cadastre a lista de presentes e acompanhe as contribuições recebidas.",
+            href: "/painel/presentes",
+          },
+        ]
+      : []),
+    ...(hasGallery || hasMural
+      ? [
+          {
+            title:
+              hasGallery && hasMural ? "Galeria e mural" : hasGallery ? "Galeria" : "Mural",
+            desc:
+              hasGallery && hasMural
+                ? "Aprove fotos e recados enviados pelos convidados."
+                : hasGallery
+                  ? "Aprove as fotos enviadas pelos convidados."
+                  : "Gerencie os recados enviados pelos convidados.",
+            href: "/painel/moderacao",
+          },
+        ]
+      : []),
   ];
 
   return (
