@@ -121,7 +121,7 @@ abra o link mágico na caixa de e-mail local (`http://127.0.0.1:55424`).
 
 ### Fluxo de acesso do cliente
 
-A criação de evento **não** é self-service. A Equipe Villa Glam (`admin`):
+A criação de evento **não** é self-service. A Equipe ALF Eventos (`admin`):
 
 1. cadastra a conta do cliente em `/admin/clientes` (nome + e-mail) — o perfil
    nasce já provisionado, sem e-mail nenhum ainda;

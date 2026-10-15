@@ -34,7 +34,7 @@ const buildGroups = (
     },
     {
       title: "Cliente (quem organiza a festa)",
-      desc: "Gestão do próprio evento, criado pela Equipe Villa Glam.",
+      desc: "Gestão do próprio evento, criado pela Equipe ALF Eventos.",
       items: [
         { href: "/onboarding", label: "Página em preparação", note: "Informativa — o admin monta a página" },
         { href: "/sem-acesso", label: "Conta sem acesso", note: "Autenticou mas não foi provisionado" },
@@ -45,7 +45,7 @@ const buildGroups = (
     },
     {
       title: "Plataforma",
-      desc: "Administração do produto pela Equipe Villa Glam.",
+      desc: "Administração do produto pela Equipe ALF Eventos.",
       items: [
         { href: "/admin", label: "Painel Admin", note: "Métricas, eventos e clientes recentes" },
         { href: "/admin/clientes", label: "Contas de cliente", note: "Cadastrar (convite) e listar" },

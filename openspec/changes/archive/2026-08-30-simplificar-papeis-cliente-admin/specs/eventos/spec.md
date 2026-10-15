@@ -33,7 +33,7 @@ encerrado. Somente eventos publicados MUST ser visíveis ao público.
 
 ### Requirement: Vínculo opcional com organização
 
-**Reason**: O MVP Villa Glam não tem organizações parceiras. Cada evento pertence
+**Reason**: O MVP ALF Eventos não tem organizações parceiras. Cada evento pertence
 a um único anfitrião (`cliente`), e o `admin` enxerga todos. A coluna
 `events.organization_id` e o painel `/organizacao` são removidos no mesmo change.
 

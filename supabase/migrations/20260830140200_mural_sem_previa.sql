@@ -1,4 +1,4 @@
--- Mural sem aprovação prévia (ata Villa Glam, seção 4: "Moderação — Não
+-- Mural sem aprovação prévia (ata ALF Eventos, seção 4: "Moderação — Não
 -- existiria"). O recado passa a nascer sempre `aprovada`, independentemente
 -- da `moderation_policy` do evento — que continua valendo para a galeria.
 -- O anfitrião mantém ocultar/remover (moderação reativa), sem fila de

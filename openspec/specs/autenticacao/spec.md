@@ -65,7 +65,7 @@ processo administrativo, nunca por fluxo exposto.
 ### Requirement: Papéis de acesso
 
 O sistema MUST distinguir exatamente dois papéis autenticados — `cliente`
-(anfitrião do evento) e `admin` (Equipe Villa Glam) — e conceder a cada um apenas
+(anfitrião do evento) e `admin` (Equipe ALF Eventos) — e conceder a cada um apenas
 o alcance correspondente. O papel de `admin` MUST NOT ser atribuível por qualquer
 fluxo exposto na aplicação.
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define o que o admin (Equipe Villa Glam) faz para colocar clientes na plataforma:
+Define o que o admin (Equipe ALF Eventos) faz para colocar clientes na plataforma:
 provisiona contas de cliente antes do primeiro acesso, acompanha essas contas
 pelo painel de admin e cria as páginas de evento já atribuídas ao cliente
 anfitrião.

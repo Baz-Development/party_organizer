@@ -1,6 +1,6 @@
 ## Why
 
-Dois pontos da ata Villa Glam ainda divergem do produto:
+Dois pontos da ata ALF Eventos ainda divergem do produto:
 
 1. **Tipos de evento** (seção 2): a ata lista casamento, debutante, corporativo,
    aniversário, formatura, confraternização e "outros". O enum `event_kind` hoje

@@ -18,7 +18,7 @@ import type { ShowcaseEvent } from "@/lib/db/featured";
 const PRICE_TAGLINE = "Preço por evento — sem mensalidade eterna.";
 
 /** Link de agendamento da call de 15 min (Calendly, Cal.com, WhatsApp...). */
-const CALL_URL = process.env.NEXT_PUBLIC_CALL_URL || "https://wa.me/";
+const CALL_URL = process.env.NEXT_PUBLIC_CALL_URL || "https://w.app/alfeventos";
 
 const F = landingFeatures;
 

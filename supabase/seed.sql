@@ -120,7 +120,7 @@ values
 -- exibição e papel. O papel de admin nunca é atribuível pela aplicação — só
 -- por seed ou operação administrativa, ambas sem sessão. As contas de cliente
 -- entram como provisionadas pelo admin, refletindo o fluxo da ata (a Equipe
--- Villa Glam cadastra o cliente antes do primeiro acesso).
+-- ALF Eventos cadastra o cliente antes do primeiro acesso).
 insert into public.profiles (id, email, display_name, role, provisioned)
 values
   ('09f235d8-b241-5023-a494-b841bd14ffac'::uuid, 'admin@exemplo.local', 'Admin da plataforma', 'admin'::public.user_role, false),

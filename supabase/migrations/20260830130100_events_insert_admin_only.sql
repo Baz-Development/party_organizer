@@ -1,6 +1,6 @@
 -- Criação de evento restrita ao admin.
 --
--- Na ata Villa Glam a página do evento é montada pela Equipe Villa Glam, que
+-- Na ata ALF Eventos a página do evento é montada pela Equipe ALF Eventos, que
 -- aponta a conta de cliente anfitriã no ato. O cliente continua administrando
 -- o próprio evento (events_update / can_manage_event seguem iguais), mas não
 -- cria mais nenhum — o self-service de `/onboarding` sai junto no código.

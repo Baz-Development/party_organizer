@@ -29,7 +29,7 @@ export default async function PainelDoCliente() {
           Sua página está sendo preparada
         </h1>
         <p className="mb-8 text-[16px] leading-relaxed text-ink-soft">
-          A Equipe Villa Glam monta a página do seu evento e vincula a sua
+          A Equipe ALF Eventos monta a página do seu evento e vincula a sua
           conta como anfitriã. Assim que estiver pronta, ela aparece aqui e você
           passa a editar o conteúdo e moderar a galeria e o mural.
         </p>

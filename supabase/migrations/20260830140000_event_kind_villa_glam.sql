@@ -1,4 +1,4 @@
--- Catálogo de tipos de evento alinhado à ata Villa Glam (seção 2):
+-- Catálogo de tipos de evento alinhado à ata ALF Eventos (seção 2):
 -- casamento, debutante, corporativo, aniversário, formatura, confraternização,
 -- outros. Faltavam `aniversario`, `confraternizacao` e `outros`.
 --

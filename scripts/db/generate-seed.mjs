@@ -213,7 +213,7 @@ ${everyone
 -- exibição e papel. O papel de admin nunca é atribuível pela aplicação — só
 -- por seed ou operação administrativa, ambas sem sessão. As contas de cliente
 -- entram como provisionadas pelo admin, refletindo o fluxo da ata (a Equipe
--- Villa Glam cadastra o cliente antes do primeiro acesso).
+-- ALF Eventos cadastra o cliente antes do primeiro acesso).
 insert into public.profiles (id, email, display_name, role, provisioned)
 values
 ${everyone

@@ -1,4 +1,4 @@
--- Provisionamento de contas de cliente pela Equipe Villa Glam (admin).
+-- Provisionamento de contas de cliente pela Equipe ALF Eventos (admin).
 --
 -- O perfil do cliente deixa de nascer só no self-service: o admin convida a
 -- pessoa por e-mail (`auth.admin.inviteUserByEmail`), o que cria a linha em

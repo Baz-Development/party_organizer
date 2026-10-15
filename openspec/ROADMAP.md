@@ -54,7 +54,7 @@ como planejado — decisões de schema tomadas na hora, não seis changes antes.
 
 | Change | Efeito |
 | --- | --- |
-| `simplificar-papeis-cliente-admin` | Remove o módulo `organizacoes` (papel `organizacao`, tabelas `organizations`/`organization_members`, `/organizacao`, `events.organization_id`). O MVP Villa Glam tem só dois papéis autenticados: `cliente` e `admin`. |
+| `simplificar-papeis-cliente-admin` | Remove o módulo `organizacoes` (papel `organizacao`, tabelas `organizations`/`organization_members`, `/organizacao`, `events.organization_id`). O MVP ALF Eventos tem só dois papéis autenticados: `cliente` e `admin`. |
 
 ## Fluxo por change
 

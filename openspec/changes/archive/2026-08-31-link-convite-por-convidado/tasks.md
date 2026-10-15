@@ -48,4 +48,4 @@
 - [x] 7.2 Teste do `GET convidados` devolvendo `inviteUrl` só para quem administra
 - [x] 7.3 `npm run lint` + `npm test` + `tsc --noEmit` limpos
 - [ ] 7.4 Verificação manual: adicionar convidado → copiar link → abrir em aba anônima → confirmar → aparece em `/painel/convidados`; e-mail de convite visível no Mailpit
-- [x] 7.5 Atualizar `docs/alinhamento-villa-glam.md` se mencionar lista aberta
+- [x] 7.5 Atualizar `docs/alinhamento-alf-eventos.md` se mencionar lista aberta

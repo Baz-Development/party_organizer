@@ -1,7 +1,7 @@
 ## Why
 
-A ata do projeto Villa Glam (`docs/ATA DE REUNIÃO — PROJETO APP VILLA GLAM.pdf`)
-define apenas dois públicos autenticados: a **Equipe Villa Glam** (que opera a
+A ata do projeto ALF Eventos (`docs/ATA DE REUNIÃO — PROJETO APP ALF EVENTOS.pdf`)
+define apenas dois públicos autenticados: a **Equipe ALF Eventos** (que opera a
 plataforma) e o **Anfitrião/contratante** (dono de um evento). O `convidado`
 continua sem conta. Não há "organização parceira" no MVP.
 
@@ -14,7 +14,7 @@ que o MVP não usa e que diverge da ata.
 ## What Changes
 
 - **BREAKING**: o papel `organizacao` deixa de existir. Passam a existir dois
-  papéis autenticados: `cliente` (anfitrião) e `admin` (Equipe Villa Glam).
+  papéis autenticados: `cliente` (anfitrião) e `admin` (Equipe ALF Eventos).
 - A área `/organizacao` e o guard `requireOrganizationMember` são removidos.
 - A autorização de evento deixa de considerar vínculo com organização:
   `can_manage_event` passa a ser "anfitrião OU admin".

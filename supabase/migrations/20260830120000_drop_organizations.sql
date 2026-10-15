@@ -1,6 +1,6 @@
--- Remove o conceito de organização parceira do MVP Villa Glam.
+-- Remove o conceito de organização parceira do MVP ALF Eventos.
 --
--- A ata define só dois públicos autenticados: a Equipe Villa Glam (`admin`) e o
+-- A ata define só dois públicos autenticados: a Equipe ALF Eventos (`admin`) e o
 -- Anfitrião (`cliente`). O papel `organizacao`, as tabelas `organizations` /
 -- `organization_members`, o vínculo `events.organization_id` e todo ramo
 -- `is_org_*` das políticas saem aqui.

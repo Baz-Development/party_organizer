@@ -2,8 +2,8 @@
 
 ### Requirement: Cadastro de organização parceira
 
-**Reason**: Organizações parceiras não fazem parte do MVP Villa Glam. A ata
-define só dois públicos autenticados (Equipe Villa Glam e Anfitrião). O cadastro
+**Reason**: Organizações parceiras não fazem parte do MVP ALF Eventos. A ata
+define só dois públicos autenticados (Equipe ALF Eventos e Anfitrião). O cadastro
 comercial de parceiros sai do produto até que exista demanda real.
 
 ### Requirement: Membros da organização

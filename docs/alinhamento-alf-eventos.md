@@ -1,14 +1,14 @@
-# Alinhamento à ata Villa Glam — plano de execução
+# Alinhamento à ata ALF Eventos — plano de execução
 
 Este documento acompanha os três changes de OpenSpec criados para levar o
 produto ao modelo descrito em
-`docs/ATA DE REUNIÃO — PROJETO APP VILLA GLAM.pdf`.
+`docs/ATA DE REUNIÃO — PROJETO APP ALF EVENTOS.pdf`.
 
 ## O que muda no modelo de usuários
 
 | Antes                                                         | Depois                                                                                                      |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `cliente`, `organizacao`, `admin` + convidado sem conta | **`admin`** (Equipe Villa Glam), **`cliente`** (anfitrião) + **convidado** sem conta |
+| `cliente`, `organizacao`, `admin` + convidado sem conta | **`admin`** (Equipe ALF Eventos), **`cliente`** (anfitrião) + **convidado** sem conta |
 | Cliente cria a própria página em`/onboarding`             | **Admin** cadastra o cliente e cria a página, atribuindo o anfitrião                                |
 | Painel`/organizacao`, tabelas `organizations`             | Removidos                                                                                                   |
 | Mural herda a moderação do evento                           | Mural publica na hora; anfitrião só oculta/remove                                                         |

@@ -1,6 +1,6 @@
 ## Why
 
-Na ata Villa Glam o fluxo comercial é: a Equipe Villa Glam fecha o contrato,
+Na ata ALF Eventos o fluxo comercial é: a Equipe ALF Eventos fecha o contrato,
 **cadastra o cliente** e **monta a página do evento**; o cliente então recebe o
 acesso e passa a cuidar do conteúdo e da moderação da sua página. O painel
 administrativo da ata (seção 7) lista "Criar eventos", "Editar eventos" e

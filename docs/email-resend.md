@@ -55,7 +55,7 @@ Settings → Environment Variables):
 
 | Variável | Valor |
 | --- | --- |
-| `EMAIL_FROM_ADDRESS` | Remetente, no domínio verificado. Ex.: `Villa Glam <no-reply@alfeventos.com.br>` ou só `no-reply@alfeventos.com.br`. |
+| `EMAIL_FROM_ADDRESS` | Remetente, no domínio verificado. Ex.: `ALF Eventos <no-reply@alfeventos.com.br>` ou só `no-reply@alfeventos.com.br`. |
 | `EMAIL_FROM_DOMAIN` | O domínio verificado. Ex.: `alfeventos.com.br`. |
 | `EMAIL_PROVIDER_API_KEY` | A API key do Resend (`re_...`). Hoje o mock ignora; o provedor do Resend vai lê-la. |
 | `EMAIL_QUEUE_CRON_SECRET` | Segredo compartilhado entre o `pg_cron` e `POST /api/interno/fila-email/processar`. Gere um valor aleatório longo. |
