@@ -35,7 +35,7 @@ export async function loadPublicEvent(
   // recentes. A galeria completa e paginada vive em /[id]/[slug]/galeria.
   const gallery = event.modules.includes("galeria")
     ? (await listPhotos(supabase, event.id, { limit: 6, status: "aprovada" })).items.map(
-        (p) => p.caption || `Foto de ${p.author}`,
+        (p) => ({ id: p.id, url: p.url, label: p.caption || `Foto de ${p.author}` }),
       )
     : [];
 

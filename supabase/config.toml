@@ -251,6 +251,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Link mágico via token_hash: funciona mesmo se o e-mail for aberto em outro
+# navegador/dispositivo (o fluxo PKCE exige o cookie do navegador que pediu).
+[auth.email.template.magic_link]
+subject = "Seu link de acesso"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Seu link de acesso"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

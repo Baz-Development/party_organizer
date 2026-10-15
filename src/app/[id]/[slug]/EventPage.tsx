@@ -240,8 +240,13 @@ export function EventPage({ event }: { event: EventSummary }) {
             <h2 className="mb-8 font-display text-[clamp(26px,4vw,38px)] font-semibold">Galeria</h2>
             <div className="mx-auto grid max-w-[960px] grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5">
               {event.gallery.map((g) => (
-                <div key={g} className="aspect-square overflow-hidden rounded-xl sm:aspect-[4/3]">
-                  <ImageSlot placeholder={g} />
+                <div key={g.id} className="aspect-square overflow-hidden rounded-xl sm:aspect-[4/3]">
+                  {g.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL assinada, de curta duração.
+                    <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageSlot placeholder={g.label} />
+                  )}
                 </div>
               ))}
             </div>

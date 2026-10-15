@@ -94,7 +94,8 @@ export interface EventSummary {
     signatureDesc?: string;
     items: BarItem[];
   };
-  gallery: string[];
+  /** Prévia das fotos aprovadas: `url` é assinada e de curta duração. */
+  gallery: { id: string; url: string; label: string }[];
   status: "rascunho" | "publicado" | "encerrado";
   /** ISO date-time. Ausente = respostas aceitas até o evento ser encerrado. */
   rsvpDeadline?: string;
