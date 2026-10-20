@@ -16,7 +16,9 @@ export type ModuleId =
   | "mural"
   | "cardapio"
   | "bar"
-  | "amigo-secreto";
+  | "amigo-secreto"
+  /** Sorteio de prêmios conduzido pela anfitriã — só painel, sem seção pública. */
+  | "sorteios";
 
 export type ThemeKey = "oliva" | "terracota" | "marinho" | "dourado";
 
@@ -213,6 +215,75 @@ export interface SecretSantaParticipant {
   wishlist: string[];
   joinedAt: string;
   hasDrawn: boolean;
+}
+
+export type RaffleStatus = "aberto" | "em_andamento" | "encerrado";
+
+/**
+ * Quem concorre: `selecionados` = marcados à mão pela anfitriã; `todos` = toda
+ * a lista de convidados; `confirmados` = só quem confirmou presença. Nos dois
+ * últimos a lista é montada pelo banco quando o sorteio começa.
+ */
+export type RaffleParticipantMode = "selecionados" | "todos" | "confirmados";
+
+/** Um prêmio do sorteio. `quantity` = quantos vencedores levam este prêmio. */
+export interface RafflePrize {
+  id: string;
+  name: string;
+  description?: string;
+  quantity: number;
+  /** Ordem em que o prêmio é sorteado no palco (crescente). */
+  position: number;
+  /** URL assinada, de curta duração. */
+  imageUrl?: string;
+  /** Path no Storage; só o painel precisa dele (para manter ou trocar a foto). */
+  imagePath?: string;
+}
+
+export interface RaffleParticipant {
+  id: string;
+  /** `undefined` quando o convidado foi removido depois de entrar no sorteio. */
+  guestId?: string;
+  name: string;
+}
+
+export interface RaffleResult {
+  id: string;
+  participantId: string;
+  name: string;
+  /** `undefined` = suplente. */
+  prizeId?: string;
+  sequence: number;
+  /** `ausente`: foi sorteado mas não estava presente — a vaga voltou a ficar livre. */
+  status: "valido" | "ausente";
+  /** ISO date-time. */
+  drawnAt: string;
+}
+
+/** Linha da listagem de sorteios do evento. */
+export interface RaffleSummary {
+  id: string;
+  title: string;
+  description?: string;
+  status: RaffleStatus;
+  participantMode: RaffleParticipantMode;
+  alternatesCount: number;
+  /**
+   * Quem concorre. Num modo automático ainda aberto, é a prévia (convidados
+   * elegíveis agora) — a lista definitiva só é gravada ao começar.
+   */
+  participantCount: number;
+  /** Soma das quantidades dos prêmios — quantos vencedores o sorteio terá. */
+  winnerSlots: number;
+  /** Resultados válidos já sorteados (vencedores + suplentes). */
+  drawnCount: number;
+  createdAt: string;
+}
+
+export interface Raffle extends RaffleSummary {
+  prizes: RafflePrize[];
+  participants: RaffleParticipant[];
+  results: RaffleResult[];
 }
 
 export interface Activity {

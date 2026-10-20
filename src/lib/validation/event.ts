@@ -36,6 +36,7 @@ export const MODULE_IDS = [
   "cardapio",
   "bar",
   "amigo-secreto",
+  "sorteios",
 ] as const;
 
 /**

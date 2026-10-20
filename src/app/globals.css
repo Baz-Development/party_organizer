@@ -381,3 +381,174 @@ input[type="radio"] {
     animation: none !important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Palco do sorteio (src/app/painel/sorteios/[id]/palco)
+   Fundo preto luxo com feixes de luz, poeira dourada subindo, urna 3D
+   de nomes e revelação com cartão girando. Tudo deriva de --accent /
+   --accent-soft, então segue o tema do evento.
+---------------------------------------------------------------- */
+.stage-bg {
+  background:
+    radial-gradient(1100px 620px at 50% 115%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%),
+    radial-gradient(900px 480px at 50% -12%, color-mix(in srgb, var(--accent-soft) 16%, transparent), transparent 66%),
+    radial-gradient(circle at 50% 50%, #141210 0%, #080808 70%);
+}
+.stage-vignette {
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+}
+.stage-beam {
+  position: absolute;
+  top: -15%;
+  left: var(--x);
+  width: 34vw;
+  height: 135vh;
+  margin-left: -17vw;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--accent-soft) 22%, transparent), transparent 72%);
+  clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+  transform-origin: 50% 0;
+  filter: blur(10px);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: stage-sweep var(--t, 11s) ease-in-out infinite alternate;
+}
+@keyframes stage-sweep {
+  from { transform: rotate(var(--from)); }
+  to { transform: rotate(var(--to)); }
+}
+.stage-mote {
+  position: absolute;
+  bottom: -12px;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  box-shadow: 0 0 10px var(--accent-soft);
+  opacity: 0;
+  animation: stage-mote var(--t) linear var(--d) infinite;
+}
+@keyframes stage-mote {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(0.6); }
+  12% { opacity: 0.85; }
+  85% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate3d(var(--dx), -105vh, 0) scale(1.1); }
+}
+.stage-shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--accent-strong) 0%,
+    var(--accent-soft) 28%,
+    #fff8e6 48%,
+    var(--accent-soft) 68%,
+    var(--accent-strong) 100%
+  );
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: stage-shimmer 4s linear infinite;
+}
+@keyframes stage-shimmer {
+  from { background-position: 130% 0; }
+  to { background-position: -130% 0; }
+}
+.stage-rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--accent-soft) 15%, transparent) 0deg 5deg,
+    transparent 5deg 15deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  animation: stage-spin 48s linear infinite;
+}
+@keyframes stage-spin {
+  to { transform: rotate(360deg); }
+}
+.stage-flip-in {
+  animation: stage-flip-in 1.25s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-style: preserve-3d;
+}
+@keyframes stage-flip-in {
+  0% { opacity: 0; transform: perspective(1400px) translateZ(-420px) rotateY(-150deg) rotateX(14deg) scale(0.5); }
+  55% { opacity: 1; transform: perspective(1400px) translateZ(40px) rotateY(10deg) rotateX(-2deg) scale(1.04); }
+  100% { opacity: 1; transform: perspective(1400px) translateZ(0) rotateY(0) rotateX(0) scale(1); }
+}
+.stage-rise {
+  animation: stage-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0s) both;
+}
+@keyframes stage-rise {
+  from { opacity: 0; transform: translateY(26px) scale(0.97); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.stage-float3d {
+  animation: stage-float3d 7s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+@keyframes stage-float3d {
+  0%, 100% { transform: perspective(1200px) rotateY(-16deg) rotateX(7deg) translateY(0); }
+  50% { transform: perspective(1200px) rotateY(16deg) rotateX(-5deg) translateY(-16px); }
+}
+.stage-carousel {
+  transform-style: preserve-3d;
+  animation: stage-carousel var(--t, 24s) linear infinite;
+}
+@keyframes stage-carousel {
+  from { transform: translateZ(calc(var(--r) * -1)) rotateX(-8deg) rotateY(0deg); }
+  to { transform: translateZ(calc(var(--r) * -1)) rotateX(-8deg) rotateY(-360deg); }
+}
+.stage-gather {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-soft) 55%, transparent), transparent 70%);
+  animation: stage-gather 0.9s ease-in-out infinite alternate;
+}
+@keyframes stage-gather {
+  from { opacity: 0.35; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.15); }
+}
+.stage-halo {
+  animation: stage-halo 2.4s ease-in-out infinite;
+}
+@keyframes stage-halo {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 18px 50px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--accent) 0%, transparent), 0 18px 50px rgba(0, 0, 0, 0.5); }
+}
+.stage-window[data-spinning="true"] {
+  animation: stage-window 0.6s ease-in-out infinite alternate;
+}
+@keyframes stage-window {
+  from { box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent), inset 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent); }
+  to { box-shadow: 0 0 60px color-mix(in srgb, var(--accent-soft) 70%, transparent), inset 0 0 30px color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+}
+.stage-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.stage-face[data-winner="true"] {
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent-soft) 80%, transparent);
+  animation: stage-winner-pulse 0.5s ease-in-out 4 alternate;
+}
+@keyframes stage-winner-pulse {
+  to { text-shadow: 0 0 22px var(--accent-soft), 0 0 46px color-mix(in srgb, var(--accent) 80%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-beam,
+  .stage-mote,
+  .stage-shimmer,
+  .stage-rays,
+  .stage-float3d,
+  .stage-carousel,
+  .stage-gather,
+  .stage-halo,
+  .stage-window[data-spinning="true"],
+  .stage-face[data-winner="true"] {
+    animation: none;
+  }
+  .stage-mote {
+    display: none;
+  }
+  .stage-flip-in,
+  .stage-rise {
+    animation-duration: 0.01s;
+  }
+}

@@ -5,6 +5,7 @@ import { ImageSlot } from "@/components/ImageSlot";
 import { Badge, Button, Field, Input, Sheet, Toggle } from "@/components/ui";
 import { brl } from "@/lib/format";
 import type { Gift, GiftStatus } from "@/lib/types";
+import { uploadEventImage } from "@/lib/upload-event-image";
 
 const STATUS_LABEL: Record<GiftStatus, string> = {
   disponivel: "Disponível",
@@ -19,32 +20,6 @@ const STATUS_TONE: Record<GiftStatus, "neutral" | "warn" | "ok"> = {
 };
 
 type EventLite = { slug: string; title: string };
-
-/**
- * Envia a foto direto ao Storage por URL assinada (mesmo fluxo da capa) e
- * devolve o path para ser gravado junto do presente. Lança com a mensagem a exibir.
- */
-async function uploadGiftImage(eventSlug: string, file: File): Promise<string> {
-  const uploadRes = await fetch(`/api/eventos/${eventSlug}/capa/upload`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contentType: file.type }),
-  });
-  const uploadBody = await uploadRes.json().catch(() => null);
-  if (!uploadRes.ok) {
-    throw new Error(uploadBody?.error ?? "Não foi possível preparar o envio.");
-  }
-
-  const { path, signedUrl } = uploadBody.data as { path: string; signedUrl: string };
-  const putRes = await fetch(signedUrl, {
-    method: "PUT",
-    headers: { "Content-Type": file.type },
-    body: file,
-  });
-  if (!putRes.ok) throw new Error("Não foi possível enviar o arquivo.");
-
-  return path;
-}
 
 /** Seletor de foto do presente: prévia + escolher/remover. */
 function GiftImagePicker({
@@ -65,7 +40,7 @@ function GiftImagePicker({
     setUploading(true);
     setError(null);
     try {
-      const path = await uploadGiftImage(eventSlug, file);
+      const path = await uploadEventImage(eventSlug, file);
       onChange(path, URL.createObjectURL(file));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Não foi possível enviar a foto.");

@@ -59,6 +59,7 @@ const MODULE_ORDER: ModuleId[] = [
   "cardapio",
   "bar",
   "amigo-secreto",
+  "sorteios",
 ];
 
 export function toEventSummary(row: EventRowWithContent): EventSummary {

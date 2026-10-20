@@ -766,6 +766,224 @@ export type Database = {
         }
         Relationships: []
       }
+      raffle_participants: {
+        Row: {
+          created_at: string
+          display_name: string
+          event_id: string
+          guest_id: string | null
+          id: string
+          raffle_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          event_id: string
+          guest_id?: string | null
+          id?: string
+          raffle_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          event_id?: string
+          guest_id?: string | null
+          id?: string
+          raffle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_participants_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_participants_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffle_prizes: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          image_path: string | null
+          name: string
+          position: number
+          quantity: number
+          raffle_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          image_path?: string | null
+          name: string
+          position?: number
+          quantity?: number
+          raffle_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          image_path?: string | null
+          name?: string
+          position?: number
+          quantity?: number
+          raffle_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_prizes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_prizes_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffle_results: {
+        Row: {
+          drawn_at: string
+          drawn_by: string | null
+          event_id: string
+          id: string
+          participant_id: string
+          prize_id: string | null
+          raffle_id: string
+          sequence: number
+          status: Database["public"]["Enums"]["raffle_result_status"]
+        }
+        Insert: {
+          drawn_at?: string
+          drawn_by?: string | null
+          event_id: string
+          id?: string
+          participant_id: string
+          prize_id?: string | null
+          raffle_id: string
+          sequence: number
+          status?: Database["public"]["Enums"]["raffle_result_status"]
+        }
+        Update: {
+          drawn_at?: string
+          drawn_by?: string | null
+          event_id?: string
+          id?: string
+          participant_id?: string
+          prize_id?: string | null
+          raffle_id?: string
+          sequence?: number
+          status?: Database["public"]["Enums"]["raffle_result_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_results_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_results_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "raffle_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_results_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "raffle_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_results_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffles: {
+        Row: {
+          alternates_count: number
+          created_at: string
+          description: string | null
+          event_id: string
+          finished_at: string | null
+          id: string
+          locked_at: string | null
+          participant_mode: Database["public"]["Enums"]["raffle_participant_mode"]
+          status: Database["public"]["Enums"]["raffle_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alternates_count?: number
+          created_at?: string
+          description?: string | null
+          event_id: string
+          finished_at?: string | null
+          id?: string
+          locked_at?: string | null
+          participant_mode?: Database["public"]["Enums"]["raffle_participant_mode"]
+          status?: Database["public"]["Enums"]["raffle_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alternates_count?: number
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          finished_at?: string | null
+          id?: string
+          locked_at?: string | null
+          participant_mode?: Database["public"]["Enums"]["raffle_participant_mode"]
+          status?: Database["public"]["Enums"]["raffle_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffles_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reactions: {
         Row: {
           created_at: string
@@ -1251,6 +1469,27 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      draw_raffle_winner: {
+        Args: { p_raffle_id: string }
+        Returns: {
+          display_name: string
+          participant_id: string
+          prize_id: string | null
+          remaining: number
+          result_id: string
+          sequence: number
+        }[]
+      }
+      finish_raffle: {
+        Args: { p_raffle_id: string }
+        Returns: Database["public"]["Tables"]["raffles"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "raffles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_guest_by_invite_token: {
         Args: { p_token: string }
         Returns: {
@@ -1337,6 +1576,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      mark_raffle_result_absent: {
+        Args: { p_result_id: string }
+        Returns: undefined
+      }
       process_payment_event: {
         Args: {
           p_amount_cents: number
@@ -1377,6 +1620,26 @@ export type Database = {
         Args: { p_exclusion_id: string }
         Returns: undefined
       }
+      reopen_raffle: {
+        Args: { p_raffle_id: string }
+        Returns: Database["public"]["Tables"]["raffles"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "raffles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reset_raffle: {
+        Args: { p_raffle_id: string }
+        Returns: Database["public"]["Tables"]["raffles"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "raffles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       run_secret_santa_draw: {
         Args: { p_event_id: string }
         Returns: {
@@ -1388,6 +1651,16 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "secret_santa_draws"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      start_raffle: {
+        Args: { p_raffle_id: string }
+        Returns: Database["public"]["Tables"]["raffles"]["Row"]
+        SetofOptions: {
+          from: "*"
+          to: "raffles"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1582,9 +1855,13 @@ export type Database = {
         | "cardapio"
         | "amigo-secreto"
         | "bar"
+        | "sorteios"
       mural_status: "pendente" | "aprovada" | "oculta"
       payment_status: "pendente" | "pago" | "falho" | "reembolsado"
       photo_status: "pendente" | "aprovada" | "oculta"
+      raffle_participant_mode: "selecionados" | "todos" | "confirmados"
+      raffle_result_status: "valido" | "ausente"
+      raffle_status: "aberto" | "em_andamento" | "encerrado"
       reaction_target: "foto" | "recado"
       reservation_status: "ativa" | "expirada" | "concluida" | "cancelada"
       rsvp_status: "pendente" | "confirmado" | "recusado"
@@ -1750,10 +2027,14 @@ export const Constants = {
         "cardapio",
         "amigo-secreto",
         "bar",
+        "sorteios",
       ],
       mural_status: ["pendente", "aprovada", "oculta"],
       payment_status: ["pendente", "pago", "falho", "reembolsado"],
       photo_status: ["pendente", "aprovada", "oculta"],
+      raffle_participant_mode: ["selecionados", "todos", "confirmados"],
+      raffle_result_status: ["valido", "ausente"],
+      raffle_status: ["aberto", "em_andamento", "encerrado"],
       reaction_target: ["foto", "recado"],
       reservation_status: ["ativa", "expirada", "concluida", "cancelada"],
       rsvp_status: ["pendente", "confirmado", "recusado"],

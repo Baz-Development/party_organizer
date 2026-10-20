@@ -53,6 +53,7 @@ const MODULE_OPTIONS: { id: ModuleId; label: string }[] = [
   { id: "cardapio", label: "Cardápio" },
   { id: "bar", label: "Bar" },
   { id: "amigo-secreto", label: "Amigo secreto" },
+  { id: "sorteios", label: "Sorteios de prêmios" },
 ];
 
 /**

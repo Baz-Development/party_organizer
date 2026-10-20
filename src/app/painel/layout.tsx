@@ -31,6 +31,7 @@ export default async function PainelLayout({
     ...(has("galeria") || has("mural")
       ? [{ href: "/painel/moderacao", label: "Moderação" }]
       : []),
+    ...(has("sorteios") ? [{ href: "/painel/sorteios", label: "Sorteios" }] : []),
   ];
 
   return (

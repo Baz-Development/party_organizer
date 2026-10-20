@@ -139,3 +139,40 @@ export function toSecretSantaError(error: { code?: string; message: string }): D
   }
   return new DbError(error.message, "desconhecido");
 }
+
+/**
+ * Códigos que as funções e triggers de sorteio (`20261019120100_raffles.sql`,
+ * `20261019120200_raffle_functions.sql`) levantam como
+ * `raise exception '<código>' using errcode = 'P0001'`.
+ */
+const RAFFLE_ERROR_MESSAGES: Record<string, string> = {
+  sorteio_nao_encontrado: "Sorteio não encontrado.",
+  modulo_desabilitado: "Os sorteios não estão habilitados para este evento.",
+  sorteio_bloqueado:
+    "O sorteio já começou — participantes e prêmios estão bloqueados. Reabra as inscrições para alterar.",
+  sorteio_nao_iniciado: "O sorteio ainda não começou.",
+  sorteio_concluido: "Todos os prêmios deste sorteio já foram sorteados.",
+  sorteio_com_resultados:
+    "Já existem nomes sorteados. Para alterar a lista, recomece o sorteio do zero.",
+  sem_premios: "Cadastre pelo menos um prêmio antes de começar.",
+  sem_participantes: "Selecione pelo menos um participante antes de começar.",
+  sem_convidados_elegiveis:
+    "Nenhum convidado se encaixa no modo de participação escolhido. Cadastre convidados ou mude o modo.",
+  participantes_esgotados: "Não há mais participantes na urna para sortear.",
+  participante_invalido: "Participante não encontrado neste evento.",
+  resultado_nao_encontrado: "Resultado não encontrado.",
+};
+
+export class RaffleError extends DbError {
+  constructor(readonly code: string) {
+    super(RAFFLE_ERROR_MESSAGES[code] ?? "Não foi possível completar a ação.", "invalido");
+    this.name = "RaffleError";
+  }
+}
+
+export function toRaffleError(error: { code?: string; message: string }): DbError {
+  if (error.code === DOMAIN_EXCEPTION && error.message in RAFFLE_ERROR_MESSAGES) {
+    return new RaffleError(error.message);
+  }
+  return new DbError(error.message, "desconhecido");
+}

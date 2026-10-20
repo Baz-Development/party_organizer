@@ -100,6 +100,15 @@ export function PainelOverview({
           },
         ]
       : []),
+    ...(event.modules.includes("sorteios")
+      ? [
+          {
+            title: "Sorteios",
+            desc: "Monte os sorteios de prêmios e apresente o sorteio ao vivo na festa.",
+            href: "/painel/sorteios",
+          },
+        ]
+      : []),
   ];
 
   return (
