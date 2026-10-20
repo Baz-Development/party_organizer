@@ -6,12 +6,12 @@ import { EditorForm } from "./EditorForm";
 export const metadata = { title: "Editor da página — Convite" };
 
 export default async function Page() {
-  const { supabase, user } = await requireSession("/painel/editor");
+  const { supabase, user, profile } = await requireSession("/painel/editor");
 
   const events = await listEvents(supabase, { hostProfileId: user.id });
   const event = events[0];
 
   if (!event) redirect("/painel");
 
-  return <EditorForm event={event} />;
+  return <EditorForm event={event} isAdmin={profile.role === "admin"} />;
 }

@@ -74,7 +74,11 @@ const CURSO_SUGESTOES = [
  */
 const CRONOGRAMA_SUGESTOES = ["Cerimônia", "Recepção", "Jantar", "Festa"] as const;
 
-export function EditorForm({ event }: { event: EventSummary }) {
+/**
+ * `isAdmin` libera a estrutura e a identidade visual da página (cores e seções
+ * ativas), que são da Equipe ALF Eventos. A anfitriã vê só o conteúdo.
+ */
+export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: boolean }) {
   const [themeKey, setThemeKey] = useState<ThemeKey>(event.themeKey);
   const [accentColor, setAccentColor] = useState(event.accentColor ?? "");
   const [accentTextColor, setAccentTextColor] = useState(event.accentTextColor ?? "");
@@ -405,131 +409,142 @@ export function EditorForm({ event }: { event: EventSummary }) {
           </div>
         </Group>
 
+        {!isAdmin && (
+          <p className="mb-8 rounded-xl bg-paper-2 px-3.5 py-3 text-[12.5px] leading-relaxed text-ink-soft">
+            As cores e as seções da página são definidas pela equipe ALF Eventos. Fale com
+            a gente se quiser mudar alguma delas.
+          </p>
+        )}
+
         {/* Cor */}
-        <Group title="Cor de destaque">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {THEME_LIST.map((sw) => (
-              <button
-                key={sw.key}
-                onClick={() => {
-                  setThemeKey(sw.key);
-                  setAccentColor("");
-                  setAccentTextColor("");
-                }}
-                aria-label={sw.label}
-                title={sw.label}
-                style={{ background: sw.accent }}
-                className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
-                  !accentColor && themeKey === sw.key
-                    ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
-                    : ""
-                }`}
-              />
-            ))}
-
-            <label
-              title="Cor personalizada"
-              aria-label="Cor personalizada"
-              style={{
-                background: accentColor || "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
-              }}
-              className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
-                accentColor ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""
-              }`}
-            >
-              {!accentColor && <span className="text-[15px] text-white drop-shadow">+</span>}
-              <input
-                type="color"
-                value={accentColor || "#d4a72c"}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setAccentColor(value);
-                  setAccentTextColor(contrastText(value));
-                }}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </label>
-          </div>
-
-          {accentColor && (
-            <div className="mt-3 flex items-center gap-2.5">
-              <span className="text-[12.5px] text-ink-faint">Texto dos botões:</span>
-              {(
-                [
-                  { label: "Claro", value: "#f5f3ee" },
-                  { label: "Escuro", value: "#080808" },
-                ] as const
-              ).map((opt) => (
+        {isAdmin && (
+          <Group title="Cor de destaque">
+            <div className="flex flex-wrap items-center gap-2.5">
+              {THEME_LIST.map((sw) => (
                 <button
-                  key={opt.value}
-                  onClick={() => setAccentTextColor(opt.value)}
-                  className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[12.5px] font-semibold ${
-                    (accentTextColor || contrastText(accentColor)) === opt.value
-                      ? "border-ink bg-paper-2"
-                      : "border-[rgba(42,39,36,0.15)] bg-white text-ink-soft"
+                  key={sw.key}
+                  onClick={() => {
+                    setThemeKey(sw.key);
+                    setAccentColor("");
+                    setAccentTextColor("");
+                  }}
+                  aria-label={sw.label}
+                  title={sw.label}
+                  style={{ background: sw.accent }}
+                  className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
+                    !accentColor && themeKey === sw.key
+                      ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
+                      : ""
                   }`}
-                >
-                  {opt.label}
-                </button>
+                />
               ))}
+
+              <label
+                title="Cor personalizada"
+                aria-label="Cor personalizada"
+                style={{
+                  background: accentColor || "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
+                }}
+                className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
+                  accentColor ? "ring-2 ring-ink ring-offset-2 ring-offset-paper" : ""
+                }`}
+              >
+                {!accentColor && <span className="text-[15px] text-white drop-shadow">+</span>}
+                <input
+                  type="color"
+                  value={accentColor || "#d4a72c"}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAccentColor(value);
+                    setAccentTextColor(contrastText(value));
+                  }}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </label>
             </div>
-          )}
-        </Group>
+
+            {accentColor && (
+              <div className="mt-3 flex items-center gap-2.5">
+                <span className="text-[12.5px] text-ink-faint">Texto dos botões:</span>
+                {(
+                  [
+                    { label: "Claro", value: "#f5f3ee" },
+                    { label: "Escuro", value: "#080808" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setAccentTextColor(opt.value)}
+                    className={`cursor-pointer rounded-lg border px-2.5 py-1 text-[12.5px] font-semibold ${
+                      (accentTextColor || contrastText(accentColor)) === opt.value
+                        ? "border-ink bg-paper-2"
+                        : "border-[rgba(42,39,36,0.15)] bg-white text-ink-soft"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </Group>
+        )}
 
         {/* Fundo */}
-        <Group title="Cor de fundo da tela">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {BACKGROUND_PRESETS.map((bg) => (
-              <button
-                key={bg.value}
-                onClick={() => setBackgroundColor(bg.value === BACKGROUND_PRESETS[0].value ? "" : bg.value)}
-                aria-label={bg.label}
-                title={bg.label}
-                style={{ background: bg.value }}
-                className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.15)] ${
-                  (backgroundColor || BACKGROUND_PRESETS[0].value) === bg.value
+        {isAdmin && (
+          <Group title="Cor de fundo da tela">
+            <div className="flex flex-wrap items-center gap-2.5">
+              {BACKGROUND_PRESETS.map((bg) => (
+                <button
+                  key={bg.value}
+                  onClick={() => setBackgroundColor(bg.value === BACKGROUND_PRESETS[0].value ? "" : bg.value)}
+                  aria-label={bg.label}
+                  title={bg.label}
+                  style={{ background: bg.value }}
+                  className={`h-9 w-9 cursor-pointer rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.15)] ${
+                    (backgroundColor || BACKGROUND_PRESETS[0].value) === bg.value
+                      ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
+                      : ""
+                  }`}
+                />
+              ))}
+
+              <label
+                title="Cor de fundo personalizada"
+                aria-label="Cor de fundo personalizada"
+                style={{
+                  background:
+                    backgroundColor &&
+                    !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
+                      ? backgroundColor
+                      : "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
+                }}
+                className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
+                  backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
                     ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
                     : ""
                 }`}
-              />
-            ))}
-
-            <label
-              title="Cor de fundo personalizada"
-              aria-label="Cor de fundo personalizada"
-              style={{
-                background:
-                  backgroundColor &&
-                  !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
-                    ? backgroundColor
-                    : "conic-gradient(from 0deg, red, yellow, lime, cyan, blue, magenta, red)",
-              }}
-              className={`relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-[0_0_0_1px_rgba(42,39,36,0.1)] ${
-                backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
-                  ? "ring-2 ring-ink ring-offset-2 ring-offset-paper"
-                  : ""
-              }`}
-            >
-              {!(backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)) && (
-                <span className="text-[15px] text-ink drop-shadow">+</span>
-              )}
-              <input
-                type="color"
-                value={
-                  backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
-                    ? backgroundColor
-                    : "#f0eee7"
-                }
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-            </label>
-          </div>
-          <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
-            Só a área atrás do cartão de conteúdo muda — prefira tons claros, já que os textos
-            do site são sempre escuros.
-          </p>
-        </Group>
+              >
+                {!(backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)) && (
+                  <span className="text-[15px] text-ink drop-shadow">+</span>
+                )}
+                <input
+                  type="color"
+                  value={
+                    backgroundColor && !BACKGROUND_PRESETS.some((bg) => bg.value === backgroundColor)
+                      ? backgroundColor
+                      : "#f0eee7"
+                  }
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </label>
+            </div>
+            <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+              Só a área atrás do cartão de conteúdo muda — prefira tons claros, já que os textos
+              do site são sempre escuros.
+            </p>
+          </Group>
+        )}
 
         {/* Textos */}
         <Group title="Textos">
@@ -700,20 +715,22 @@ export function EditorForm({ event }: { event: EventSummary }) {
         </Group>
 
         {/* Módulos */}
-        <Group title="Seções ativas">
-          <div className="flex flex-col gap-3">
-            {MODULE_OPTIONS.map((m) => (
-              <div key={m.id} className="flex items-center justify-between gap-4">
-                <span className="text-sm">{m.label}</span>
-                <Toggle
-                  label={m.label}
-                  checked={!!modules[m.id]}
-                  onChange={(v) => setModules((s) => ({ ...s, [m.id]: v }))}
-                />
-              </div>
-            ))}
-          </div>
-        </Group>
+        {isAdmin && (
+          <Group title="Seções ativas">
+            <div className="flex flex-col gap-3">
+              {MODULE_OPTIONS.map((m) => (
+                <div key={m.id} className="flex items-center justify-between gap-4">
+                  <span className="text-sm">{m.label}</span>
+                  <Toggle
+                    label={m.label}
+                    checked={!!modules[m.id]}
+                    onChange={(v) => setModules((s) => ({ ...s, [m.id]: v }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </Group>
+        )}
 
         {/* Cardápio */}
         {modules["cardapio"] && (

@@ -38,12 +38,17 @@ export type EditorResult =
  * Salva o que o editor da página controla: conteúdo editorial, tema, módulos
  * habilitados, cronograma, cardápio e bar.
  *
+ * Tema/cores e módulos são do admin: para a anfitriã eles são descartados
+ * aqui, e o banco recusa de todo jeito (RLS de `event_modules` e trigger de
+ * `events`) — descartar só evita um erro por um campo que ela nem vê.
+ *
  * Não confere se o usuário é dono do evento — a RLS confere. `updateEvent`
  * volta sem linha quando a política recusa, e isso vira "não encontrado".
  * Duplicar a checagem aqui daria a falsa impressão de que ela é o que protege.
  */
 export async function salvarEditor(input: EditorPayload): Promise<EditorResult> {
-  const { supabase } = await requireSession("/painel/editor");
+  const { supabase, profile } = await requireSession("/painel/editor");
+  const isAdmin = profile.role === "admin";
 
   const parsed = payloadSchema.safeParse(input);
   if (!parsed.success) {
@@ -51,11 +56,12 @@ export async function salvarEditor(input: EditorPayload): Promise<EditorResult> 
     return { ok: false, message: first?.message ?? "Dados inválidos." };
   }
 
-  const { eventId, content, modules, schedule, menu, bar } = parsed.data;
+  const { eventId, modules, schedule, menu, bar } = parsed.data;
+  const content = isAdmin ? parsed.data.content : withoutLayout(parsed.data.content);
 
   try {
     await updateEvent(supabase, eventId, content);
-    await setEventModules(supabase, eventId, modules);
+    if (isAdmin) await setEventModules(supabase, eventId, modules);
     await replaceSchedule(supabase, eventId, schedule);
     await replaceMenu(supabase, eventId, menu);
     await replaceBar(supabase, eventId, bar);
@@ -79,4 +85,18 @@ export async function salvarEditor(input: EditorPayload): Promise<EditorResult> 
   revalidatePath("/[id]/[slug]/rsvp", "page");
 
   return { ok: true };
+}
+
+/**
+ * Conteúdo sem os campos de identidade visual, que só o admin altera.
+ * `updateEvent` ignora campos `undefined`, então as colunas ficam intactas.
+ */
+function withoutLayout(content: z.output<typeof updateEventSchema>) {
+  return {
+    ...content,
+    themeKey: undefined,
+    accentColor: undefined,
+    accentTextColor: undefined,
+    backgroundColor: undefined,
+  };
 }

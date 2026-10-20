@@ -43,7 +43,7 @@ export default async function AdminEditorPage({
           </div>
         }
       />
-      <EditorForm event={event} />
+      <EditorForm event={event} isAdmin />
     </div>
   );
 }
