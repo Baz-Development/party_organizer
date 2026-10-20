@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Badge, Button, Field, Input, Sheet, Toggle } from "@/components/ui";
 import { brl } from "@/lib/format";
@@ -96,6 +97,7 @@ export function GiftManager({ event }: { event: EventLite }) {
   const [gifts, setGifts] = useState<Gift[] | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [editing, setEditing] = useState<Gift | null>(null);
+  const { confirm, notify, dialog } = useConfirm();
 
   const load = useCallback(() => {
     fetch(`/api/eventos/${event.slug}/presentes`)
@@ -128,14 +130,23 @@ export function GiftManager({ event }: { event: EventLite }) {
   }, [event.slug, load]);
 
   async function remove(gift: Gift) {
-    if (!confirm(`Remover "${gift.name}" da lista de presentes?`)) return;
+    const ok = await confirm({
+      title: `Remover "${gift.name}"?`,
+      message: "O presente sai da lista de presentes do evento.",
+      confirmLabel: "Remover presente",
+      tone: "danger",
+    });
+    if (!ok) return;
     const res = await fetch(`/api/eventos/${event.slug}/presentes/${gift.id}`, {
       method: "DELETE",
     });
     if (res.ok) load();
     else {
       const body = await res.json().catch(() => null);
-      alert(body?.error ?? "Não foi possível remover o presente.");
+      await notify({
+        title: "Não foi possível remover",
+        message: body?.error ?? "Tente novamente em instantes.",
+      });
     }
   }
 
@@ -279,6 +290,7 @@ export function GiftManager({ event }: { event: EventLite }) {
           onSaved={load}
         />
       )}
+      {dialog}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { ImageSlot } from "@/components/ImageSlot";
 import {
   Badge,
@@ -41,6 +42,7 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
   const [editOpen, setEditOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   const load = useCallback(async () => {
     const res = await fetch(base);
@@ -69,8 +71,22 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
     };
   }, [base]);
 
-  async function act(acao: "reabrir" | "recomecar", confirmText: string) {
-    if (!confirm(confirmText)) return;
+  async function act(acao: "reabrir" | "recomecar") {
+    const ok = await confirm(
+      acao === "recomecar"
+        ? {
+            title: "Recomeçar do zero?",
+            message: "Todos os nomes já sorteados serão descartados e as inscrições reabertas.",
+            confirmLabel: "Recomeçar",
+            tone: "danger",
+          }
+        : {
+            title: "Reabrir as inscrições?",
+            message: "A lista de participantes e os prêmios voltam a poder ser alterados.",
+            confirmLabel: "Reabrir",
+          },
+    );
+    if (!ok) return;
     setBusy(true);
     setError(null);
     const err = await send(`${base}/estado`, "POST", { acao });
@@ -81,8 +97,13 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
 
   async function removeRaffle() {
     if (!raffle) return;
-    if (!confirm(`Excluir o sorteio "${raffle.title}"? Prêmios, participantes e resultados serão apagados.`))
-      return;
+    const ok = await confirm({
+      title: `Excluir "${raffle.title}"?`,
+      message: "Prêmios, participantes e resultados deste sorteio serão apagados.",
+      confirmLabel: "Excluir sorteio",
+      tone: "danger",
+    });
+    if (!ok) return;
     const err = await send(base, "DELETE");
     if (err) setError(err);
     else router.push("/painel/sorteios");
@@ -205,12 +226,7 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
               variant="danger"
               size="sm"
               disabled={busy}
-              onClick={() =>
-                act(
-                  "recomecar",
-                  "Recomeçar do zero? Todos os nomes já sorteados serão descartados e as inscrições reabertas.",
-                )
-              }
+              onClick={() => act("recomecar")}
             >
               Recomeçar do zero
             </Button>
@@ -219,7 +235,7 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
               variant="outline"
               size="sm"
               disabled={busy}
-              onClick={() => act("reabrir", "Reabrir as inscrições deste sorteio?")}
+              onClick={() => act("reabrir")}
             >
               Reabrir inscrições
             </Button>
@@ -250,6 +266,7 @@ export function RaffleEditor({ event, raffleId }: { event: EventLite; raffleId: 
           onSaved={load}
         />
       )}
+      {dialog}
     </div>
   );
 }
@@ -309,6 +326,7 @@ function PrizesCard({
 }) {
   const [editing, setEditing] = useState<RafflePrize | "novo" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
   const [alternates, setAlternates] = useState(raffle.alternatesCount);
 
   // Mantém o stepper em sincronia quando o sorteio é recarregado.
@@ -330,7 +348,13 @@ function PrizesCard({
   }
 
   async function remove(prize: RafflePrize) {
-    if (!confirm(`Remover o prêmio "${prize.name}"?`)) return;
+    const ok = await confirm({
+      title: `Remover "${prize.name}"?`,
+      message: "O prêmio sai da lista deste sorteio.",
+      confirmLabel: "Remover prêmio",
+      tone: "danger",
+    });
+    if (!ok) return;
     setError(await send(`${base}/premios/${prize.id}`, "DELETE"));
     await onChanged();
   }
@@ -441,6 +465,7 @@ function PrizesCard({
           onSaved={onChanged}
         />
       )}
+      {dialog}
     </StepCard>
   );
 }
@@ -762,9 +787,21 @@ function ParticipantsCard({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mode = raffle.participantMode;
+  const { confirm, dialog } = useConfirm();
 
   async function changeMode(next: RaffleParticipantMode) {
-    if (mode === "selecionados" && dirty && !confirm("Descartar as marcações que ainda não foram salvas?")) return;
+    if (
+      mode === "selecionados" &&
+      dirty &&
+      !(await confirm({
+        title: "Descartar as marcações?",
+        message: "Você marcou convidados que ainda não foram salvos.",
+        confirmLabel: "Descartar e trocar",
+        cancelLabel: "Continuar marcando",
+        tone: "danger",
+      }))
+    )
+      return;
     setSaving(true);
     setError(await send(base, "PATCH", { participantMode: next }));
     setSaving(false);
@@ -953,6 +990,7 @@ function ParticipantsCard({
           {error && <p className="mt-2 text-[13px] text-danger">{error}</p>}
         </>
       )}
+      {dialog}
     </StepCard>
   );
 }

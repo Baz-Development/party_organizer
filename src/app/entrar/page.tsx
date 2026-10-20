@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { safeNextPath } from "@/lib/auth/redirect";
@@ -30,9 +29,7 @@ export default async function EntrarPage({
     >
       <div className="w-full max-w-[440px]">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-block no-underline">
-            <Logo variant="lockup" height={52} className="mx-auto" priority />
-          </Link>
+          <Logo variant="lockup" height={52} className="mx-auto" priority />
         </div>
 
         <div className="rounded-[24px] bg-paper p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] sm:p-10">

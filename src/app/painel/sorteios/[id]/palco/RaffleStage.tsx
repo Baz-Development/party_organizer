@@ -269,9 +269,10 @@ export function RaffleStage({ event, raffleId }: { event: StageEvent; raffleId: 
   }, [phase, raffle]);
 
   const markAbsent = useCallback(async () => {
+    // Sem `confirm()`: diálogo nativo derruba a tela cheia no meio da
+    // apresentação. A proteção contra clique errado é a distância entre os
+    // botões e a trava logo após a revelação (ver `Reveal`).
     if (!current || !raffle || busy) return;
-    if (!confirm(`${current.draw.name} não está presente? O nome sai da urna e este prêmio é sorteado de novo.`))
-      return;
     setBusy(true);
     const res = await fetch(`${base}/resultados/${current.draw.resultId}`, {
       method: "PATCH",
@@ -502,7 +503,12 @@ export function RaffleStage({ event, raffleId }: { event: StageEvent; raffleId: 
             primary.run();
           }}
           primaryLabel={primary.label}
-          onAbsent={markAbsent}
+          onAbsent={() => {
+            // Mesma trava do botão principal: os botões já existem (invisíveis)
+            // enquanto o cartão ainda está entrando.
+            if (Date.now() - revealedAt.current < REVEAL_GUARD_MS) return;
+            void markAbsent();
+          }}
           busy={busy}
         />
       )}
@@ -748,8 +754,8 @@ function Reveal({
         : "Ganhador(a)";
 
   return (
-    <div className="fixed inset-0 z-[1100] flex items-center justify-center overflow-hidden bg-black/70 px-4 backdrop-blur-md [animation:fade-up_0.5s_ease_both]">
-      <div className="stage-rays pointer-events-none absolute left-1/2 top-1/2 h-[170vmax] w-[170vmax] -translate-x-1/2 -translate-y-1/2" />
+    // `pb-28`: reserva o rodapé para o botão de ausente, longe do botão principal.
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center overflow-hidden bg-black/70 px-4 pb-28 pt-6 backdrop-blur-md [animation:fade-up_0.5s_ease_both] sm:pb-24">      <div className="stage-rays pointer-events-none absolute left-1/2 top-1/2 h-[170vmax] w-[170vmax] -translate-x-1/2 -translate-y-1/2" />
       <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 h-[80vmin] w-[80vmin] -translate-x-1/2 -translate-y-1/2 rounded-full" />
 
       <div className="stage-flip-in relative w-[min(94vw,880px)] rounded-[34px] border border-[color-mix(in_srgb,var(--accent-soft)_55%,transparent)] bg-[linear-gradient(160deg,#211d18_0%,#0b0a09_70%)] px-[clamp(20px,5vw,64px)] py-[clamp(28px,6vh,64px)] text-center shadow-[0_40px_120px_rgba(0,0,0,0.75),0_0_80px_color-mix(in_srgb,var(--accent)_35%,transparent)]">
@@ -797,17 +803,25 @@ function Reveal({
           </p>
         )}
 
-        <div className="stage-rise mt-[4vh] flex flex-col items-center gap-3" style={{ "--d": "1.5s" } as React.CSSProperties}>
+        <div className="stage-rise mt-[4vh] flex justify-center" style={{ "--d": "1.5s" } as React.CSSProperties}>
           <PrimaryButton label={primaryLabel} onClick={onPrimary} disabled={busy} />
-          <button
-            type="button"
-            onClick={onAbsent}
-            disabled={busy}
-            className="cursor-pointer text-[13.5px] text-white/50 underline-offset-4 hover:text-white/80 hover:underline disabled:opacity-40"
-          >
-            Não está presente? Sortear outro nome
-          </button>
         </div>
+      </div>
+
+      {/* Ação secundária no canto, fora do cartão: longe do botão principal
+          para não ser apertada por engano. */}
+      <div
+        className="stage-rise absolute inset-x-0 bottom-5 flex justify-center sm:inset-x-auto sm:bottom-8 sm:left-8"
+        style={{ "--d": "1.8s" } as React.CSSProperties}
+      >
+        <button
+          type="button"
+          onClick={onAbsent}
+          disabled={busy}
+          className="cursor-pointer rounded-full border border-white/20 bg-black/40 px-5 py-2.5 text-[13.5px] text-white/65 transition hover:border-white/40 hover:text-white disabled:opacity-40"
+        >
+          Não está presente? Sortear outro nome
+        </button>
       </div>
     </div>
   );
