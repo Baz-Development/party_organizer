@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Countdown } from "@/components/Countdown";
 import { ImageSlot } from "@/components/ImageSlot";
+import { Logo } from "@/components/Logo";
 import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
 import { eventUrl } from "@/lib/event-url";
 import { brl, longDate } from "@/lib/format";
@@ -85,9 +86,9 @@ export function EventPage({ event }: { event: EventSummary }) {
                   <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
                     {block.title}
                   </div>
-                  <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="sm:columns-2 sm:gap-x-7 lg:columns-4">
                     {block.items.map((ev, i) => (
-                      <div key={`${ev.time}-${i}`}>
+                      <div key={`${ev.time}-${i}`} className="mb-7 break-inside-avoid">
                         {ev.time && (
                           <div className="mb-1.5 text-sm font-semibold text-accent">{ev.time}</div>
                         )}
@@ -261,9 +262,9 @@ export function EventPage({ event }: { event: EventSummary }) {
               </div>
             )}
             {event.bar.items.length > 0 && (
-              <div className="mx-auto grid max-w-[720px] gap-5 text-left sm:grid-cols-2">
+              <div className="mx-auto max-w-[720px] text-left sm:columns-2 sm:gap-x-8">
                 {event.bar.items.map((item, i) => (
-                  <div key={`${item.name}-${i}`} className="border-t border-line pt-3.5">
+                  <div key={`${item.name}-${i}`} className="mb-5 break-inside-avoid border-t border-line pt-3.5">
                     <div className="font-display text-[17px] font-semibold">{item.name}</div>
                     {item.desc && (
                       <div className="mt-1 text-[14px] leading-relaxed text-ink-soft">
@@ -390,11 +391,22 @@ export function EventPage({ event }: { event: EventSummary }) {
         {/* Rodapé ---------------------------------------------------- */}
         <footer className="border-t border-line px-6 py-14 text-center sm:px-10">
           <div className="mb-2 font-display text-[22px]">Com carinho,</div>
-          <div className="mb-5 font-display text-[28px] font-semibold">{event.hosts}</div>
-          <div className="text-xs tracking-wide text-ink-faint">
-            Feito com Convite · plataforma de eventos
-          </div>
+          <div className="font-display text-[28px] font-semibold">{event.hosts}</div>
         </footer>
+
+        {/* Assinatura ALF Eventos ------------------------------------ */}
+        <div className="border-t border-line bg-paper-2 px-6 py-8 text-center sm:px-10">
+          <Link
+            href="/"
+            className="inline-flex flex-col items-center gap-2.5 no-underline"
+            aria-label="Feito com ALF Eventos"
+          >
+            <span className="text-xs uppercase tracking-[2.5px] text-ink-faint">
+              Feito com
+            </span>
+            <Logo variant="lockup" height={34} />
+          </Link>
+        </div>
       </div>
 
       {/* Barra fixa de RSVP no mobile --------------------------------- */}
