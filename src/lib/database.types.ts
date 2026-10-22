@@ -176,6 +176,7 @@ export type Database = {
           secret_santa_draw_date: string | null
           secret_santa_exchange_date: string | null
           secret_santa_rules: string | null
+          section_order: Database["public"]["Enums"]["module_id"][] | null
           self_signup_token: string | null
           slug: string
           status: Database["public"]["Enums"]["event_status"]
@@ -209,6 +210,7 @@ export type Database = {
           secret_santa_draw_date?: string | null
           secret_santa_exchange_date?: string | null
           secret_santa_rules?: string | null
+          section_order?: Database["public"]["Enums"]["module_id"][] | null
           self_signup_token?: string | null
           slug: string
           status?: Database["public"]["Enums"]["event_status"]
@@ -242,6 +244,7 @@ export type Database = {
           secret_santa_draw_date?: string | null
           secret_santa_exchange_date?: string | null
           secret_santa_rules?: string | null
+          section_order?: Database["public"]["Enums"]["module_id"][] | null
           self_signup_token?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["event_status"]

@@ -133,6 +133,7 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
   const [modules, setModules] = useState<Record<string, boolean>>(
     Object.fromEntries(MODULE_OPTIONS.map((m) => [m.id, event.modules.includes(m.id)])),
   );
+  const [sectionOrder, setSectionOrder] = useState<ModuleId[]>(event.sectionOrder);
   const [secretSantaBudget, setSecretSantaBudget] = useState(event.secretSanta.budget ?? "");
   const [secretSantaDrawDate, setSecretSantaDrawDate] = useState(event.secretSanta.drawDate ?? "");
   const [secretSantaExchangeDate, setSecretSantaExchangeDate] = useState(
@@ -249,7 +250,10 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
         "rsvp",
         ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
       ] as ModuleId[],
-      schedule: schedule.filter((item) => item.time.trim() && item.title.trim()),
+      sectionOrder,
+      schedule: schedule.filter(
+          (item) => item.title.trim() && (item.time.trim() || item.desc.trim()),
+        ),
       menu: menu.filter((item) => item.course.trim() && item.name.trim()),
       bar: {
         service: barService || undefined,
@@ -280,6 +284,7 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
       moderationPolicy,
       coverUrl,
       modules,
+      sectionOrder,
       schedule,
       menu,
       bar,
@@ -312,6 +317,7 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
           backgroundColor,
           rsvpDeadline,
           moderationPolicy,
+          sectionOrder,
           secretSantaBudget,
           secretSantaDrawDate,
           secretSantaExchangeDate,
@@ -324,7 +330,9 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
           "rsvp",
           ...MODULE_OPTIONS.filter((m) => modules[m.id]).map((m) => m.id),
         ],
-        schedule: schedule.filter((item) => item.time.trim() && item.title.trim()),
+        schedule: schedule.filter(
+          (item) => item.title.trim() && (item.time.trim() || item.desc.trim()),
+        ),
         menu: menu.filter((item) => item.course.trim() && item.name.trim()),
         bar: bar.filter((item) => item.name.trim()),
       });
@@ -337,6 +345,15 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
       }
     });
   };
+
+  const moveSection = (index: number, delta: -1 | 1) =>
+    setSectionOrder((order) => {
+      const target = index + delta;
+      if (target < 0 || target >= order.length) return order;
+      const next = [...order];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
 
   const patchItem = (index: number, patch: Partial<ScheduleItem>) =>
     setSchedule((items) =>
@@ -637,7 +654,7 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
                   <Input
                     value={item.time}
                     onChange={(e) => patchItem(index, { time: e.target.value })}
-                    placeholder="16h00"
+                    placeholder="Horário (opcional) — ex.: 16h00"
                     aria-label="Horário"
                     className="min-w-0 flex-1 px-3 py-2 text-sm"
                   />
@@ -672,7 +689,8 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
           </div>
           <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
             Escolha um bloco da lista ou digite um novo. Os itens aparecem
-            agrupados pelo bloco, na ordem desta lista.
+            agrupados pelo bloco, na ordem desta lista. O horário é opcional:
+            deixe em branco para itens sem horário fixo.
           </p>
         </Group>
 
@@ -715,22 +733,51 @@ export function EditorForm({ event, isAdmin }: { event: EventSummary; isAdmin: b
         </Group>
 
         {/* Módulos */}
-        {isAdmin && (
-          <Group title="Seções ativas">
-            <div className="flex flex-col gap-3">
-              {MODULE_OPTIONS.map((m) => (
-                <div key={m.id} className="flex items-center justify-between gap-4">
-                  <span className="text-sm">{m.label}</span>
-                  <Toggle
-                    label={m.label}
-                    checked={!!modules[m.id]}
-                    onChange={(v) => setModules((s) => ({ ...s, [m.id]: v }))}
-                  />
+        <Group title="Seções ativas">
+          <div className="flex flex-col gap-3">
+            {sectionOrder.map((id, index) => {
+              const m = MODULE_OPTIONS.find((option) => option.id === id);
+              // Cliente só reordena o que está ativo; ligar/desligar é do admin.
+              if (!m || (!isAdmin && !modules[m.id])) return null;
+              return (
+                <div key={m.id} className="flex items-center gap-2">
+                  <div className="flex shrink-0 gap-1">
+                    <button
+                      type="button"
+                      onClick={() => moveSection(index, -1)}
+                      disabled={index === 0}
+                      aria-label={`Subir ${m.label}`}
+                      className="h-7 w-7 cursor-pointer rounded-md border border-line-strong text-[13px] leading-none text-ink hover:bg-paper-2 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveSection(index, 1)}
+                      disabled={index === sectionOrder.length - 1}
+                      aria-label={`Descer ${m.label}`}
+                      className="h-7 w-7 cursor-pointer rounded-md border border-line-strong text-[13px] leading-none text-ink hover:bg-paper-2 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                  <span className="flex-1 text-sm">{m.label}</span>
+                  {isAdmin && (
+                    <Toggle
+                      label={m.label}
+                      checked={!!modules[m.id]}
+                      onChange={(v) => setModules((s) => ({ ...s, [m.id]: v }))}
+                    />
+                  )}
                 </div>
-              ))}
-            </div>
-          </Group>
-        )}
+              );
+            })}
+          </div>
+          <p className="mt-2.5 text-[12px] leading-relaxed text-ink-faint">
+            Use as setas para escolher a ordem em que as seções aparecem na página — a
+            pré-visualização acompanha.
+          </p>
+        </Group>
 
         {/* Cardápio */}
         {modules["cardapio"] && (

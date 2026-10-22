@@ -34,6 +34,7 @@ export interface Theme {
 
 /** Um item do cronograma, agrupado na página pelo bloco (`title`). */
 export interface ScheduleItem {
+  /** Horário do item; string vazia quando o item não tem horário fixo. */
   time: string;
   /** Bloco do dia: "Cerimônia", "Recepção", "Jantar"... */
   title: string;
@@ -84,6 +85,12 @@ export interface EventSummary {
   /** Cor de fundo da tela (atrás do cartão de conteúdo), hex `#rrggbb`. Ausente = fundo padrão. */
   backgroundColor?: string;
   modules: ModuleId[];
+  /**
+   * Ordem das seções na página pública, definida pelo anfitrião. Sempre
+   * completa: traz todos os módulos com seção própria, ativos ou não — quem
+   * renderiza filtra pelos ativos.
+   */
+  sectionOrder: ModuleId[];
   schedule: ScheduleItem[];
   /** Pratos do cardápio, na ordem definida pelo anfitrião. */
   menu: MenuItem[];

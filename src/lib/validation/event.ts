@@ -51,7 +51,8 @@ const eventDate = z
   .transform((value) => new Date(value).toISOString());
 
 const scheduleItem = z.object({
-  time: z.string().trim().min(1, "Informe o horário do item."),
+  // Vazio = item sem horário fixo.
+  time: z.string().trim().default(""),
   title: z.string().trim().min(1, "Informe o título do item."),
   desc: z.string().trim().default(""),
 });
@@ -143,6 +144,7 @@ export const updateEventSchema = z.object({
   accentTextColor: optionalHexColor,
   backgroundColor: optionalHexColor,
   rsvpDeadline,
+  sectionOrder: z.array(z.enum(MODULE_IDS, { message: "Seção desconhecida." })).optional(),
   moderationPolicy: z.enum(MODERATION_POLICIES, {
     message: "Política de moderação desconhecida.",
   }).optional(),

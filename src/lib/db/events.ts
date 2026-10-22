@@ -26,7 +26,7 @@ const EVENT_SELECT = `
   id, slug, host_profile_id, kind, title, event_at, venue,
   city, address, postal_code, hosts, eyebrow, welcome, theme_key,
   accent_color, accent_text_color, background_color, status, created_at, updated_at,
-  rsvp_deadline, self_signup_token, moderation_policy, cover_path,
+  rsvp_deadline, section_order, self_signup_token, moderation_policy, cover_path,
   secret_santa_budget, secret_santa_draw_date, secret_santa_exchange_date, secret_santa_rules,
   bar_service, bar_signature_name, bar_signature_desc,
   event_modules ( module ),
@@ -171,6 +171,7 @@ export async function updateEvent(
   if (input.accentTextColor !== undefined) patch.accent_text_color = input.accentTextColor;
   if (input.backgroundColor !== undefined) patch.background_color = input.backgroundColor;
   if (input.rsvpDeadline !== undefined) patch.rsvp_deadline = input.rsvpDeadline;
+  if (input.sectionOrder !== undefined) patch.section_order = input.sectionOrder;
   if (input.moderationPolicy !== undefined) patch.moderation_policy = input.moderationPolicy;
   if (input.secretSantaBudget !== undefined) patch.secret_santa_budget = input.secretSantaBudget;
   if (input.secretSantaDrawDate !== undefined) patch.secret_santa_draw_date = input.secretSantaDrawDate;

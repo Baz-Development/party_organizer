@@ -17,7 +17,7 @@ import type { EventSummary } from "./types";
  */
 type SeedEvent = Omit<
   EventSummary,
-  "gallery" | "coverUrl" | "coverPath" | "hostProfileId" | "secretSanta"
+  "gallery" | "coverUrl" | "coverPath" | "hostProfileId" | "secretSanta" | "sectionOrder"
 >;
 
 export const EVENTS: SeedEvent[] = [

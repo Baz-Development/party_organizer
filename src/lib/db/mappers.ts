@@ -1,4 +1,5 @@
 import type { Database } from "@/lib/database.types";
+import { resolveSectionOrder } from "@/lib/sections";
 import type {
   BarItem,
   EventSummary,
@@ -100,6 +101,7 @@ export function toEventSummary(row: EventRowWithContent): EventSummary {
     accentTextColor: row.accent_text_color ?? undefined,
     backgroundColor: row.background_color ?? undefined,
     modules,
+    sectionOrder: resolveSectionOrder(row.section_order),
     schedule,
     menu,
     bar: {

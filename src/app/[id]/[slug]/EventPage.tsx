@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { Countdown } from "@/components/Countdown";
 import { ImageSlot } from "@/components/ImageSlot";
 import { Button, Field, Input, Sheet, Stepper } from "@/components/ui";
@@ -26,8 +26,8 @@ export function EventPage({ event }: { event: EventSummary }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [secretJoined, setSecretJoined] = useState(false);
 
-  const nav = (Object.keys(MODULE_LABELS) as ModuleId[])
-    .filter(has)
+  const nav = event.sectionOrder
+    .filter((m) => has(m) && MODULE_LABELS[m])
     .map((m) => ({ id: m, label: MODULE_LABELS[m]!, href: `#${m}` }));
 
   // Cardápio agrupado por etapa, preservando a ordem em que o anfitrião cadastrou.
@@ -68,6 +68,256 @@ export function EventPage({ event }: { event: EventSummary }) {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [event.slug]);
+
+  // Seções da página, na ordem que o anfitrião definiu; só as ativas entram.
+  const sectionOrder = event.sectionOrder.filter(has);
+  const sections: Partial<Record<ModuleId, ReactNode>> = {
+    // Cronograma
+    cronograma: has("cronograma") && (
+          <section id="cronograma" className="px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">Programação</div>
+            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">
+              Cronograma do dia
+            </h2>
+            <div className="mx-auto flex max-w-[960px] flex-col gap-10 text-left">
+              {scheduleBlocks.map((block) => (
+                <div key={block.title}>
+                  <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
+                    {block.title}
+                  </div>
+                  <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+                    {block.items.map((ev, i) => (
+                      <div key={`${ev.time}-${i}`}>
+                        {ev.time && (
+                          <div className="mb-1.5 text-sm font-semibold text-accent">{ev.time}</div>
+                        )}
+                        <div className="text-[15px] text-ink-soft">{ev.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+    ),
+
+    // Local
+    local: has("local") && (
+          <section
+            id="local"
+            className="grid items-center gap-10 px-6 pb-16 sm:px-10 sm:pb-18 lg:grid-cols-2 lg:gap-14"
+          >
+            <div className="text-center lg:text-left">
+              <div className="eyebrow mb-3">Local</div>
+              <h2 className="mb-2.5 font-display text-[clamp(26px,4vw,38px)] font-semibold">
+                {event.venue}
+              </h2>
+              <div className="mb-2 text-[17px] text-ink-soft">{event.city}</div>
+              {event.address && (
+                <div className="mb-1 text-[15px] text-ink-soft">{event.address}</div>
+              )}
+              {event.postalCode && (
+                <div className="mb-6 text-[15px] text-ink-faint">CEP {event.postalCode}</div>
+              )}
+              {mapsQuery && (
+                <a
+                  href={mapsLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
+                >
+                  Ver rota no mapa
+                </a>
+              )}
+            </div>
+            <div className="h-[240px] overflow-hidden rounded-[20px] lg:h-[320px]">
+              {mapsQuery ? (
+                <iframe
+                  title={`Mapa — ${event.venue || event.city}`}
+                  src={mapsEmbedSrc}
+                  className="h-full w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              ) : (
+                <ImageSlot placeholder="Mapa de localização" />
+              )}
+            </div>
+          </section>
+    ),
+
+    // Presentes
+    presentes: has("presentes") && (
+          <section id="presentes" className="bg-paper-2 px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">Lista de presentes</div>
+            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">Presentes</h2>
+            <div className="mx-auto grid max-w-[900px] gap-6 sm:grid-cols-3">
+              {featuredGifts.map((g) => (
+                <div key={g.id} className="rounded-[18px] bg-paper p-6 text-left">
+                  <div className="mb-4 h-[140px] w-full overflow-hidden rounded-xl">
+                    <ImageSlot placeholder={g.name} />
+                  </div>
+                  <div className="text-[17px] font-semibold">{g.name}</div>
+                  <div className="mt-1 text-sm text-ink-soft">
+                    {g.quota ? `Cotas a partir de ${brl(g.price)}` : brl(g.price)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link
+              href={eventUrl(event, "/presentes")}
+              className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper"
+            >
+              Ver lista completa
+            </Link>
+          </section>
+    ),
+
+    // Galeria
+    galeria: has("galeria") && (
+          <section id="galeria" className="px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">Memórias</div>
+            <h2 className="mb-8 font-display text-[clamp(26px,4vw,38px)] font-semibold">Galeria</h2>
+            <div className="mx-auto grid max-w-[960px] grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5">
+              {event.gallery.map((g) => (
+                <div key={g.id} className="aspect-square overflow-hidden rounded-xl sm:aspect-[4/3]">
+                  {g.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL assinada, de curta duração.
+                    <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageSlot placeholder={g.label} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <Link
+              href={eventUrl(event, "/galeria")}
+              className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
+            >
+              Enviar minhas fotos
+            </Link>
+          </section>
+    ),
+
+    // Cardápio
+    cardapio: has("cardapio") && (
+          <section id="cardapio" className="bg-paper-2 px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">À mesa</div>
+            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">Cardápio</h2>
+            {menuCourses.length === 0 ? (
+              <p className="text-[16px] leading-relaxed text-ink-soft">
+                O cardápio será divulgado em breve.
+              </p>
+            ) : (
+              <div className="mx-auto flex max-w-[720px] flex-col gap-10 text-left">
+                {menuCourses.map((group) => (
+                  <div key={group.course}>
+                    <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
+                      {group.course}
+                    </div>
+                    <div className="flex flex-col gap-5">
+                      {group.items.map((item, i) => (
+                        <div key={`${item.name}-${i}`}>
+                          <div className="font-display text-[19px] font-semibold">{item.name}</div>
+                          {item.desc && (
+                            <div className="mt-1 text-[15px] leading-relaxed text-ink-soft">
+                              {item.desc}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+    ),
+
+    // Bar
+    bar: has("bar") && (
+          <section id="bar" className="px-6 py-16 text-center sm:px-10 sm:py-18">
+            <div className="eyebrow mb-2.5">Para brindar</div>
+            <h2 className="mb-4 font-display text-[clamp(26px,4vw,38px)] font-semibold">Bar</h2>
+            {event.bar.service && (
+              <p className="mx-auto mb-9 max-w-[480px] text-[16px] leading-relaxed text-ink-soft">
+                {event.bar.service}
+              </p>
+            )}
+            {event.bar.signatureName && (
+              <div className="mx-auto mb-9 max-w-[420px] rounded-[20px] bg-paper-2 px-6 py-7">
+                <div className="mb-1.5 text-[12px] uppercase tracking-[2.5px] text-accent">
+                  Drink de assinatura
+                </div>
+                <div className="font-display text-[22px] font-semibold">
+                  {event.bar.signatureName}
+                </div>
+                {event.bar.signatureDesc && (
+                  <div className="mt-2 text-[15px] leading-relaxed text-ink-soft">
+                    {event.bar.signatureDesc}
+                  </div>
+                )}
+              </div>
+            )}
+            {event.bar.items.length > 0 && (
+              <div className="mx-auto grid max-w-[720px] gap-5 text-left sm:grid-cols-2">
+                {event.bar.items.map((item, i) => (
+                  <div key={`${item.name}-${i}`} className="border-t border-line pt-3.5">
+                    <div className="font-display text-[17px] font-semibold">{item.name}</div>
+                    {item.desc && (
+                      <div className="mt-1 text-[14px] leading-relaxed text-ink-soft">
+                        {item.desc}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {!event.bar.service &&
+              !event.bar.signatureName &&
+              event.bar.items.length === 0 && (
+                <p className="text-[16px] leading-relaxed text-ink-soft">
+                  As informações do bar serão divulgadas em breve.
+                </p>
+              )}
+          </section>
+    ),
+
+    // Amigo secreto
+    "amigo-secreto": has("amigo-secreto") && (
+          <section id="amigo-secreto" className="px-6 pb-16 pt-16 sm:px-10 sm:pb-20">
+            <div className="rounded-[24px] bg-ink px-7 py-10 text-center text-paper sm:p-14">
+              <div className="mb-3 text-[13px] uppercase tracking-[3px] text-accent-soft">
+                Diversão à parte
+              </div>
+              <h2 className="mb-3.5 font-display text-[clamp(24px,4vw,32px)] font-semibold">
+                Amigo Secreto
+              </h2>
+              <p className="mx-auto mb-6 max-w-[480px] text-[16px] leading-[1.8] text-paper/75">
+                Participe do sorteio entre os convidados e leve um mimo especial para trocar no
+                grande dia.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button
+                  onClick={() => setSecretJoined((v) => !v)}
+                  className={`cursor-pointer rounded-[10px] border border-paper/40 px-7 py-3.5 text-[15px] font-semibold text-paper ${
+                    secretJoined ? "bg-paper/15" : "bg-accent"
+                  }`}
+                >
+                  {secretJoined ? "Inscrição confirmada" : "Participar do sorteio"}
+                </button>
+                <Link
+                  href={eventUrl(event, "/amigo-secreto")}
+                  className="rounded-[10px] border border-paper/40 px-7 py-3.5 text-[15px] font-semibold text-paper no-underline"
+                >
+                  Ver meu sorteio
+                </Link>
+              </div>
+            </div>
+          </section>
+    ),
+  };
 
   return (
     <div style={themeVars(event)} className="min-h-screen bg-paper-3">
@@ -133,249 +383,9 @@ export function EventPage({ event }: { event: EventSummary }) {
           </div>
         </nav>
 
-        {/* Cronograma ------------------------------------------------ */}
-        {has("cronograma") && (
-          <section id="cronograma" className="px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">Programação</div>
-            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">
-              Cronograma do dia
-            </h2>
-            <div className="mx-auto flex max-w-[960px] flex-col gap-10 text-left">
-              {scheduleBlocks.map((block) => (
-                <div key={block.title}>
-                  <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
-                    {block.title}
-                  </div>
-                  <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-                    {block.items.map((ev, i) => (
-                      <div key={`${ev.time}-${i}`}>
-                        <div className="mb-1.5 text-sm font-semibold text-accent">{ev.time}</div>
-                        <div className="text-[15px] text-ink-soft">{ev.desc}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Local ----------------------------------------------------- */}
-        {has("local") && (
-          <section
-            id="local"
-            className="grid items-center gap-10 px-6 pb-16 sm:px-10 sm:pb-18 lg:grid-cols-2 lg:gap-14"
-          >
-            <div className="text-center lg:text-left">
-              <div className="eyebrow mb-3">Local</div>
-              <h2 className="mb-2.5 font-display text-[clamp(26px,4vw,38px)] font-semibold">
-                {event.venue}
-              </h2>
-              <div className="mb-2 text-[17px] text-ink-soft">{event.city}</div>
-              {event.address && (
-                <div className="mb-1 text-[15px] text-ink-soft">{event.address}</div>
-              )}
-              {event.postalCode && (
-                <div className="mb-6 text-[15px] text-ink-faint">CEP {event.postalCode}</div>
-              )}
-              {mapsQuery && (
-                <a
-                  href={mapsLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
-                >
-                  Ver rota no mapa
-                </a>
-              )}
-            </div>
-            <div className="h-[240px] overflow-hidden rounded-[20px] lg:h-[320px]">
-              {mapsQuery ? (
-                <iframe
-                  title={`Mapa — ${event.venue || event.city}`}
-                  src={mapsEmbedSrc}
-                  className="h-full w-full border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  allowFullScreen
-                />
-              ) : (
-                <ImageSlot placeholder="Mapa de localização" />
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Presentes ------------------------------------------------- */}
-        {has("presentes") && (
-          <section id="presentes" className="bg-paper-2 px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">Lista de presentes</div>
-            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">Presentes</h2>
-            <div className="mx-auto grid max-w-[900px] gap-6 sm:grid-cols-3">
-              {featuredGifts.map((g) => (
-                <div key={g.id} className="rounded-[18px] bg-paper p-6 text-left">
-                  <div className="mb-4 h-[140px] w-full overflow-hidden rounded-xl">
-                    <ImageSlot placeholder={g.name} />
-                  </div>
-                  <div className="text-[17px] font-semibold">{g.name}</div>
-                  <div className="mt-1 text-sm text-ink-soft">
-                    {g.quota ? `Cotas a partir de ${brl(g.price)}` : brl(g.price)}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link
-              href={eventUrl(event, "/presentes")}
-              className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper"
-            >
-              Ver lista completa
-            </Link>
-          </section>
-        )}
-
-        {/* Galeria --------------------------------------------------- */}
-        {has("galeria") && (
-          <section id="galeria" className="px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">Memórias</div>
-            <h2 className="mb-8 font-display text-[clamp(26px,4vw,38px)] font-semibold">Galeria</h2>
-            <div className="mx-auto grid max-w-[960px] grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5">
-              {event.gallery.map((g) => (
-                <div key={g.id} className="aspect-square overflow-hidden rounded-xl sm:aspect-[4/3]">
-                  {g.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- URL assinada, de curta duração.
-                    <img src={g.url} alt={g.label} className="h-full w-full object-cover" />
-                  ) : (
-                    <ImageSlot placeholder={g.label} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <Link
-              href={eventUrl(event, "/galeria")}
-              className="mt-8 inline-block rounded-full border border-[rgba(42,39,36,0.3)] px-6 py-3 text-[15px] text-ink no-underline hover:bg-paper-2"
-            >
-              Enviar minhas fotos
-            </Link>
-          </section>
-        )}
-
-        {/* Cardápio -------------------------------------------------- */}
-        {has("cardapio") && (
-          <section id="cardapio" className="bg-paper-2 px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">À mesa</div>
-            <h2 className="mb-10 font-display text-[clamp(26px,4vw,38px)] font-semibold">Cardápio</h2>
-            {menuCourses.length === 0 ? (
-              <p className="text-[16px] leading-relaxed text-ink-soft">
-                O cardápio será divulgado em breve.
-              </p>
-            ) : (
-              <div className="mx-auto flex max-w-[720px] flex-col gap-10 text-left">
-                {menuCourses.map((group) => (
-                  <div key={group.course}>
-                    <div className="mb-4 border-b border-line pb-2 text-center font-display text-[13px] uppercase tracking-[2.5px] text-accent">
-                      {group.course}
-                    </div>
-                    <div className="flex flex-col gap-5">
-                      {group.items.map((item, i) => (
-                        <div key={`${item.name}-${i}`}>
-                          <div className="font-display text-[19px] font-semibold">{item.name}</div>
-                          {item.desc && (
-                            <div className="mt-1 text-[15px] leading-relaxed text-ink-soft">
-                              {item.desc}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Bar ----------------------------------------------------- */}
-        {has("bar") && (
-          <section id="bar" className="px-6 py-16 text-center sm:px-10 sm:py-18">
-            <div className="eyebrow mb-2.5">Para brindar</div>
-            <h2 className="mb-4 font-display text-[clamp(26px,4vw,38px)] font-semibold">Bar</h2>
-            {event.bar.service && (
-              <p className="mx-auto mb-9 max-w-[480px] text-[16px] leading-relaxed text-ink-soft">
-                {event.bar.service}
-              </p>
-            )}
-            {event.bar.signatureName && (
-              <div className="mx-auto mb-9 max-w-[420px] rounded-[20px] bg-paper-2 px-6 py-7">
-                <div className="mb-1.5 text-[12px] uppercase tracking-[2.5px] text-accent">
-                  Drink de assinatura
-                </div>
-                <div className="font-display text-[22px] font-semibold">
-                  {event.bar.signatureName}
-                </div>
-                {event.bar.signatureDesc && (
-                  <div className="mt-2 text-[15px] leading-relaxed text-ink-soft">
-                    {event.bar.signatureDesc}
-                  </div>
-                )}
-              </div>
-            )}
-            {event.bar.items.length > 0 && (
-              <div className="mx-auto grid max-w-[720px] gap-5 text-left sm:grid-cols-2">
-                {event.bar.items.map((item, i) => (
-                  <div key={`${item.name}-${i}`} className="border-t border-line pt-3.5">
-                    <div className="font-display text-[17px] font-semibold">{item.name}</div>
-                    {item.desc && (
-                      <div className="mt-1 text-[14px] leading-relaxed text-ink-soft">
-                        {item.desc}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            {!event.bar.service &&
-              !event.bar.signatureName &&
-              event.bar.items.length === 0 && (
-                <p className="text-[16px] leading-relaxed text-ink-soft">
-                  As informações do bar serão divulgadas em breve.
-                </p>
-              )}
-          </section>
-        )}
-
-        {/* Amigo secreto --------------------------------------------- */}
-        {has("amigo-secreto") && (
-          <section id="amigo-secreto" className="px-6 pb-16 pt-16 sm:px-10 sm:pb-20">
-            <div className="rounded-[24px] bg-ink px-7 py-10 text-center text-paper sm:p-14">
-              <div className="mb-3 text-[13px] uppercase tracking-[3px] text-accent-soft">
-                Diversão à parte
-              </div>
-              <h2 className="mb-3.5 font-display text-[clamp(24px,4vw,32px)] font-semibold">
-                Amigo Secreto
-              </h2>
-              <p className="mx-auto mb-6 max-w-[480px] text-[16px] leading-[1.8] text-paper/75">
-                Participe do sorteio entre os convidados e leve um mimo especial para trocar no
-                grande dia.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <button
-                  onClick={() => setSecretJoined((v) => !v)}
-                  className={`cursor-pointer rounded-[10px] border border-paper/40 px-7 py-3.5 text-[15px] font-semibold text-paper ${
-                    secretJoined ? "bg-paper/15" : "bg-accent"
-                  }`}
-                >
-                  {secretJoined ? "Inscrição confirmada" : "Participar do sorteio"}
-                </button>
-                <Link
-                  href={eventUrl(event, "/amigo-secreto")}
-                  className="rounded-[10px] border border-paper/40 px-7 py-3.5 text-[15px] font-semibold text-paper no-underline"
-                >
-                  Ver meu sorteio
-                </Link>
-              </div>
-            </div>
-          </section>
-        )}
+        {sectionOrder.map((id) => (
+          <Fragment key={id}>{sections[id]}</Fragment>
+        ))}
 
         {/* Rodapé ---------------------------------------------------- */}
         <footer className="border-t border-line px-6 py-14 text-center sm:px-10">
